@@ -229,7 +229,7 @@ Virtua_sym.prototype["match"] = function(obj, arg) {
 };
 
 /* Pairs match only pairs, recursively. */
-Virtua_sym.prototype["match"] = function(obj, arg) {
+Virtua_pair.prototype["match"] = function(obj, arg) {
     var operand = virtua_car(arg);
     var env = virtua_cdr(arg);
     virtua_match(virtua_car(obj), virtua_car(operand), env);
