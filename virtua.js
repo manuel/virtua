@@ -41,7 +41,7 @@ function virtua_send(rcv, sel, arg) {
 
 /* Default objects peruse JS's prototype chain to implement mapping of
    message selectors to implementation functions (methods).  A method
-   receives as its two arguments the receiver and the opaque arguments
+   receives as its two arguments the receiver and the opaque argument
    object. */
 
 function Virtua_obj() {
