@@ -47,6 +47,10 @@ function virtua_send(rcv, sel, arg) {
 function Virtua_obj() {
 }
 
+Virtua_obj.prototype.toString = function() {
+    return "#[object]";
+}
+
 Virtua_obj.prototype.virtua_send = function(rcv, sel, arg) {
     var method_name = virtua_str_get_js_str(virtua_sym_get_name(sel));
     var method = rcv[method_name];
@@ -64,10 +68,14 @@ Virtua_obj.prototype.virtua_send = function(rcv, sel, arg) {
    sanitaire. */
 
 function Virtua_str(js_str) {
-    this.js_str = js_str;
+    this.virtua_js_str = js_str;
 }
 
 Virtua_str.prototype = new Virtua_obj();
+
+Virtua_str.prototype.toString = function() {
+    return "\"" + virtua_str_get_js_str(this) + "\""; // TODO: escape properly
+}
 
 /* Creates a new string from the given JS string. */
 function virtua_str(js_str) {
@@ -76,7 +84,7 @@ function virtua_str(js_str) {
 
 /* Returns the JS string of a string. */
 function virtua_str_get_js_str(str) {
-    return str.js_str;
+    return str.virtua_js_str;
 }
 
 /**** Symbols ****/
@@ -91,6 +99,10 @@ function Virtua_sym(name) {
 }
 
 Virtua_sym.prototype = new Virtua_obj();
+
+Virtua_sym.prototype.toString = function() {
+    return virtua_str_get_js_str(virtua_sym_get_name(this)); // TODO: escape properly
+}
 
 /* Returns the symbol with the given string name. */
 function virtua_intern(name) {
@@ -120,6 +132,10 @@ function Virtua_pair(car, cdr) {
 }
 
 Virtua_pair.prototype = new Virtua_obj();
+
+Virtua_pair.prototype.toString = function() {
+    return "(" + virtua_car(this) + " . " + virtua_cdr(this) + ")";
+}
 
 /* Creates a new pair with the given car and cdr. */
 function virtua_cons(car, cdr) {
@@ -154,6 +170,15 @@ function virtua_array_to_cons_list(array, end) {
     return c;
 }
 
+function virtua_cons_list_to_array(c) {
+    var res = [];
+    while(c !== virtua_nil) {
+        res.push(virtua_car(c));
+        c = virtua_cdr(c);
+    }
+    return res;
+}
+
 /**** Nil ****/
 
 /* Nil is the empty list, and different from void. */
@@ -162,6 +187,10 @@ function Virtua_nil() {
 }
 
 Virtua_nil.prototype = new Virtua_obj();
+
+Virtua_nil.prototype.toString = function() {
+    return "#nil";
+}
 
 var virtua_nil = new Virtua_nil();
 
@@ -175,6 +204,10 @@ function Virtua_void() {
 
 Virtua_void.prototype = new Virtua_obj();
 
+Virtua_void.prototype.toString = function() {
+    return "#void";
+}
+
 var virtua_void = new Virtua_void();
 
 /**** Ignore ****/
@@ -186,6 +219,10 @@ function Virtua_ignore() {
 }
 
 Virtua_ignore.prototype = new Virtua_obj();
+
+Virtua_ignore.prototype.toString = function() {
+    return "#ignore";
+}
 
 var virtua_ignore = new Virtua_ignore();
 
@@ -247,6 +284,10 @@ function Virtua_env(bindings) {
 }
 
 Virtua_env.prototype = new Virtua_obj();
+
+Virtua_env.prototype.toString = function() {
+    return "#[environment]";
+}
 
 /* Creates a new empty environment. */
 function virtua_make_env() {
@@ -340,6 +381,10 @@ function Virtua_combiner(ptree, eformal, body, env) {
 
 Virtua_combiner.prototype = new Virtua_obj();
 
+Virtua_combiner.prototype.toString = function() {
+    return "#[combiner]";
+}
+
 Virtua_combiner.prototype["combine"] = function(combiner, arg) {
     var otree = virtua_car(arg);
     var denv = virtua_cdr(arg);
@@ -365,6 +410,10 @@ function Virtua_wrapper(underlying) {
 }
 
 Virtua_wrapper.prototype = new Virtua_obj();
+
+Virtua_wrapper.prototype.toString = function() {
+    return "#[wrapper]";
+}
 
 /* Constructs a new wrapper around an underlying combiner. */
 function virtua_wrap(underlying) {
@@ -547,7 +596,7 @@ Virtua_alien.prototype = new Virtua_obj();
 
 Virtua_alien.prototype["combine"] = function(combiner, arg) {
     var argslist = virtua_car(arg);
-    return combiner.js_fun.apply(null, scm_cons_list_to_array(argslist));
+    return combiner.js_fun.apply(null, virtua_cons_list_to_array(argslist));
 };
 
 function virtua_make_alien(js_fun) {
