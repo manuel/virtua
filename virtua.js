@@ -47,8 +47,6 @@ function virtua_send(rcv, sel, arg) {
 function Virtua_obj() {
 }
 
-var virtua_default_obj = new Virtua_obj();
-
 Virtua_obj.prototype.virtua_send = function(rcv, sel, arg) {
     var method_name = virtua_str_get_js_str(virtua_sym_get_name(sel));
     var method = rcv[method_name];
