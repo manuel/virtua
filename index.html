@@ -1,0 +1,49 @@
+<html>
+<head>
+  <title>Virtua 0.0.1</title>
+  <script src="jsparse.js" type="text/javascript"></script>
+  <script src="virtua.js" type="text/javascript"></script>
+</head>
+<body onload="virtua_repl_load()">
+  <div id="output">
+  </div>
+  <form id="evalform"
+        onsubmit="try{return virtua_repl_eval(virtua_parse(document.forms.evalform.input.value));}finally{return false;}">
+    <input type="text" name="input">
+    <input type="submit" value="eval">
+  </form>
+  <script type="text/javascript">
+var virtua_core_env;
+
+function virtua_repl_load() {
+    virtua_core_env = virtua_make_core_env();
+    virtua_env_bind_comfortably(virtua_core_env, "print", virtua_make_alien(virtua_repl_print));
+    virtua_repl_print("LISP READY");
+}
+
+function virtua_repl_eval(forms) {
+    virtua_repl_print("> " + document.forms.evalform.input.value);
+    for (var i = 0; i < forms.length; i++) {
+        var form = forms[i];
+        var result;
+        try {
+            result = virtua_eval(form, virtua_core_env);
+        } catch(e) {
+            result = "ERROR: " + e;
+        }
+        virtua_repl_print(result);
+    }
+    return false;
+}
+
+function virtua_repl_print(string) {
+    var resultDiv = document.createElement("div");
+    resultDiv.appendChild(document.createTextNode(string));
+    var output = document.getElementById("output");
+    output.insertBefore(resultDiv, output.firstChild);
+    document.forms.evalform.input.value = "";
+    return false;
+}
+  </script>
+</body>
+</html>
