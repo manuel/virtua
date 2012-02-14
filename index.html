@@ -17,7 +17,7 @@ var virtua_core_env;
 
 function virtua_repl_load() {
     virtua_core_env = virtua_make_core_env();
-    virtua_env_bind_comfortably(virtua_core_env, "print", virtua_make_alien(virtua_repl_print));
+    virtua_env_bind_comfortably(virtua_core_env, "print", virtua_make_native(virtua_repl_print));
     virtua_repl_print("LISP READY");
 }
 

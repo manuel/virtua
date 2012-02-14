@@ -9,15 +9,15 @@ function virtua_make_core_env() {
     virtua_env_bind_comfortably(env, "$unwind-protect", new Virtua_unwind_protect());
     virtua_env_bind_comfortably(env, "throw", new Virtua_throw());
     virtua_env_bind_comfortably(env, "$catch", new Virtua_catch());
-    virtua_env_bind_comfortably(env, "eq?", virtua_make_alien(virtua_eqp));
-    virtua_env_bind_comfortably(env, "make-environment", virtua_make_alien(virtua_make_env));
-    virtua_env_bind_comfortably(env, "eval", virtua_make_alien(virtua_eval));
-    virtua_env_bind_comfortably(env, "wrap", virtua_make_alien(virtua_wrap));
-    virtua_env_bind_comfortably(env, "unwrap", virtua_make_alien(virtua_unwrap));
-    virtua_env_bind_comfortably(env, "cons", virtua_make_alien(virtua_cons));
-    virtua_env_bind_comfortably(env, "car", virtua_make_alien(virtua_car));
-    virtua_env_bind_comfortably(env, "cdr", virtua_make_alien(virtua_cdr));
-    virtua_env_bind_comfortably(env, "null?", virtua_make_alien(virtua_nullp));
+    virtua_env_bind_comfortably(env, "eq?", virtua_make_native(virtua_eqp));
+    virtua_env_bind_comfortably(env, "make-environment", virtua_make_native(virtua_make_env));
+    virtua_env_bind_comfortably(env, "eval", virtua_make_native(virtua_eval));
+    virtua_env_bind_comfortably(env, "wrap", virtua_make_native(virtua_wrap));
+    virtua_env_bind_comfortably(env, "unwrap", virtua_make_native(virtua_unwrap));
+    virtua_env_bind_comfortably(env, "cons", virtua_make_native(virtua_cons));
+    virtua_env_bind_comfortably(env, "car", virtua_make_native(virtua_car));
+    virtua_env_bind_comfortably(env, "cdr", virtua_make_native(virtua_cdr));
+    virtua_env_bind_comfortably(env, "null?", virtua_make_native(virtua_nullp));
     virtua_env_bind_comfortably(env, "#t", virtua_t);
     virtua_env_bind_comfortably(env, "#f", virtua_f);
     virtua_env_bind_comfortably(env, "#ignore", virtua_ignore);
@@ -642,23 +642,23 @@ Virtua_catch.prototype["combine"] = function(combiner, arg) {
     }
 };
 
-/**** Alien Combiners ****/
+/**** Native Combiners ****/
 
-/* An alien combiner is a wrapper around a JS function. */
+/* An native combiner is a wrapper around a JS function. */
 
-function Virtua_alien(js_fun) {
+function Virtua_native(js_fun) {
     this.virtua_js_fun = js_fun;
 }
 
-Virtua_alien.prototype = new Virtua_obj();
+Virtua_native.prototype = new Virtua_obj();
 
-Virtua_alien.prototype["combine"] = function(combiner, arg) {
+Virtua_native.prototype["combine"] = function(combiner, arg) {
     var argslist = virtua_car(arg);
     return combiner.virtua_js_fun.apply(null, virtua_cons_list_to_array(argslist));
 };
 
-function virtua_make_alien(js_fun) {
-    return virtua_wrap(new Virtua_alien(js_fun));
+function virtua_make_native(js_fun) {
+    return virtua_wrap(new Virtua_native(js_fun));
 }
 
 /**** Library ****/
