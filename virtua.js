@@ -2,13 +2,14 @@
 
 function virtua_make_core_env() {
     var env = virtua_make_env();
-    virtua_env_bind_comfortably(env, "def", new Virtua_def());
-    virtua_env_bind_comfortably(env, "vau", new Virtua_vau());
-    virtua_env_bind_comfortably(env, "if", new Virtua_if());
-    virtua_env_bind_comfortably(env, "loop", new Virtua_loop());
-    virtua_env_bind_comfortably(env, "unwind-protect", new Virtua_unwind_protect());
+    virtua_env_bind_comfortably(env, "$define!", new Virtua_def());
+    virtua_env_bind_comfortably(env, "$vau", new Virtua_vau());
+    virtua_env_bind_comfortably(env, "$if", new Virtua_if());
+    virtua_env_bind_comfortably(env, "$loop", new Virtua_loop());
+    virtua_env_bind_comfortably(env, "$unwind-protect", new Virtua_unwind_protect());
     virtua_env_bind_comfortably(env, "throw", new Virtua_throw());
-    virtua_env_bind_comfortably(env, "catch", new Virtua_catch());
+    virtua_env_bind_comfortably(env, "$catch", new Virtua_catch());
+    virtua_env_bind_comfortably(env, "eq?", virtua_make_alien(virtua_eqp));
     virtua_env_bind_comfortably(env, "make-environment", virtua_make_alien(virtua_make_env));
     virtua_env_bind_comfortably(env, "eval", virtua_make_alien(virtua_eval));
     virtua_env_bind_comfortably(env, "wrap", virtua_make_alien(virtua_wrap));
@@ -16,11 +17,11 @@ function virtua_make_core_env() {
     virtua_env_bind_comfortably(env, "cons", virtua_make_alien(virtua_cons));
     virtua_env_bind_comfortably(env, "car", virtua_make_alien(virtua_car));
     virtua_env_bind_comfortably(env, "cdr", virtua_make_alien(virtua_cdr));
-    virtua_env_bind_comfortably(env, "#nil", virtua_nil);
+    virtua_env_bind_comfortably(env, "null?", virtua_make_alien(virtua_nullp));
     virtua_env_bind_comfortably(env, "#t", virtua_t);
     virtua_env_bind_comfortably(env, "#f", virtua_f);
     virtua_env_bind_comfortably(env, "#ignore", virtua_ignore);
-    virtua_env_bind_comfortably(env, "#void", virtua_void);
+    virtua_env_bind_comfortably(env, "#inert", virtua_inert);
     return env;
 }
 
@@ -207,7 +208,7 @@ var virtua_f = new Virtua_bool(false);
 
 /**** Nil ****/
 
-/* Nil is the empty list, and different from void. */
+/* Nil is the empty list, and different from inert. */
 
 function Virtua_nil() {
 }
@@ -215,26 +216,26 @@ function Virtua_nil() {
 Virtua_nil.prototype = new Virtua_obj();
 
 Virtua_nil.prototype.toString = function() {
-    return "#nil";
+    return "()";
 }
 
 var virtua_nil = new Virtua_nil();
 
-/**** Void ****/
+/**** Inert ****/
 
-/* Void is the uninteresting value, returned by functions that do not
+/* Inert is the uninteresting value, returned by functions that do not
    compute a result. */
 
-function Virtua_void() {
+function Virtua_inert() {
 }
 
-Virtua_void.prototype = new Virtua_obj();
+Virtua_inert.prototype = new Virtua_obj();
 
-Virtua_void.prototype.toString = function() {
-    return "#void";
+Virtua_inert.prototype.toString = function() {
+    return "#inert";
 }
 
-var virtua_void = new Virtua_void();
+var virtua_inert = new Virtua_inert();
 
 /**** Ignore ****/
 
@@ -466,11 +467,11 @@ function virtua_eval_args(otree, env) {
     }
 }
 
-/*** Vau ***/
+/*** $vau ***/
 
-/* Vau creates a compound combiner.
+/* Creates a compound combiner.
 
-   (vau ptree eformal body) -> combiner */
+   ($vau ptree eformal body) -> combiner */
 
 function Virtua_vau() {
 }
@@ -486,12 +487,12 @@ Virtua_vau.prototype["combine"] = function(combiner, arg) {
     return new Virtua_combiner(ptree, eformal, body, env);
 };
 
-/*** Def ***/
+/*** $define! ***/
 
-/* Def updates the binding of a name to a value in the current
+/* Updates the binding of a name to a value in the current
    environment.
 
-   (def name value) -> void */
+   ($define! name value) -> inert */
 
 function Virtua_def() {
 }
@@ -504,15 +505,15 @@ Virtua_def.prototype["combine"] = function(combiner, arg) {
     var name = virtua_elt(otree, 0);
     var value = virtua_elt(otree, 1);
     virtua_env_bind(env, name, virtua_eval(value, env));
-    return virtua_void;
+    return virtua_inert;
 };
 
-/*** If ***/
+/*** $if ***/
 
-/* If performs either the consequent or alternative expression,
-   depending on the boolean result of the test expression.
+/* Performs either the consequent or alternative expression, depending
+   on the boolean result of the test expression.
 
-   (if test consequent alternative) -> result */
+   ($if test consequent alternative) -> result */
 
 function Virtua_if() {
 }
@@ -536,11 +537,11 @@ Virtua_if.prototype["combine"] = function(combiner, arg) {
     }
 };
 
-/*** Loop ***/
+/*** $loop ***/
 
-/* Loop repeatedly evaluates a body expression.
+/* Repeatedly evaluates a body expression.
 
-   (loop body) -> | */
+   ($loop body) -> | */
 
 function Virtua_loop() {
 }
@@ -556,13 +557,12 @@ Virtua_loop.prototype["combine"] = function(combiner, arg) {
     }
 };
 
-/*** Unwind-Protect ***/
+/*** $unwind-protect ***/
 
-/* Unwind-Protect performs a cleanup expression whether or not a
-   protected expression exits normally.  Returns the result of the
-   protected expression.
+/* Performs a cleanup expression whether or not a protected expression
+   exits normally.  Returns the result of the protected expression.
 
-   (unwind-protect protected cleanup) -> result */
+   ($unwind-protect protected cleanup) -> result */
 
 function Virtua_unwind_protect() {
 }
@@ -581,11 +581,11 @@ Virtua_unwind_protect.prototype["combine"] = function(combiner, arg) {
     }
 };
 
-/*** Throw ***/
+/*** throw ***/
 
-/* Throw throws a value to an enclosing catch tag.  If there is no
-   such enclosing tag, an error happens (after the stack has been
-   unwound -- unlike Common Lisp.)
+/* Throws a value to an enclosing catch tag.  If there is no such
+   enclosing tag, an error happens (after the stack has been unwound
+   -- unlike Common Lisp.)
 
    (throw tag value) -> | */
 
@@ -608,14 +608,14 @@ function Virtua_control_exc(tag, value) {
     this.virtua_value = value;
 }
 
-/*** Catch ***/
+/*** $catch ***/
 
-/* Catch performs a body with a catch tag in effect.  If a throw to
-   that tag occurs during the dynamic extent of the evaluation of the
-   body, the throw's value is returned, otherwise the result of the
-   body is returned normally.
+/* Performs a body with a catch tag in effect.  If a throw to that tag
+   occurs during the dynamic extent of the evaluation of the body, the
+   throw's value is returned, otherwise the result of the body is
+   returned normally.
 
-   (catch tag body) -> result */
+   ($catch tag body) -> result */
 
 function Virtua_catch() {
 }
@@ -656,6 +656,18 @@ Virtua_alien.prototype["combine"] = function(combiner, arg) {
 
 function virtua_make_alien(js_fun) {
     return virtua_wrap(new Virtua_alien(js_fun));
+}
+
+/**** Library ****/
+
+/* Compares two objects for pointer equality. */
+function virtua_eqp(a, b) {
+    return (a === b) ? virtua_t : virtua_f;
+}
+
+/* Returns true iff object is nil. */
+function virtua_nullp(obj) {
+    return virtua_eqp(obj, virtua_nil);
 }
 
 /**** Parser ****/
@@ -716,7 +728,7 @@ function virtua_string_syntax_action(ast) {
 }
 
 var virtua_nil_syntax =
-    action("#nil", virtua_nil_syntax_action);
+    action("()", virtua_nil_syntax_action);
 
 function virtua_nil_syntax_action(ast) {
     return virtua_nil;
@@ -729,11 +741,11 @@ function virtua_ignore_syntax_action(ast) {
     return virtua_ignore;
 }
 
-var virtua_void_syntax =
-    action("#void", virtua_void_syntax_action);
+var virtua_inert_syntax =
+    action("#inert", virtua_inert_syntax_action);
 
-function virtua_void_syntax_action(ast) {
-    return virtua_void;
+function virtua_inert_syntax_action(ast) {
+    return virtua_inert;
 }
 
 var virtua_dot_syntax =
@@ -760,7 +772,7 @@ function virtua_compound_syntax_action(ast) {
 var virtua_expression_syntax =
     whitespace(choice(virtua_nil_syntax,
                       virtua_ignore_syntax,
-                      virtua_void_syntax,
+                      virtua_inert_syntax,
                       virtua_compound_syntax,
                       virtua_identifier_syntax,
                       virtua_string_syntax));
