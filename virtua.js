@@ -647,14 +647,14 @@ Virtua_catch.prototype["combine"] = function(combiner, arg) {
 /* An alien combiner is a wrapper around a JS function. */
 
 function Virtua_alien(js_fun) {
-    this.js_fun = js_fun;
+    this.virtua_js_fun = js_fun;
 }
 
 Virtua_alien.prototype = new Virtua_obj();
 
 Virtua_alien.prototype["combine"] = function(combiner, arg) {
     var argslist = virtua_car(arg);
-    return combiner.js_fun.apply(null, virtua_cons_list_to_array(argslist));
+    return combiner.virtua_js_fun.apply(null, virtua_cons_list_to_array(argslist));
 };
 
 function virtua_make_alien(js_fun) {
