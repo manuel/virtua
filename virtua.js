@@ -41,6 +41,11 @@ function virtua_send(rcv, sel, arg) {
     return rcv.virtua_send(rcv, sel, arg);
 }
 
+/* Sends a message with a JS string as selector. */
+function virtua_send_comfortably(rcv, sel_js_str, arg) {
+    return virtua_send(rcv, virtua_intern(virtua_str(sel_js_str)), arg);
+}
+
 /**** Default Objects ****/
 
 /* Default objects peruse JS's prototype chain to implement mapping of
@@ -261,8 +266,7 @@ var virtua_ignore = new Virtua_ignore();
    against, and the environment in which matching should occur. */
 
 function virtua_match(pattern, operand, env) {
-    return virtua_send(pattern, virtua_intern(virtua_str("match")),
-                       virtua_cons(operand, env));
+    return virtua_send_comfortably(pattern, "match", virtua_cons(operand, env));
 }
 
 /* By default, objects cannot be used as patterns. */
@@ -357,7 +361,7 @@ function virtua_env_bind_comfortably(env, name, value) {
 /* Evaluates the object in the given environment.  The 'eval message
    is sent to the object with the environment as argument. */
 function virtua_eval(obj, env) {
-    return virtua_send(obj, virtua_intern(virtua_str("eval")), env);
+    return virtua_send_comfortably(obj, "eval", env);
 }
 
 /* By default, objects evaluate to themselves. */
@@ -383,8 +387,7 @@ Virtua_pair.prototype["eval"] = function(pair, env) {
    given environment.  The 'combine message is sent to the combiner
    with a cons of the operand tree and environment as argument. */
 function virtua_combine(combiner, otree, env) {
-    return virtua_send(combiner, virtua_intern(virtua_str("combine")),
-                       virtua_cons(otree, env));
+    return virtua_send_comfortably(combiner, "combine", virtua_cons(otree, env));
 }
 
 /* By default, objects cannot act as combiner. */
