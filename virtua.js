@@ -4,6 +4,7 @@ function virtua_make_core_env() {
     var env = virtua_make_env();
     virtua_env_bind_comfortably(env, "def", new Virtua_def());
     virtua_env_bind_comfortably(env, "vau", new Virtua_vau());
+    virtua_env_bind_comfortably(env, "if", new Virtua_if());
     virtua_env_bind_comfortably(env, "loop", new Virtua_loop());
     virtua_env_bind_comfortably(env, "unwind-protect", new Virtua_unwind_protect());
     virtua_env_bind_comfortably(env, "throw", new Virtua_throw());
@@ -16,6 +17,8 @@ function virtua_make_core_env() {
     virtua_env_bind_comfortably(env, "car", virtua_make_alien(virtua_car));
     virtua_env_bind_comfortably(env, "cdr", virtua_make_alien(virtua_cdr));
     virtua_env_bind_comfortably(env, "#nil", virtua_nil);
+    virtua_env_bind_comfortably(env, "#t", virtua_t);
+    virtua_env_bind_comfortably(env, "#f", virtua_f);
     virtua_env_bind_comfortably(env, "#ignore", virtua_ignore);
     virtua_env_bind_comfortably(env, "#void", virtua_void);
     return env;
@@ -178,6 +181,29 @@ function virtua_cons_list_to_array(c) {
     }
     return res;
 }
+
+/**** Booleans ****/
+
+/* Booleans and If should probably be defined in userland, but they're
+   built-in to make bootstrapping easier (Kernel's bootstrap depends
+   on If and I want to follow it closely for the moment). */
+
+function Virtua_bool(js_bool) {
+    this.virtua_js_bool = js_bool;
+}
+
+Virtua_bool.prototype = new Virtua_obj();
+
+Virtua_bool.prototype.toString = function() {
+    if (this.virtua_js_bool) {
+        return "#t";
+    } else {
+        return "#f";
+    }
+}
+
+var virtua_t = new Virtua_bool(true);
+var virtua_f = new Virtua_bool(false);
 
 /**** Nil ****/
 
@@ -479,6 +505,35 @@ Virtua_def.prototype["combine"] = function(combiner, arg) {
     var value = virtua_elt(otree, 1);
     virtua_env_bind(env, name, virtua_eval(value, env));
     return virtua_void;
+};
+
+/*** If ***/
+
+/* If performs either the consequent or alternative expression,
+   depending on the boolean result of the test expression.
+
+   (if test consequent alternative) -> result */
+
+function Virtua_if() {
+}
+
+Virtua_if.prototype = new Virtua_obj();
+
+Virtua_if.prototype["combine"] = function(combiner, arg) {
+    var otree = virtua_car(arg);
+    var env = virtua_cdr(arg);
+    var test = virtua_elt(otree, 0);
+    var consequent = virtua_elt(otree, 1);
+    var alternative = virtua_elt(otree, 2);
+    var testResult = virtua_eval(test, env);
+    if (testResult === virtua_t) {
+        return virtua_eval(consequent, env);
+    } else if (testResult === virtua_f) {
+        return virtua_eval(alternative, env);
+    } else {
+        // TODO: signal condition
+        throw("Not a boolean.");
+    }
 };
 
 /*** Loop ***/
