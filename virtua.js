@@ -1,472 +1,443 @@
 /**** Core Environment ****/
 
-function virtua_make_core_env() {
-    var env = virtua_make_env();
-    virtua_env_bind_comfortably(env, "$define!", new Virtua_def());
-    virtua_env_bind_comfortably(env, "$vau", new Virtua_vau());
-    virtua_env_bind_comfortably(env, "$if", new Virtua_if());
-    virtua_env_bind_comfortably(env, "$loop", new Virtua_loop());
-    virtua_env_bind_comfortably(env, "$unwind-protect", new Virtua_unwind_protect());
-    virtua_env_bind_comfortably(env, "throw", new Virtua_throw());
-    virtua_env_bind_comfortably(env, "$catch", new Virtua_catch());
-    virtua_env_bind_comfortably(env, "eq?", virtua_make_native(virtua_eqp));
-    virtua_env_bind_comfortably(env, "make-environment", virtua_make_native(virtua_make_env));
-    virtua_env_bind_comfortably(env, "eval", virtua_make_native(virtua_eval));
-    virtua_env_bind_comfortably(env, "wrap", virtua_make_native(virtua_wrap));
-    virtua_env_bind_comfortably(env, "unwrap", virtua_make_native(virtua_unwrap));
-    virtua_env_bind_comfortably(env, "cons", virtua_make_native(virtua_cons));
-    virtua_env_bind_comfortably(env, "car", virtua_make_native(virtua_car));
-    virtua_env_bind_comfortably(env, "cdr", virtua_make_native(virtua_cdr));
-    virtua_env_bind_comfortably(env, "null?", virtua_make_native(virtua_nullp));
-    virtua_env_bind_comfortably(env, "#t", virtua_t);
-    virtua_env_bind_comfortably(env, "#f", virtua_f);
-    virtua_env_bind_comfortably(env, "#ignore", virtua_ignore);
-    virtua_env_bind_comfortably(env, "#inert", virtua_inert);
+function lisp_make_core_environment() {
+    var env = lisp_make_environment();
+    lisp_environment_put_comfortably(env, "$vau", lisp_make_instance(Lisp_Vau));
+    lisp_environment_put_comfortably(env, "$define!", lisp_make_instance(Lisp_Define));
+    lisp_environment_put_comfortably(env, "$if", lisp_make_instance(Lisp_If));
+    lisp_environment_put_comfortably(env, "$loop", lisp_make_instance(Lisp_Loop));
+    lisp_environment_put_comfortably(env, "$unwind-protect", lisp_make_instance(Lisp_Unwind_Protect));
+    lisp_environment_put_comfortably(env, "$catch", lisp_make_instance(Lisp_Catch));
+    lisp_environment_put_comfortably(env, "throw", lisp_make_instance(Lisp_Throw));
+    lisp_environment_put_comfortably(env, "eq?", lisp_wrap_native(lisp_lib_eq));
+    lisp_environment_put_comfortably(env, "make-environment", lisp_wrap_native(lisp_make_environment));
+    lisp_environment_put_comfortably(env, "eval", lisp_wrap_native(lisp_eval));
+    lisp_environment_put_comfortably(env, "wrap", lisp_wrap_native(lisp_wrap));
+    lisp_environment_put_comfortably(env, "unwrap", lisp_wrap_native(lisp_unwrap));
+    lisp_environment_put_comfortably(env, "cons", lisp_wrap_native(lisp_cons));
+    lisp_environment_put_comfortably(env, "car", lisp_wrap_native(lisp_car));
+    lisp_environment_put_comfortably(env, "cdr", lisp_wrap_native(lisp_cdr));
+    lisp_environment_put_comfortably(env, "null?", lisp_wrap_native(lisp_lib_null));
+    lisp_environment_put_comfortably(env, "#t", lisp_t);
+    lisp_environment_put_comfortably(env, "#f", lisp_f);
+    lisp_environment_put_comfortably(env, "#ignore", lisp_ignore);
+    lisp_environment_put_comfortably(env, "#inert", lisp_inert);
     return env;
+};
+
+/**** Core Behaviors ****/
+
+/* Evaluates the object in the environment. */
+function lisp_eval(obj, env) {
+    return lisp_class_of(obj).lisp_eval(obj, env);
 }
 
-/**** Messaging ****/
-
-/* Like in Smalltalk, objects respond to messages.  The object to
-   which a message is sent is called the receiver (rcv).  The name of
-   the message is called the selector (sel) and must be a symbol.  A
-   message send passes along a single argument object (arg) that is
-   not inspected by the messaging system.
-  
-   Sending a message is effected with "virtua_send", which dispatches
-   to the receiver's "virtua_send" property, allowing every object to
-   implement its own message handling functionality. */
-
-function virtua_send(rcv, sel, arg) {
-    return rcv.virtua_send(rcv, sel, arg);
+/* Combines the object with the operand tree in the environment. */
+function lisp_combine(obj, otree, env) {
+    return lisp_class_of(obj).lisp_combine(obj, otree, env);
 }
 
-/* Sends a message with a JS string as selector. */
-function virtua_send_comfortably(rcv, sel_js_str, arg) {
-    return virtua_send(rcv, virtua_intern(virtua_str(sel_js_str)), arg);
+/* Matches this object against the operand tree, possibly updating the environment. */
+function lisp_match(obj, otree, env) {
+    return lisp_class_of(obj).lisp_match(obj, otree, env);
 }
 
-/**** Default Objects ****/
-
-/* Default objects peruse JS's prototype chain to implement mapping of
-   message selectors to implementation functions (methods).  A method
-   receives as its two arguments the receiver and the opaque argument
-   object. */
-
-function Virtua_obj() {
+/* Sends a message with the given selector and operand tree to this object. */
+function lisp_send(obj, sel, otree) {
+    return lisp_class_of(obj).lisp_send(obj, sel, otree);
 }
 
-Virtua_obj.prototype.toString = function() {
-    return "#[object]";
-}
+/**** Object System ****/
 
-Virtua_obj.prototype.virtua_send = function(rcv, sel, arg) {
-    var method_name = virtua_str_get_js_str(virtua_sym_get_name(sel));
-    var method = rcv[method_name];
+function Lisp_Prototype() {}
+
+Lisp_Prototype.prototype.lisp_eval = function(obj, env) {
+    return obj;
+};
+
+Lisp_Prototype.prototype.lisp_combine = function(obj, otree, env) {
+    lisp_simple_error("Not a combiner.");
+};
+
+Lisp_Prototype.prototype.lisp_match = function(obj, otree, env) {
+    lisp_simple_error("Not a pattern.");
+};
+
+Lisp_Prototype.prototype.lisp_send = function(obj, sel, otree) {
+    var c = lisp_class_of(obj);
+    var method = c[sel];
     if (method !== undefined) {
-        return method(rcv, arg);
+        return method.lisp_combine(lisp_cons(obj, otree), lisp_make_environment());
     } else {
-        // TODO: implement message-not-understood handling.
-        throw("message not understood:" + method_name);
+        lisp_message_not_understood_error(obj, sel);
     }
+};
+
+/* Bootstrap the class hierarchy. */
+
+/* The root of the class hierarchy. */
+var Lisp_Object = new Lisp_Prototype();
+
+/* The class of classes. */
+function Lisp_Class_Prototype() {}
+Lisp_Class_Prototype.prototype = new Lisp_Prototype();
+var Lisp_Class = new Lisp_Class_Prototype();
+
+Lisp_Object.lisp_isa = Lisp_Class;
+Lisp_Class.lisp_isa = Lisp_Class;
+Lisp_Class.lisp_superclass = Lisp_Object;
+
+/* Creates a new class with the given superclass and native name (for debuggability). */
+function lisp_make_class(sc, native_name) {
+    lisp_assert(lisp_is_instance(sc, Lisp_Class));
+    lisp_assert(lisp_is_native_string(native_name));
+    var f = eval("(function " + native_name + "() {})");
+    f.prototype = new Lisp_Prototype();
+    var c = new f();
+    c.lisp_isa = Lisp_Class;
+    c.lisp_superclass = sc;
+    return c;
+}
+
+/* Creates an instance of the given class. */
+function lisp_make_instance(c) {
+    lisp_assert(lisp_is_instance(c, Lisp_Class));
+    return { lisp_isa: c };
+}
+
+/* Returns the class of the object. */
+function lisp_class_of(obj) {
+    var c = obj.lisp_isa;
+    if (c !== undefined) {
+        return c;
+    } else {
+        lisp_not_an_object_error(obj);
+    }
+}
+
+/* Returns true if the object is a direct or general instance of the class. */
+function lisp_is_instance(obj, c) {
+    return lisp_is_subclass(lisp_class_of(obj), c);
+}
+
+/* Returns true if the class is a direct or general subclass of the superclass. */
+function lisp_is_subclass(c, sc) {
+    if (c === sc) {
+        return true;
+    } else {
+        var csc = lisp_superclass_of(c);
+        if (csc !== undefined) {
+            return lisp_is_subclass(csc, sc);
+        } else {
+            return false;
+        }
+    }
+}
+
+/* Returns the superclass of a class, or undefined for the root class. */
+function lisp_superclass_of(c) {
+    return c.lisp_superclass;
+}
+
+function lisp_not_an_object_error(obj) {
+    lisp_simple_error("Not an object.");
+}
+
+function lisp_message_not_understood_error(obj, sel) {
+    lisp_simple_error("Message not understood.");
 }
 
 /**** Strings ****/
 
-/* Strings store a JavaScript string as a member, as a cordon
-   sanitaire. */
+var Lisp_String = lisp_make_class(Lisp_Object, "Lisp_String");
 
-function Virtua_str(js_str) {
-    this.virtua_js_str = js_str;
+/* Creates a new string with the given native string. */
+function lisp_make_string(native_string) {
+    lisp_assert(lisp_is_native_string(native_string));
+    var string = lisp_make_instance(Lisp_String);
+    string.lisp_native_string = native_string;
+    return string;
 }
 
-Virtua_str.prototype = new Virtua_obj();
-
-Virtua_str.prototype.toString = function() {
-    return "\"" + virtua_str_get_js_str(this) + "\""; // TODO: escape properly
+/* Returns the native string of the string. */
+function lisp_string_native_string(string) {
+    lisp_assert(lisp_is_instance(string, Lisp_String));
+    return string.lisp_native_string;
 }
 
-/* Creates a new string from the given JS string. */
-function virtua_str(js_str) {
-    return new Virtua_str(js_str);
-}
-
-/* Returns the JS string of a string. */
-function virtua_str_get_js_str(str) {
-    return str.virtua_js_str;
+function lisp_is_native_string(native_string) {
+    return native_string.substring !== undefined;
 }
 
 /**** Symbols ****/
 
-/* Symbols are unique names that can be compared via pointer
-   equality. */
+var lisp_symbols_table = {};
 
-var virtua_syms = {};
+var Lisp_Symbol = lisp_make_class(Lisp_Object, "Lisp_Symbol");
 
-function Virtua_sym(name) {
-    this.virtua_name = name;
+/* A symbol evaluates to the value of the binding it names. */
+Lisp_Symbol.lisp_eval = function(symbol, env) {
+    return lisp_environment_lookup(env, symbol);
+};
+
+/* A symbol matches anything and binds the operand in the environment. */
+Lisp_Symbol.lisp_match = function(symbol, otree, env) {
+    lisp_environment_put(env, symbol, otree);
+};
+
+/* Use lisp_intern. */
+function lisp_make_symbol_do_not_call(name) {
+    lisp_assert(lisp_is_instance(name, Lisp_String));
+    var symbol = lisp_make_instance(Lisp_Symbol);
+    symbol.lisp_name = name;
+    return symbol;
 }
 
-Virtua_sym.prototype = new Virtua_obj();
-
-Virtua_sym.prototype.toString = function() {
-    return virtua_str_get_js_str(virtua_sym_get_name(this)); // TODO: escape properly
-}
-
-/* Returns the symbol with the given string name. */
-function virtua_intern(name) {
-    var js_str = virtua_str_get_js_str(name);
-    var sym = virtua_syms[js_str];
-    if (sym !== undefined) {
-        return sym;
+/* Returns the symbol with the given name. */
+function lisp_intern(name) {
+    var native_string = lisp_string_native_string(name);
+    var symbol = lisp_symbols_table[native_string];
+    if (symbol !== undefined) {
+        return symbol;
     } else {
-        sym = new Virtua_sym(name);
-        virtua_syms[js_str] = sym;
-        return sym;
+        symbol = lisp_make_symbol_do_not_call(name);
+        lisp_symbols_table[native_string] = symbol;
+        return symbol;
     }
 }
 
-/* Returns the name string of a symbol. */
-function virtua_sym_get_name(sym) {
-    return sym.virtua_name;
+/* Returns the symbol with the given native string name. */
+function lisp_intern_comfortably(native_string) {
+    return lisp_intern(lisp_make_string(native_string));
 }
 
-Virtua_sym.prototype["symbol-name"] = virtua_sym_get_name;
+/* Returns the string name of a symbol. */
+function lisp_symbol_name(symbol) {
+    lisp_assert(lisp_is_instance(symbol, Lisp_Symbol));
+    return symbol.lisp_name;
+}
+
+/* Returns the native string name of a symbol. */
+function lisp_symbol_native_string(symbol) {
+    return lisp_string_native_string(lisp_symbol_name(symbol));
+}
 
 /**** Pairs ****/
 
-function Virtua_pair(car, cdr) {
-    this.virtua_car = car;
-    this.virtua_cdr = cdr;
+var Lisp_Pair = lisp_make_class(Lisp_Object, "Lisp_Pair");
+
+/* A pair evaluates to the combination of its operator (car) with its
+   operand tree (cdr). */
+Lisp_Pair.lisp_eval = function(pair, env) {
+    return lisp_combine(lisp_eval(lisp_car(pair), env), lisp_cdr(pair), env);
+};
+
+/* A pair matches pairs, recursively. */
+Lisp_Symbol.lisp_match = function(pair, otree, env) {
+    lisp_assert(lisp_is_instance(otree, Lisp_Pair));
+    lisp_match(lisp_car(pair), lisp_car(otree), env);
+    lisp_match(lisp_cdr(pair), lisp_cdr(otree), env);
+};
+
+/* Creates a new pair with the given first and second elements. */
+function lisp_cons(car, cdr) {
+    lisp_assert(lisp_is_instance(car, Lisp_Object));
+    lisp_assert(lisp_is_instance(cdr, Lisp_Object));
+    var cons = lisp_make_instance(Lisp_Pair);
+    cons.lisp_car = car;
+    cons.lisp_cdr = cdr;
+    return cons;
 }
 
-Virtua_pair.prototype = new Virtua_obj();
-
-Virtua_pair.prototype.toString = function() {
-    return "(" + virtua_car(this) + " . " + virtua_cdr(this) + ")";
+/* Returns the first element of the pair. */
+function lisp_car(cons) {
+    lisp_assert(lisp_is_instance(cons, Lisp_Pair));
+    return cons.lisp_car;
 }
 
-/* Creates a new pair with the given car and cdr. */
-function virtua_cons(car, cdr) {
-    return new Virtua_pair(car, cdr);
+/* Returns the second element of the pair. */
+function lisp_cdr(cons) {
+    lisp_assert(lisp_is_instance(cons, Lisp_Pair));
+    return cons.lisp_cdr;
 }
 
-/* Returns the car of a pair. */
-function virtua_car(pair) {
-    return pair.virtua_car;
-}
-
-/* Returns the cdr of a pair. */
-function virtua_cdr(pair) {
-    return pair.virtua_cdr;
-}
-
-Virtua_pair.prototype["car"] = virtua_car;
-Virtua_pair.prototype["cdr"] = virtua_cdr;
-
-function virtua_elt(pair, i) {
+function lisp_elt(pair, i) {
     if (i === 0) {
-        return virtua_car(pair);
+        return lisp_car(pair);
     } else {
-        return virtua_elt(virtua_cdr(pair), i - 1);
+        return lisp_elt(lisp_cdr(pair), i - 1);
     }
 }
 
-function virtua_array_to_cons_list(array, end) {
-    var c = end ? end : virtua_nil;
+function lisp_array_to_cons_list(array, end) {
+    var c = end ? end : lisp_nil;
     for (var i = array.length; i > 0; i--)
-        c = virtua_cons(array[i - 1], c);
+        c = lisp_cons(array[i - 1], c);
     return c;
 }
 
-function virtua_cons_list_to_array(c) {
+function lisp_cons_list_to_array(c) {
     var res = [];
-    while(c !== virtua_nil) {
-        res.push(virtua_car(c));
-        c = virtua_cdr(c);
+    while(c !== lisp_nil) {
+        res.push(lisp_car(c));
+        c = lisp_cdr(c);
     }
     return res;
 }
 
-/**** Booleans ****/
-
-/* Booleans and If should probably be defined in userland, but they're
-   built-in to make bootstrapping easier (Kernel's bootstrap depends
-   on If and I want to follow it closely for the moment). */
-
-function Virtua_bool(js_bool) {
-    this.virtua_js_bool = js_bool;
-}
-
-Virtua_bool.prototype = new Virtua_obj();
-
-Virtua_bool.prototype.toString = function() {
-    if (this.virtua_js_bool) {
-        return "#t";
-    } else {
-        return "#f";
-    }
-}
-
-var virtua_t = new Virtua_bool(true);
-var virtua_f = new Virtua_bool(false);
-
-/**** Nil ****/
-
-/* Nil is the empty list, and different from inert. */
-
-function Virtua_nil() {
-}
-
-Virtua_nil.prototype = new Virtua_obj();
-
-Virtua_nil.prototype.toString = function() {
-    return "()";
-}
-
-var virtua_nil = new Virtua_nil();
-
-/**** Inert ****/
-
-/* Inert is the uninteresting value, returned by functions that do not
-   compute a result. */
-
-function Virtua_inert() {
-}
-
-Virtua_inert.prototype = new Virtua_obj();
-
-Virtua_inert.prototype.toString = function() {
-    return "#inert";
-}
-
-var virtua_inert = new Virtua_inert();
-
-/**** Ignore ****/
-
-/* Ignore is used in pattern matching to indicate that one doesn't
-   care about the actual value. */
-
-function Virtua_ignore() {
-}
-
-Virtua_ignore.prototype = new Virtua_obj();
-
-Virtua_ignore.prototype.toString = function() {
-    return "#ignore";
-}
-
-var virtua_ignore = new Virtua_ignore();
-
-/**** Pattern Matching ****/
-
-/* Every object can participate in pattern matching as a
-   left-hand-side pattern by responding to the 'match method.  It
-   receives as argument a cons of the right-hand-side object to match
-   against, and the environment in which matching should occur. */
-
-function virtua_match(pattern, operand, env) {
-    return virtua_send_comfortably(pattern, "match", virtua_cons(operand, env));
-}
-
-/* By default, objects cannot be used as patterns. */
-Virtua_obj.prototype["match"] = function(obj, arg) {
-    // TODO: signal condition
-    throw("Cannot use this object as pattern.");
-};
-
-/* Nil matches only itself. */
-Virtua_nil.prototype["match"] = function(obj, arg) {
-    var operand = virtua_car(arg);
-    if (operand !== virtua_nil) {
-        // TODO: signal condition
-        throw("Expected nil.");
-    }
-};
-
-/* Ignore matches anything. */
-Virtua_ignore.prototype["match"] = function(obj, arg) {
-    // do nothing
-};
-
-/* Symbols match anything and update the environment. */
-Virtua_sym.prototype["match"] = function(obj, arg) {
-    var operand = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    virtua_env_bind(env, obj, operand);
-};
-
-/* Pairs match only pairs, recursively. */
-Virtua_pair.prototype["match"] = function(obj, arg) {
-    var operand = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    virtua_match(virtua_car(obj), virtua_car(operand), env);
-    virtua_match(virtua_cdr(obj), virtua_cdr(operand), env);
-};
-
 /**** Environments ****/
 
-/* An environment is a mapping from names to values, and may have a
-   parent environment, in which names are looked up if they are not
-   bound in the environment itself. */
-
-function Virtua_env(bindings) {
-    this.virtua_bindings = bindings;
-}
-
-Virtua_env.prototype = new Virtua_obj();
-
-Virtua_env.prototype.toString = function() {
-    return "#[environment]";
-}
+var Lisp_Environment = lisp_make_class(Lisp_Object, "Lisp_Environment");
 
 /* Creates a new empty environment. */
-function virtua_make_env() {
-    return new Virtua_env({});
+function lisp_make_environment() {
+    return lisp_make_environment_with_bindings({});
 }
 
-/* Creates a new empty environment with the given environment as
-   parent. */
-function virtua_env_extend(env) {
-    function X() {};
-    X.prototype = env.virtua_bindings;
-    return new Virtua_env(new X());
+/* Creates a new empty environment with a given parent environment. */
+function lisp_make_child_environment(parent) {
+    lisp_assert(lisp_is_instance(parent, Lisp_Environment));
+    function E() {};
+    E.prototype = parent.lisp_bindings;
+    return lisp_make_environment_with_bindings(new E());
 }
 
-/* Looks up the value of a symbol in the environment. */
-function virtua_env_lookup(env, sym) {
-    var var_name = virtua_str_get_js_str(virtua_sym_get_name(sym));
-    var value = env.virtua_bindings[var_name];
+function lisp_make_environment_with_bindings(bindings) {
+    var env = lisp_make_instance(Lisp_Environment);
+    env.lisp_bindings = bindings;
+    return env;
+}
+
+/* Updates or creates a binding from a name to a value. */
+function lisp_environment_put(env, name, value) {
+    lisp_assert(lisp_is_instance(env, Lisp_Environment));
+    lisp_assert(lisp_is_instance(name, Lisp_Symbol));
+    lisp_assert(lisp_is_instance(value, Lisp_Object));
+    env.lisp_bindings[lisp_symbol_native_string(name)] = value;
+    return value;
+}
+
+/* Updates or creates a binding from a native string name to a value. */
+function lisp_environment_put_comfortably(env, native_string, value) {
+    return lisp_environment_put(env, lisp_intern_comfortably(native_string), value);
+}
+
+/* Looks up the value of a name in the environment and its ancestors. */
+function lisp_environment_lookup(env, name) {
+    lisp_assert(lisp_is_instance(env, Lisp_Environment));
+    lisp_assert(lisp_is_instance(name, Lisp_Symbol));
+    var value = env.lisp_bindings[lisp_symbol_native_string(name)];
     if (value !== undefined) {
         return value;
     } else {
-        // TODO: signal condition
-        throw("undefined variable: " + var_name);
+        lisp_simple_error("Undefined identifier.");
     }
 }
 
-/* Updates the value of a symbol in the environment. */
-function virtua_env_bind(env, sym, value) {
-    var var_name = virtua_str_get_js_str(virtua_sym_get_name(sym));
-    env.virtua_bindings[var_name] = value;
-}
+/**** Booleans ****/
 
-/* Updates the value of a JS string in the environment. */
-function virtua_env_bind_comfortably(env, name, value) {
-    virtua_env_bind(env, virtua_intern(virtua_str(name)), value);
-}
+var Lisp_Boolean = lisp_make_class(Lisp_Object, "Lisp_Boolean");
 
-/**** Evaluation ****/
+var lisp_t = lisp_make_instance(Lisp_Boolean);
 
-/* Evaluates the object in the given environment.  The 'eval message
-   is sent to the object with the environment as argument. */
-function virtua_eval(obj, env) {
-    return virtua_send_comfortably(obj, "eval", env);
-}
+var lisp_f = lisp_make_instance(Lisp_Boolean);
 
-/* By default, objects evaluate to themselves. */
-Virtua_obj.prototype["eval"] = function(obj, env) {
-    return obj;
+/**** Nil ****/
+
+var Lisp_Nil = lisp_make_class(Lisp_Object, "Lisp_Nil");
+
+var lisp_nil = lisp_make_instance(Lisp_Nil);
+
+/* Nil matches only itself. */
+Lisp_Nil.lisp_match = function(nil, otree, env) {
+    if (otree === lisp_nil) {
+        lisp_simple_error("Expected nil.");
+    }
 };
 
-/* Symbols evaluate to the value of the binding they name. */
-Virtua_sym.prototype["eval"] = function(sym, env) {
-    return virtua_env_lookup(env, sym);
+/**** Ignore ****/
+
+var Lisp_Ignore = lisp_make_class(Lisp_Object, "Lisp_Ignore");
+
+var lisp_ignore = lisp_make_instance(Lisp_Ignore);
+
+/* Ignore matches anything. */
+Lisp_Ignore.lisp_match = function(ignore, otree, env) {
 };
 
-/* Pairs evaluate to the combination of their operator (car) with the
-   operand tree (cdr). */
-Virtua_pair.prototype["eval"] = function(pair, env) {
-    var combiner = virtua_eval(virtua_car(pair), env);
-    return virtua_combine(combiner, virtua_cdr(pair), env);
-};
+/**** Inert ****/
 
-/**** Combination ****/
+var Lisp_Inert = lisp_make_class(Lisp_Object, "Lisp_Inert");
 
-/* Compute a result using the combiner and the operand tree in the
-   given environment.  The 'combine message is sent to the combiner
-   with a cons of the operand tree and environment as argument. */
-function virtua_combine(combiner, otree, env) {
-    return virtua_send_comfortably(combiner, "combine", virtua_cons(otree, env));
-}
+var lisp_inert = lisp_make_instance(Lisp_Inert);
 
-/* By default, objects cannot act as combiner. */
-Virtua_obj.prototype["combine"] = function(obj, arg) {
-    // TODO: signal condition
-    throw("Cannot use object as combiner.");
-};
+/**** Combiners ****/
 
-/*** Compound Combiner ***/
+/*** Compound Combiners ***/
 
-/* Compound combiners are those created by vau.  They contain a
+/* Compound combiners are those created by $vau.  They contain a
    parameter tree, a formal lexical environment parameter, a body, and
    a static lexical environment link. */
 
-function Virtua_combiner(ptree, eformal, body, env) {
-    this.virtua_ptree = ptree;
-    this.virtua_eformal = eformal;
-    this.virtua_body = body;
-    this.virtua_env = env;
+var Lisp_Combiner = lisp_make_class(Lisp_Object, "Lisp_Combiner");
+
+function lisp_make_combiner(ptree, envformal, body, senv) {
+    lisp_assert(lisp_is_instance(ptree, Lisp_Object));
+    lisp_assert(lisp_is_instance(envformal, Lisp_Object));
+    lisp_assert(lisp_is_instance(body, Lisp_Object));
+    lisp_assert(lisp_is_instance(senv, Lisp_Environment));
+    var cmb = lisp_make_instance(Lisp_Combiner);
+    cmb.lisp_ptree = ptree;
+    cmb.lisp_envformal = envformal;
+    cmb.lisp_body = body;
+    cmb.lisp_senv = senv;
+    return cmb;
 }
 
-Virtua_combiner.prototype = new Virtua_obj();
-
-Virtua_combiner.prototype.toString = function() {
-    return "#[combiner]";
-}
-
-Virtua_combiner.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var denv = virtua_cdr(arg);
+Lisp_Combiner.lisp_combine = function(cmb, otree, env) {
     // Match parameter tree against operand tree in new child
     // environment of static environment
-    var xenv = virtua_env_extend(combiner.virtua_env);
-    virtua_match(combiner.virtua_ptree, otree, xenv);
+    var xenv = lisp_make_child_environment(cmb.lisp_senv);
+    lisp_match(cmb.lisp_ptree, otree, xenv);
     // Pass in dynamic environment unless ignored
-    virtua_match(combiner.virtua_eformal, denv, xenv);
+    lisp_match(cmb.lisp_envformal, env, xenv);
     // Enter body in extended environment
-    return virtua_eval(combiner.virtua_body, xenv);
+    return lisp_eval(cmb.lisp_body, xenv);
 };
 
-/*** Applicative Combiner ***/
+/*** Wrappers ***/
 
-/* An applicative combiner (wrapper) induces argument evaluation for
-   an underlying combiner.  What this means is that the operand tree
-   must be a list, and all elements are evaluated to yield an
-   arguments list, which is passed to the underlying combiner. */
+/* A wrapper (applicative combiner) induces argument evaluation for an
+   underlying combiner.  What this means is that the operand tree must
+   be a list, and all elements are evaluated to yield an arguments
+   list, which is passed to the underlying combiner. */
 
-function Virtua_wrapper(underlying) {
-    this.virtua_underlying = underlying;
+var Lisp_Wrapper = lisp_make_class(Lisp_Object, "Lisp_Wrapper");
+
+/* Creates a new wrapper around an underlying combiner. */
+function lisp_wrap(underlying) {
+    lisp_assert(lisp_is_instance(underlying, Lisp_Object));
+    var cmb = lisp_make_instance(Lisp_Wrapper);
+    cmb.lisp_underlying = underlying;
+    return cmb;
 }
 
-Virtua_wrapper.prototype = new Virtua_obj();
-
-Virtua_wrapper.prototype.toString = function() {
-    return "#[wrapper]";
+/* Extracts the underlying combiner of a wrapper. */
+function lisp_unwrap(wrapper) {
+    lisp_assert(lisp_is_instance(wrapper, Lisp_Wrapper));
+    return wrapper.lisp_underlying;
 }
 
-/* Constructs a new wrapper around an underlying combiner. */
-function virtua_wrap(underlying) {
-    return new Virtua_wrapper(underlying);
-}
-
-/* Returns a wrapper's underlying combiner. */
-function virtua_unwrap(wrapper) {
-    return wrapper.virtua_underlying;
-}
-
-Virtua_wrapper.prototype["combine"] = function(appl, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    return virtua_combine(appl.virtua_underlying, virtua_eval_args(otree, env), env);
+Lisp_Wrapper.lisp_combine = function(cmb, otree, env) {
+    return lisp_combine(lisp_unwrap(cmb), lisp_eval_args(otree, env), env);
 };
 
-function virtua_eval_args(otree, env) {
-    if (otree === virtua_nil) {
-        return virtua_nil;
+function lisp_eval_args(otree, env) {
+    if (otree === lisp_nil) {
+        return lisp_nil;
     } else {
-        return virtua_cons(virtua_eval(virtua_car(otree), env),
-                           virtua_eval_args(virtua_cdr(otree), env));
+        return lisp_cons(lisp_eval(lisp_car(otree), env),
+                         lisp_eval_args(lisp_cdr(otree), env));
     }
 }
 
@@ -474,20 +445,15 @@ function virtua_eval_args(otree, env) {
 
 /* Creates a compound combiner.
 
-   ($vau ptree eformal body) -> combiner */
+   ($vau ptree envformal body) -> combiner */
 
-function Virtua_vau() {
-}
+var Lisp_Vau = lisp_make_class(Lisp_Object, "Lisp_Vau");
 
-Virtua_vau.prototype = new Virtua_obj();
-
-Virtua_vau.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    var ptree = virtua_elt(otree, 0);
-    var eformal = virtua_elt(otree, 1);
-    var body = virtua_elt(otree, 2);
-    return new Virtua_combiner(ptree, eformal, body, env);
+Lisp_Vau.lisp_combine = function(cmb, otree, env) {
+    var ptree = lisp_elt(otree, 0);
+    var envformal = lisp_elt(otree, 1);
+    var body = lisp_elt(otree, 2);
+    return lisp_make_combiner(ptree, envformal, body, env);
 };
 
 /*** $define! ***/
@@ -495,20 +461,14 @@ Virtua_vau.prototype["combine"] = function(combiner, arg) {
 /* Updates the binding of a name to a value in the current
    environment.
 
-   ($define! name value) -> inert */
+   ($define! name value) -> value */
 
-function Virtua_def() {
-}
+var Lisp_Define = lisp_make_class(Lisp_Object, "Lisp_Define");
 
-Virtua_def.prototype = new Virtua_obj();
-
-Virtua_def.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    var name = virtua_elt(otree, 0);
-    var value = virtua_elt(otree, 1);
-    virtua_env_bind(env, name, virtua_eval(value, env));
-    return virtua_inert;
+Lisp_Define.lisp_combine = function(cmb, otree, env) {
+    var name = lisp_elt(otree, 0);
+    var value = lisp_elt(otree, 1);
+    return lisp_environment_put(env, name, lisp_eval(value, env));
 };
 
 /*** $if ***/
@@ -518,25 +478,19 @@ Virtua_def.prototype["combine"] = function(combiner, arg) {
 
    ($if test consequent alternative) -> result */
 
-function Virtua_if() {
-}
+var Lisp_If = lisp_make_class(Lisp_Object, "Lisp_If");
 
-Virtua_if.prototype = new Virtua_obj();
-
-Virtua_if.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    var test = virtua_elt(otree, 0);
-    var consequent = virtua_elt(otree, 1);
-    var alternative = virtua_elt(otree, 2);
-    var testResult = virtua_eval(test, env);
-    if (testResult === virtua_t) {
-        return virtua_eval(consequent, env);
-    } else if (testResult === virtua_f) {
-        return virtua_eval(alternative, env);
+Lisp_If.lisp_combine = function(cmb, otree, env) {
+    var test = lisp_elt(otree, 0);
+    var consequent = lisp_elt(otree, 1);
+    var alternative = lisp_elt(otree, 2);
+    var test_result = lisp_eval(test, env);
+    if (test_result === lisp_t) {
+        return lisp_eval(consequent, env);
+    } else if (test_result === lisp_f) {
+        return lisp_eval(alternative, env);
     } else {
-        // TODO: signal condition
-        throw("Not a boolean.");
+        lisp_simple_error("Condition must be a boolean.");
     }
 };
 
@@ -546,17 +500,12 @@ Virtua_if.prototype["combine"] = function(combiner, arg) {
 
    ($loop body) -> | */
 
-function Virtua_loop() {
-}
+var Lisp_Loop = lisp_make_class(Lisp_Object, "Lisp_Loop");
 
-Virtua_loop.prototype = new Virtua_obj();
-
-Virtua_loop.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    var body = virtua_elt(otree, 0);
+Lisp_Loop.lisp_combine = function(cmb, otree, env) {
+    var body = lisp_elt(otree, 0);
     while(true) {
-        virtua_eval(body, env);
+        lisp_eval(body, env);
     }
 };
 
@@ -567,20 +516,15 @@ Virtua_loop.prototype["combine"] = function(combiner, arg) {
 
    ($unwind-protect protected cleanup) -> result */
 
-function Virtua_unwind_protect() {
-}
+var Lisp_Unwind_Protect = lisp_make_class(Lisp_Object, "Lisp_Unwind_Protect");
 
-Virtua_unwind_protect.prototype = new Virtua_obj();
-
-Virtua_unwind_protect.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    var protect = virtua_elt(otree, 0);
-    var cleanup = virtua_elt(otree, 1);
+Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
+    var protect = lisp_elt(otree, 0);
+    var cleanup = lisp_elt(otree, 1);
     try {
-        return virtua_eval(protect, env);
+        return lisp_eval(protect, env);
     } finally {
-        virtua_eval(cleanup, env);
+        lisp_eval(cleanup, env);
     }
 };
 
@@ -592,23 +536,18 @@ Virtua_unwind_protect.prototype["combine"] = function(combiner, arg) {
 
    (throw tag value) -> | */
 
-function Virtua_throw() {
-}
+var Lisp_Throw = lisp_make_class(Lisp_Object, "Lisp_Throw");
 
-Virtua_throw.prototype = new Virtua_obj();
-
-Virtua_throw.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    var tag = virtua_elt(otree, 0);
-    var value = virtua_elt(otree, 1);
-    throw new Virtua_control_exc(virtua_eval(tag, env),
-                                 virtua_eval(value, env));
+Lisp_Throw.lisp_combine = function(cmb, otree, env) {
+    var tag = lisp_elt(otree, 0);
+    var value = lisp_elt(otree, 1);
+    throw new Lisp_Control_Exception(lisp_eval(tag, env),
+                                     lisp_eval(value, env));
 };
 
-function Virtua_control_exc(tag, value) {
-    this.virtua_tag = tag;
-    this.virtua_value = value;
+function Lisp_Control_Exception(tag, value) {
+    this.lisp_tag = tag;
+    this.lisp_value = value;
 }
 
 /*** $catch ***/
@@ -620,22 +559,17 @@ function Virtua_control_exc(tag, value) {
 
    ($catch tag body) -> result */
 
-function Virtua_catch() {
-}
+var Lisp_Catch = lisp_make_class(Lisp_Object, "Lisp_Catch");
 
-Virtua_catch.prototype = new Virtua_obj();
-
-Virtua_catch.prototype["combine"] = function(combiner, arg) {
-    var otree = virtua_car(arg);
-    var env = virtua_cdr(arg);
-    var tag = virtua_elt(otree, 0);
-    var body = virtua_elt(otree, 1);
-    var tagValue = virtua_eval(tag, env);
+Lisp_Catch.lisp_combine = function(cmb, otree, env) {
+    var tag = lisp_elt(otree, 0);
+    var body = lisp_elt(otree, 1);
+    var tag_value = lisp_eval(tag, env);
     try {
-        return virtua_eval(body, env);
+        return lisp_eval(body, env);
     } catch(e) {
-        if (e.virtua_tag === tagValue) {
-            return e.virtua_value;
+        if (e.lisp_tag === tag_value) {
+            return e.lisp_value;
         } else {
             throw e;
         }
@@ -644,141 +578,156 @@ Virtua_catch.prototype["combine"] = function(combiner, arg) {
 
 /**** Native Combiners ****/
 
-/* An native combiner is a wrapper around a JS function. */
+/* A native combiner is a wrapper around a native function. */
 
-function Virtua_native(js_fun) {
-    this.virtua_js_fun = js_fun;
-}
+var Lisp_Native = lisp_make_class(Lisp_Object, "Lisp_Native");
 
-Virtua_native.prototype = new Virtua_obj();
-
-Virtua_native.prototype["combine"] = function(combiner, arg) {
-    var argslist = virtua_car(arg);
-    return combiner.virtua_js_fun.apply(null, virtua_cons_list_to_array(argslist));
+Lisp_Native.lisp_combine = function(cmb, otree, env) {
+    return cmb.lisp_native_fun.apply(null, lisp_cons_list_to_array(otree));
 };
 
-function virtua_make_native(js_fun) {
-    return virtua_wrap(new Virtua_native(js_fun));
+/* Creates a new native wrapper for the native function. */
+function lisp_wrap_native(native_fun) {
+    var cmb = lisp_make_instance(Lisp_Native);
+    cmb.lisp_native_fun = native_fun;
+    return lisp_wrap(cmb);
 }
 
-/**** Library ****/
+/**** Library Functions ****/
 
-/* Compares two objects for pointer equality. */
-function virtua_eqp(a, b) {
-    return (a === b) ? virtua_t : virtua_f;
+/* Returns a Lisp boolean for a native one. */
+function lisp_truth(native_bool) {
+    return native_bool ? lisp_t : lisp_f;
 }
 
-/* Returns true iff object is nil. */
-function virtua_nullp(obj) {
-    return virtua_eqp(obj, virtua_nil);
+/* Returns true if two objects are identical, false otherwise. */
+function lisp_lib_eq(a, b) {
+    return lisp_truth(a === b);
+}
+
+/* Returns true if the object is nil, false otherwise. */
+function lisp_lib_null(obj) {
+    return lisp_lib_eq(obj, lisp_nil);
+}
+
+/**** Errors & Assertions ****/
+
+function lisp_simple_error(msg) {
+    throw msg;
+}
+
+function lisp_assert(bool) {
+    if (!bool) {
+        lisp_simple_error("Assertion failed.");
+    }
 }
 
 /**** Parser ****/
 
 /* Returns an array of cons lists of the forms in the string. */
-function virtua_parse(string) {
-    var result = virtua_program_syntax(ps(string));
+function lisp_parse(string) {
+    lisp_assert(lisp_is_native_string(string));
+    var result = lisp_program_syntax(ps(string));
     if (result.ast) {
         return result.ast;
     } else {
-        // TODO: signal condition
-        throw("Reader error:" + string);
+        lisp_simple_error("Parse error.");
     }
 }
 
-var virtua_expression_syntax =
-    function(input) { return virtua_expression_syntax(input); }; // forward decl.
+var lisp_expression_syntax =
+    function(input) { return lisp_expression_syntax(input); }; // forward decl.
 
-var virtua_identifier_special_char =
+var lisp_identifier_special_char =
     choice(// R5RS sans "."
            "-", "&", "!", ":", "=", ">","<", "%", "+", "?", "/", "*", "#",
            // Additional
            "$", "_");
 
-var virtua_identifier_syntax =
+var lisp_identifier_syntax =
     action(join_action(repeat1(choice(range("a", "z"),
                                       range("0", "9"),
-                                      virtua_identifier_special_char)),
+                                      lisp_identifier_special_char)),
                        ""),
-           virtua_identifier_syntax_action);
+           lisp_identifier_syntax_action);
 
-function virtua_identifier_syntax_action(ast) {
-    return virtua_intern(virtua_str(ast));
+function lisp_identifier_syntax_action(ast) {
+    return lisp_intern_comfortably(ast);
 }
 
-var virtua_escape_char =
+var lisp_escape_char =
     choice("\"", "\\");
 
-var virtua_escape_sequence =
-    action(sequence("\\", virtua_escape_char),
-           virtua_escape_sequence_action);
+var lisp_escape_sequence =
+    action(sequence("\\", lisp_escape_char),
+           lisp_escape_sequence_action);
 
-var virtua_string_char =
-    choice(negate(virtua_escape_char), 
-           virtua_escape_sequence);
+var lisp_string_char =
+    choice(negate(lisp_escape_char),
+           lisp_escape_sequence);
 
-var virtua_string_syntax =
-    action(sequence("\"", join_action(repeat0(virtua_string_char), ""), "\""),
-           virtua_string_syntax_action);
+var lisp_string_syntax =
+    action(sequence("\"", join_action(repeat0(lisp_string_char), ""), "\""),
+           lisp_string_syntax_action);
 
-function virtua_escape_sequence_action(ast) {
+function lisp_escape_sequence_action(ast) {
     var escape_char = ast[1];
     return escape_char;
 }
 
-function virtua_string_syntax_action(ast) {
-    return virtua_str(ast[1]);
+function lisp_string_syntax_action(ast) {
+    return lisp_make_string(ast[1]);
 }
 
-var virtua_nil_syntax =
-    action("()", virtua_nil_syntax_action);
+var lisp_nil_syntax =
+    action("()", lisp_nil_syntax_action);
 
-function virtua_nil_syntax_action(ast) {
-    return virtua_nil;
+function lisp_nil_syntax_action(ast) {
+    return lisp_nil;
 }
 
-var virtua_ignore_syntax =
-    action("#ignore", virtua_ignore_syntax_action);
+var lisp_ignore_syntax =
+    action("#ignore", lisp_ignore_syntax_action);
 
-function virtua_ignore_syntax_action(ast) {
-    return virtua_ignore;
+function lisp_ignore_syntax_action(ast) {
+    return lisp_ignore;
 }
 
-var virtua_inert_syntax =
-    action("#inert", virtua_inert_syntax_action);
+var lisp_inert_syntax =
+    action("#inert", lisp_inert_syntax_action);
 
-function virtua_inert_syntax_action(ast) {
-    return virtua_inert;
+function lisp_inert_syntax_action(ast) {
+    return lisp_inert;
 }
 
-var virtua_dot_syntax =
-    action(wsequence(".", virtua_expression_syntax),
-           virtua_dot_syntax_action);
+var lisp_dot_syntax =
+    action(wsequence(".", lisp_expression_syntax),
+           lisp_dot_syntax_action);
 
-function virtua_dot_syntax_action(ast) {
+function lisp_dot_syntax_action(ast) {
     return ast[1];
 }
 
-var virtua_compound_syntax =
+var lisp_compound_syntax =
     action(wsequence("(",
-                     repeat1(virtua_expression_syntax),
-                     optional(virtua_dot_syntax),
+                     repeat1(lisp_expression_syntax),
+                     optional(lisp_dot_syntax),
                      ")"),
-           virtua_compound_syntax_action);
+           lisp_compound_syntax_action);
 
-function virtua_compound_syntax_action(ast) {
+function lisp_compound_syntax_action(ast) {
     var exprs = ast[1];
-    var end = ast[2] ? ast[2] : virtua_nil;
-    return virtua_array_to_cons_list(exprs, end);
+    var end = ast[2] ? ast[2] : lisp_nil;
+    return lisp_array_to_cons_list(exprs, end);
 }
 
-var virtua_expression_syntax =
-    whitespace(choice(virtua_nil_syntax,
-                      virtua_ignore_syntax,
-                      virtua_inert_syntax,
-                      virtua_compound_syntax,
-                      virtua_identifier_syntax,
-                      virtua_string_syntax));
+var lisp_expression_syntax =
+    whitespace(choice(lisp_nil_syntax,
+                      lisp_ignore_syntax,
+                      lisp_inert_syntax,
+                      lisp_compound_syntax,
+                      lisp_identifier_syntax,
+                      lisp_string_syntax));
 
-var virtua_program_syntax =
-    whitespace(repeat1(virtua_expression_syntax));
+var lisp_program_syntax =
+    whitespace(repeat1(lisp_expression_syntax));

@@ -3,46 +3,47 @@
   <title>Virtua 0.0.1</title>
   <script src="jsparse.js" type="text/javascript"></script>
   <script src="virtua.js" type="text/javascript"></script>
+  <script src="test.js" type="text/javascript"></script>
 </head>
-<body onload="virtua_repl_load()">
+<body onload="lisp_repl_load()">
   <div id="output">
   </div>
   <form id="evalform"
-        onsubmit="try{return virtua_repl_eval(virtua_parse(document.forms.evalform.input.value));}finally{return false;}">
+        onsubmit="try{lisp_repl_eval(lisp_parse(document.forms.evalform.input.value))}finally{return false}">
     <input type="text" name="input">
     <input type="submit" value="eval">
   </form>
   <script type="text/javascript">
-var virtua_core_env;
+var lisp_core_env;
 
-function virtua_repl_load() {
-    virtua_core_env = virtua_make_core_env();
-    virtua_env_bind_comfortably(virtua_core_env, "print", virtua_make_native(virtua_repl_print));
-    virtua_repl_print("LISP READY");
+function lisp_repl_load() {
+    lisp_core_env = lisp_make_core_environment();
+    lisp_environment_put_comfortably(lisp_core_env, "print", lisp_wrap_native(lisp_repl_print));
+    lisp_repl_print("LISP READY");
 }
 
-function virtua_repl_eval(forms) {
-    virtua_repl_print("> " + document.forms.evalform.input.value);
+function lisp_repl_eval(forms) {
+    lisp_repl_print("> " + document.forms.evalform.input.value);
     for (var i = 0; i < forms.length; i++) {
         var form = forms[i];
         var result;
         try {
-            result = virtua_eval(form, virtua_core_env);
+            result = lisp_eval(form, lisp_core_env);
         } catch(e) {
             result = "ERROR: " + e;
         }
-        virtua_repl_print(result);
+        lisp_repl_print(result);
     }
     return false;
 }
 
-function virtua_repl_print(string) {
+function lisp_repl_print(string) {
     var resultDiv = document.createElement("div");
     resultDiv.appendChild(document.createTextNode(string));
     var output = document.getElementById("output");
     output.appendChild(resultDiv);
     document.forms.evalform.input.value = "";
-    return virtua_inert;
+    return lisp_inert;
 }
   </script>
 </body>
