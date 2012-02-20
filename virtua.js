@@ -67,7 +67,7 @@ Lisp_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     var c = lisp_class_of(obj);
     var method = c[sel];
     if (method !== undefined) {
-        return method.lisp_combine(lisp_cons(obj, otree), lisp_make_environment());
+        return lisp_combine(method, lisp_cons(obj, otree), lisp_make_environment());
     } else {
         lisp_message_not_understood_error(obj, sel);
     }
@@ -92,7 +92,7 @@ function lisp_make_class(sc, native_name) {
     lisp_assert(lisp_is_instance(sc, Lisp_Class));
     lisp_assert(lisp_is_native_string(native_name));
     var f = eval("(function " + native_name + "() {})");
-    f.prototype = new Lisp_Prototype();
+    f.prototype = sc;
     var c = new f();
     c.lisp_isa = Lisp_Class;
     c.lisp_superclass = sc;
@@ -145,6 +145,20 @@ function lisp_not_an_object_error(obj) {
 
 function lisp_message_not_understood_error(obj, sel) {
     lisp_simple_error("Message not understood.");
+}
+
+/* Puts a combiner as implementation for a message selector. */
+function lisp_put_method(c, sel, cmb) {
+    lisp_assert(lisp_is_instance(c, Lisp_Class));
+    lisp_assert(lisp_is_native_string(sel));
+    lisp_assert(lisp_is_instance(cmb, Lisp_Object));
+    c[sel] = cmb;
+    return lisp_inert;
+}
+
+/* Puts a native function as implementation for a message selector. */
+function lisp_put_native_method(c, sel, native_fun) {
+    return lisp_put_method(c, sel, lisp_wrap_native(native_fun));
 }
 
 /**** Strings ****/
@@ -233,7 +247,7 @@ Lisp_Pair.lisp_eval = function(pair, env) {
 };
 
 /* A pair matches pairs, recursively. */
-Lisp_Symbol.lisp_match = function(pair, otree, env) {
+Lisp_Pair.lisp_match = function(pair, otree, env) {
     lisp_assert(lisp_is_instance(otree, Lisp_Pair));
     lisp_match(lisp_car(pair), lisp_car(otree), env);
     lisp_match(lisp_cdr(pair), lisp_cdr(otree), env);
@@ -350,7 +364,7 @@ var lisp_nil = lisp_make_instance(Lisp_Nil);
 
 /* Nil matches only itself. */
 Lisp_Nil.lisp_match = function(nil, otree, env) {
-    if (otree === lisp_nil) {
+    if (otree !== lisp_nil) {
         lisp_simple_error("Expected nil.");
     }
 };
@@ -578,7 +592,7 @@ Lisp_Catch.lisp_combine = function(cmb, otree, env) {
 
 /**** Native Combiners ****/
 
-/* A native combiner is a wrapper around a native function. */
+/* A native combiner contains a native function. */
 
 var Lisp_Native = lisp_make_class(Lisp_Object, "Lisp_Native");
 
@@ -586,14 +600,21 @@ Lisp_Native.lisp_combine = function(cmb, otree, env) {
     return cmb.lisp_native_fun.apply(null, lisp_cons_list_to_array(otree));
 };
 
-/* Creates a new native wrapper for the native function. */
-function lisp_wrap_native(native_fun) {
+/* Creates a new native combiner for the native function. */
+function lisp_make_native(native_fun) {
     var cmb = lisp_make_instance(Lisp_Native);
     cmb.lisp_native_fun = native_fun;
-    return lisp_wrap(cmb);
+    return cmb;
 }
 
-/**** Library Functions ****/
+/* Creates a new native wrapper for the native function. */
+function lisp_wrap_native(native_fun) {
+    return lisp_wrap(lisp_make_native(native_fun));
+}
+
+/**** Library ****/
+
+/*** Library Functions ***/
 
 /* Returns a Lisp boolean for a native one. */
 function lisp_truth(native_bool) {
@@ -609,6 +630,62 @@ function lisp_lib_eq(a, b) {
 function lisp_lib_null(obj) {
     return lisp_lib_eq(obj, lisp_nil);
 }
+
+/*** Printing ***/
+
+function lisp_to_string(obj) {
+    return lisp_send(obj, "to-string", lisp_nil);
+}
+
+lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
+    return lisp_make_string("#[object]");
+});
+
+lisp_put_native_method(Lisp_String, "to-string", function(obj) {
+    return obj;
+});
+
+lisp_put_native_method(Lisp_Boolean, "to-string", function(obj) {
+    return obj === lisp_t ? lisp_make_string("#t") : lisp_make_string("#f");
+});
+
+// Have to use non-wrapped natives for pairs or symbols or we get an
+// extra-evaluation.  Need to look into how to handle this more
+// elegantly.
+
+lisp_put_method(Lisp_Pair, "to-string", lisp_make_native(function(obj) {
+    var car_string = lisp_string_native_string(lisp_to_string(lisp_car(obj)));
+    var cdr_string = lisp_string_native_string(lisp_to_string(lisp_cdr(obj)));
+    return lisp_make_string("(" + car_string + " . " + cdr_string + ")");
+}));
+
+lisp_put_method(Lisp_Symbol, "to-string", lisp_make_native(function(obj) {
+    return lisp_symbol_name(obj);
+}));
+
+lisp_put_native_method(Lisp_Nil, "to-string", function(obj) {
+    return lisp_make_string("()");
+});
+
+lisp_put_native_method(Lisp_Ignore, "to-string", function(obj) {
+    return lisp_make_string("#ignore");
+});
+
+lisp_put_native_method(Lisp_Inert, "to-string", function(obj) {
+    return lisp_make_string("#inert");
+});
+
+lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
+    return lisp_make_string("#[combiner]");
+});
+
+lisp_put_native_method(Lisp_Wrapper, "to-string", function(obj) {
+    return lisp_make_string("#[wrapper]");
+});
+
+lisp_put_native_method(Lisp_Native, "to-string", function(obj) {
+    return lisp_make_string("#[native]");
+});
 
 /**** Errors & Assertions ****/
 

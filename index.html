@@ -19,27 +19,27 @@ var lisp_core_env;
 function lisp_repl_load() {
     lisp_core_env = lisp_make_core_environment();
     lisp_environment_put_comfortably(lisp_core_env, "print", lisp_wrap_native(lisp_repl_print));
-    lisp_repl_print("LISP READY");
+    lisp_repl_print(lisp_make_string("LISP READY"));
 }
 
 function lisp_repl_eval(forms) {
-    lisp_repl_print("> " + document.forms.evalform.input.value);
+    lisp_repl_print(lisp_make_string("> " + document.forms.evalform.input.value));
     for (var i = 0; i < forms.length; i++) {
         var form = forms[i];
         var result;
         try {
             result = lisp_eval(form, lisp_core_env);
         } catch(e) {
-            result = "ERROR: " + e;
+            result = lisp_make_string("ERROR: " + e);
         }
         lisp_repl_print(result);
     }
     return false;
 }
 
-function lisp_repl_print(string) {
+function lisp_repl_print(obj) {
     var resultDiv = document.createElement("div");
-    resultDiv.appendChild(document.createTextNode(string));
+    resultDiv.appendChild(document.createTextNode(lisp_string_native_string(lisp_send(obj, "to-string", lisp_nil))));
     var output = document.getElementById("output");
     output.appendChild(resultDiv);
     document.forms.evalform.input.value = "";
