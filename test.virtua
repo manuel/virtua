@@ -1,6 +1,13 @@
 ;; Test suite for Virtua kernel language.           -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
+(assert (instance? 19222222222222222222222222222222222222222222222222222 Number))
+(assert (instance? -19222222222222222222222222222222222222222222222222222 Number))
+(assert (instance? -19222222222222222222222222222222222222222222222222222.5 Number))
+(assert (instance? 19222222222222222222222222222222222222222222222222222.3 Number))
+(assert (instance? "foo" String))
+(assert (instance? "" String))
+
 (assert (eq? #t #t))
 (assert (eq? #f #f))
 (assert (eq? () ()))

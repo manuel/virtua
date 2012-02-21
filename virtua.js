@@ -42,6 +42,7 @@ function lisp_make_kernel_environment() {
     lisp_environment_put_comfy(env, "Pair", Lisp_Pair);
     lisp_environment_put_comfy(env, "Nil", Lisp_Nil);
     lisp_environment_put_comfy(env, "String", Lisp_String);
+    lisp_environment_put_comfy(env, "Number", Lisp_Number);
     lisp_environment_put_comfy(env, "Boolean", Lisp_Boolean);
     lisp_environment_put_comfy(env, "Ignore", Lisp_Ignore);
     lisp_environment_put_comfy(env, "Inert", Lisp_Inert);
@@ -214,6 +215,19 @@ function lisp_string_native_string(string) {
 
 function lisp_is_native_string(native_string) {
     return typeof(native_string.substring) !== "undefined";
+}
+
+/**** Numbers ****/
+
+var Lisp_Number = lisp_make_class(Lisp_Object, "Lisp_Number");
+
+/* Creates a new number from the given native string number
+   representation. */
+function lisp_make_number(repr) {
+    lisp_assert(lisp_is_native_string(repr));
+    var number = lisp_make_instance(Lisp_Number);
+    number.lisp_number = jsnums.fromString(repr);;
+    return number;
 }
 
 /**** Symbols ****/
@@ -765,6 +779,10 @@ lisp_put_native_method(Lisp_String, "to-string", function(obj) {
     return obj;
 });
 
+lisp_put_native_method(Lisp_Number, "to-string", function(obj) {
+    return lisp_make_string(obj.lisp_number.toString());
+});
+
 lisp_put_native_method(Lisp_Boolean, "to-string", function(obj) {
     return obj === lisp_t ? lisp_make_string("#t") : lisp_make_string("#f");
 });
@@ -869,6 +887,22 @@ function lisp_string_syntax_action(ast) {
     return lisp_make_string(ast[1]);
 }
 
+var lisp_digits = 
+    join_action(repeat1(range("0", "9")), "");
+
+var lisp_number_syntax =
+    action(sequence(optional(choice("+", "-")),
+                    lisp_digits,
+                    optional(join_action(sequence(".", lisp_digits), ""))),
+           lisp_number_syntax_action);
+
+function lisp_number_syntax_action(ast) {    
+    var sign = ast[0] ? ast[0] : "+";
+    var integral_digits = ast[1];
+    var fractional_digits = ast[2] || "";
+    return lisp_make_number(sign + integral_digits + fractional_digits);
+}
+
 var lisp_nil_syntax =
     action("()", lisp_nil_syntax_action);
 
@@ -924,7 +958,8 @@ function lisp_line_comment_action(ast) {
 }
 
 var lisp_expression_syntax =
-    whitespace(choice(lisp_nil_syntax,
+    whitespace(choice(lisp_number_syntax,
+                      lisp_nil_syntax,
                       lisp_ignore_syntax,
                       lisp_inert_syntax,
                       lisp_compound_syntax,
