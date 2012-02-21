@@ -390,20 +390,22 @@ var lisp_inert = lisp_make_instance(Lisp_Inert);
 
 /**** Combiners ****/
 
+var Lisp_Combiner = lisp_make_class(Lisp_Object, "Lisp_Combiner");
+
 /*** Compound Combiners ***/
 
 /* Compound combiners are those created by $vau.  They contain a
    parameter tree, a formal lexical environment parameter, a body, and
    a static lexical environment link. */
 
-var Lisp_Combiner = lisp_make_class(Lisp_Object, "Lisp_Combiner");
+var Lisp_Compound_Combiner = lisp_make_class(Lisp_Combiner, "Lisp_Compound_Combiner");
 
 function lisp_make_combiner(ptree, envformal, body, senv) {
     lisp_assert(lisp_is_instance(ptree, Lisp_Object));
     lisp_assert(lisp_is_instance(envformal, Lisp_Object));
     lisp_assert(lisp_is_instance(body, Lisp_Object));
     lisp_assert(lisp_is_instance(senv, Lisp_Environment));
-    var cmb = lisp_make_instance(Lisp_Combiner);
+    var cmb = lisp_make_instance(Lisp_Compound_Combiner);
     cmb.lisp_ptree = ptree;
     cmb.lisp_envformal = envformal;
     cmb.lisp_body = body;
@@ -411,7 +413,7 @@ function lisp_make_combiner(ptree, envformal, body, senv) {
     return cmb;
 }
 
-Lisp_Combiner.lisp_combine = function(cmb, otree, env) {
+Lisp_Compound_Combiner.lisp_combine = function(cmb, otree, env) {
     // Match parameter tree against operand tree in new child
     // environment of static environment
     var xenv = lisp_make_child_environment(cmb.lisp_senv);
@@ -429,11 +431,11 @@ Lisp_Combiner.lisp_combine = function(cmb, otree, env) {
    be a list, and all elements are evaluated to yield an arguments
    list, which is passed to the underlying combiner. */
 
-var Lisp_Wrapper = lisp_make_class(Lisp_Object, "Lisp_Wrapper");
+var Lisp_Wrapper = lisp_make_class(Lisp_Combiner, "Lisp_Wrapper");
 
 /* Creates a new wrapper around an underlying combiner. */
 function lisp_wrap(underlying) {
-    lisp_assert(lisp_is_instance(underlying, Lisp_Object));
+    lisp_assert(lisp_is_instance(underlying, Lisp_Combiner));
     var cmb = lisp_make_instance(Lisp_Wrapper);
     cmb.lisp_underlying = underlying;
     return cmb;
@@ -464,7 +466,7 @@ function lisp_eval_args(otree, env) {
 
    ($vau ptree envformal body) -> combiner */
 
-var Lisp_Vau = lisp_make_class(Lisp_Object, "Lisp_Vau");
+var Lisp_Vau = lisp_make_class(Lisp_Combiner, "Lisp_Vau");
 
 Lisp_Vau.lisp_combine = function(cmb, otree, env) {
     var ptree = lisp_elt(otree, 0);
@@ -480,7 +482,7 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
 
    ($define! name value) -> value */
 
-var Lisp_Define = lisp_make_class(Lisp_Object, "Lisp_Define");
+var Lisp_Define = lisp_make_class(Lisp_Combiner, "Lisp_Define");
 
 Lisp_Define.lisp_combine = function(cmb, otree, env) {
     var name = lisp_elt(otree, 0);
@@ -495,7 +497,7 @@ Lisp_Define.lisp_combine = function(cmb, otree, env) {
 
    ($if test consequent alternative) -> result */
 
-var Lisp_If = lisp_make_class(Lisp_Object, "Lisp_If");
+var Lisp_If = lisp_make_class(Lisp_Combiner, "Lisp_If");
 
 Lisp_If.lisp_combine = function(cmb, otree, env) {
     var test = lisp_elt(otree, 0);
@@ -517,7 +519,7 @@ Lisp_If.lisp_combine = function(cmb, otree, env) {
 
    ($loop body) -> | */
 
-var Lisp_Loop = lisp_make_class(Lisp_Object, "Lisp_Loop");
+var Lisp_Loop = lisp_make_class(Lisp_Combiner, "Lisp_Loop");
 
 Lisp_Loop.lisp_combine = function(cmb, otree, env) {
     var body = lisp_elt(otree, 0);
@@ -533,7 +535,7 @@ Lisp_Loop.lisp_combine = function(cmb, otree, env) {
 
    ($unwind-protect protected cleanup) -> result */
 
-var Lisp_Unwind_Protect = lisp_make_class(Lisp_Object, "Lisp_Unwind_Protect");
+var Lisp_Unwind_Protect = lisp_make_class(Lisp_Combiner, "Lisp_Unwind_Protect");
 
 Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
     var protect = lisp_elt(otree, 0);
@@ -553,7 +555,7 @@ Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
 
    (throw tag value) -> | */
 
-var Lisp_Throw = lisp_make_class(Lisp_Object, "Lisp_Throw");
+var Lisp_Throw = lisp_make_class(Lisp_Combiner, "Lisp_Throw");
 
 Lisp_Throw.lisp_combine = function(cmb, otree, env) {
     var tag = lisp_elt(otree, 0);
@@ -576,7 +578,7 @@ function Lisp_Control_Exception(tag, value) {
 
    ($catch tag body) -> result */
 
-var Lisp_Catch = lisp_make_class(Lisp_Object, "Lisp_Catch");
+var Lisp_Catch = lisp_make_class(Lisp_Combiner, "Lisp_Catch");
 
 Lisp_Catch.lisp_combine = function(cmb, otree, env) {
     var tag = lisp_elt(otree, 0);
@@ -597,15 +599,15 @@ Lisp_Catch.lisp_combine = function(cmb, otree, env) {
 
 /* A native combiner contains a native function. */
 
-var Lisp_Native = lisp_make_class(Lisp_Object, "Lisp_Native");
+var Lisp_Native_Combiner = lisp_make_class(Lisp_Combiner, "Lisp_Native_Combiner");
 
-Lisp_Native.lisp_combine = function(cmb, otree, env) {
+Lisp_Native_Combiner.lisp_combine = function(cmb, otree, env) {
     return cmb.lisp_native_fun.apply(null, lisp_cons_list_to_array(otree));
 };
 
 /* Creates a new native combiner for the native function. */
 function lisp_make_native(native_fun) {
-    var cmb = lisp_make_instance(Lisp_Native);
+    var cmb = lisp_make_instance(Lisp_Native_Combiner);
     cmb.lisp_native_fun = native_fun;
     return cmb;
 }
@@ -680,14 +682,6 @@ lisp_put_native_method(Lisp_Inert, "to-string", function(obj) {
 
 lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
     return lisp_make_string("#[combiner]");
-});
-
-lisp_put_native_method(Lisp_Wrapper, "to-string", function(obj) {
-    return lisp_make_string("#[wrapper]");
-});
-
-lisp_put_native_method(Lisp_Native, "to-string", function(obj) {
-    return lisp_make_string("#[native]");
 });
 
 /**** Errors & Assertions ****/
