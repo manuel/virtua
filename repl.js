@@ -11,7 +11,7 @@ function lisp_repl_onload() {
 function lisp_repl_onsubmit() {
     try {
         var input = lisp_repl_line().value;
-        lisp_repl_print(lisp_make_string("> " + input));
+        lisp_repl_print(lisp_make_string("\u25B6 " + input));
         lisp_eval_forms(lisp_parse(input), true);
         lisp_repl_line().value = "";
     } finally {
