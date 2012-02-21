@@ -18,11 +18,11 @@
     <input type="text" name="input" style="width: 100%; font-family:mono; font-size:medium;">
   </form>
   <script type="text/javascript">
-var lisp_core_env;
+var lisp_repl_env;
 
 function lisp_repl_load() {
-    lisp_core_env = lisp_make_core_environment();
-    lisp_environment_put_comfy(lisp_core_env, "print", lisp_wrap_native(lisp_repl_print, 1, 1));
+    lisp_repl_env = lisp_make_kernel_environment();
+    lisp_environment_put_comfy(lisp_repl_env, "print", lisp_wrap_native(lisp_repl_print, 1, 1));
 
     lisp_repl_eval(lisp_parse(lisp_get_file("standard.virtua")));
     lisp_repl_eval(lisp_parse(lisp_get_file("test.virtua")));
@@ -36,7 +36,7 @@ function lisp_repl_eval(forms) {
         var form = forms[i];
         var result;
         try {
-            result = lisp_eval(form, lisp_core_env);
+            result = lisp_eval(form, lisp_repl_env);
         } catch(e) {
             result = lisp_make_string("ERROR: " + e);
         }

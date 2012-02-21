@@ -1,9 +1,9 @@
 // Virtua interpreter.
 // Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
-/**** Core Environment ****/
+/**** Kernel Environment ****/
 
-function lisp_make_core_environment() {
+function lisp_make_kernel_environment() {
     var env = lisp_make_environment();
     /* Basics */
     lisp_environment_put_comfy(env, "$vau", lisp_make_instance(Lisp_Vau));
