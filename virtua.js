@@ -49,6 +49,9 @@ function lisp_make_core_environment() {
     lisp_environment_put_comfy(env, "Compound-Combiner", Lisp_Compound_Combiner);
     lisp_environment_put_comfy(env, "Wrapper", Lisp_Wrapper);
     lisp_environment_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
+    /* Misc */
+    lisp_environment_put_comfy(env, "assert", lisp_wrap_native(lisp_lib_assert, 1, 1));
+    lisp_environment_put_comfy(env, "error", lisp_wrap_native(lisp_lib_error, 1, 1));
     return env;
 };
 
@@ -659,19 +662,25 @@ function lisp_wrap_native(native_fun, min_args, max_args) {
 
 /**** Library ****/
 
-/*** Library Functions ***/
+/*** Helpers ***/
 
 /* Returns a Lisp boolean for a native one. */
 function lisp_truth(native_bool) {
     return native_bool ? lisp_t : lisp_f;
 }
 
-/* Returns true if two objects are identical, false otherwise. */
+/* Returns a native boolean for a Lisp one. */
+function lisp_native_truth(lisp_bool) {
+    lisp_assert(lisp_is_instance(lisp_bool, Lisp_Boolean));
+    return lisp_bool === lisp_t ? true : false;
+}
+
+/*** Library Functions ***/
+
 function lisp_lib_eq(a, b) {
     return lisp_truth(a === b);
 }
 
-/* Returns true if the object is nil, false otherwise. */
 function lisp_lib_null(obj) {
     return lisp_lib_eq(obj, lisp_nil);
 }
@@ -716,6 +725,16 @@ function lisp_lib_set_slot(obj, slot, value) {
     lisp_assert(lisp_is_instance(value, Lisp_Object));
     obj[lisp_symbol_native_string(slot)] = value;
     return value;
+}
+
+function lisp_lib_assert(lisp_bool) {
+    lisp_assert(lisp_native_truth(lisp_bool));
+    return lisp_inert;
+}
+
+function lisp_lib_error(string) {
+    lisp_assert(lisp_is_instance(string, Lisp_String));
+    lisp_simple_error(lisp_string_native_string(string));
 }
 
 /*** Printing ***/
