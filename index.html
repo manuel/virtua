@@ -14,7 +14,7 @@
   <form id="evalform"
         onsubmit="try{lisp_repl_eval(lisp_parse(document.forms.evalform.input.value))}finally{return false}">
     <input type="text" name="input">
-    <input type="submit" value="eval">
+    <input type="submit" value="&lambda;">
   </form>
   <script type="text/javascript">
 var lisp_core_env;
@@ -26,6 +26,8 @@ function lisp_repl_load() {
     lisp_repl_eval(lisp_parse(lisp_get_file("standard.virtua")));
 
     lisp_repl_print(lisp_make_string("LISP READY"));
+
+    document.forms.evalform.input.focus();
 }
 
 function lisp_repl_eval(forms) {
