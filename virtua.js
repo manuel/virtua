@@ -13,7 +13,7 @@ function lisp_make_kernel_environment() {
     lisp_environment_put_comfy(env, "$unwind-protect", lisp_make_instance(Lisp_Unwind_Protect));
     lisp_environment_put_comfy(env, "$catch", lisp_make_instance(Lisp_Catch));
     lisp_environment_put_comfy(env, "throw", lisp_make_instance(Lisp_Throw));
-    lisp_environment_put_comfy(env, "eq?", lisp_wrap_native(lisp_lib_eq));
+    lisp_environment_put_comfy(env, "eq?", lisp_wrap_native(lisp_lib_eq, 2, 2));
     lisp_environment_put_comfy(env, "make-environment", lisp_wrap_native(lisp_make_environment, 0, 0));
     lisp_environment_put_comfy(env, "eval", lisp_wrap_native(lisp_eval, 2, 2));
     lisp_environment_put_comfy(env, "wrap", lisp_wrap_native(lisp_wrap, 1, 1));
