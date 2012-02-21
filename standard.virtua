@@ -1,6 +1,8 @@
 ;; Virtua standard language.                        -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
+;;;; These are taken from John Shutt's SINK and the R-1RK.
+
 ($define! $quote ($vau (form) #ignore form))
 
 ($define! $sequence
@@ -76,27 +78,7 @@
 
 ($define! get-current-environment (wrap ($vau () e e)))
 
-($define! $set!
-   ($vau (exp1 formals exp2) env
-      (eval (list $define! formals
-                  (list (unwrap eval) exp2 env))
-            (eval exp1 env))))
-
-($define! $provide!
-   ($vau (symbols . body) env
-      (eval (list $define! symbols
-               (list $let ()
-                  (list* $sequence body)
-                  (list* list symbols)))
-            env)))
-
-($define! $import!
-   ($vau (exp . symbols) env
-      (eval (list $set!
-                  env
-                  symbols
-                  (cons list symbols))
-            (eval exp env))))
+;;;; Virtua-specific forms
 
 ;; Execute body expressions in throwaway environment.
 ($define! $scope
@@ -104,6 +86,11 @@
       (($lambda ()
           (eval (list* $sequence body) (get-current-environment))))))
 
+;;;; Object System
+
+($define! $define-class!
+   ($vau (name (superclass) . slots) env
+       #f))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
