@@ -13,32 +13,40 @@ function lisp_make_core_environment() {
     lisp_environment_put_comfortably(env, "$catch", lisp_make_instance(Lisp_Catch));
     lisp_environment_put_comfortably(env, "throw", lisp_make_instance(Lisp_Throw));
     lisp_environment_put_comfortably(env, "eq?", lisp_wrap_native(lisp_lib_eq));
-    lisp_environment_put_comfortably(env, "make-environment", lisp_wrap_native(lisp_make_environment));
-    lisp_environment_put_comfortably(env, "eval", lisp_wrap_native(lisp_eval));
-    lisp_environment_put_comfortably(env, "wrap", lisp_wrap_native(lisp_wrap));
-    lisp_environment_put_comfortably(env, "unwrap", lisp_wrap_native(lisp_unwrap));
-    lisp_environment_put_comfortably(env, "cons", lisp_wrap_native(lisp_cons));
-    lisp_environment_put_comfortably(env, "car", lisp_wrap_native(lisp_car));
-    lisp_environment_put_comfortably(env, "cdr", lisp_wrap_native(lisp_cdr));
-    lisp_environment_put_comfortably(env, "null?", lisp_wrap_native(lisp_lib_null));
+    lisp_environment_put_comfortably(env, "make-environment",
+                                     lisp_wrap_native(lisp_make_environment, 0, 0));
+    lisp_environment_put_comfortably(env, "eval", lisp_wrap_native(lisp_eval, 2, 2));
+    lisp_environment_put_comfortably(env, "wrap", lisp_wrap_native(lisp_wrap, 1, 1));
+    lisp_environment_put_comfortably(env, "unwrap", lisp_wrap_native(lisp_unwrap, 1, 1));
+    lisp_environment_put_comfortably(env, "cons", lisp_wrap_native(lisp_cons, 2, 2));
+    lisp_environment_put_comfortably(env, "car", lisp_wrap_native(lisp_car, 1, 1));
+    lisp_environment_put_comfortably(env, "cdr", lisp_wrap_native(lisp_cdr, 1, 1));
+    lisp_environment_put_comfortably(env, "null?", lisp_wrap_native(lisp_lib_null, 1, 1));
     lisp_environment_put_comfortably(env, "#t", lisp_t);
     lisp_environment_put_comfortably(env, "#f", lisp_f);
     lisp_environment_put_comfortably(env, "#ignore", lisp_ignore);
     lisp_environment_put_comfortably(env, "#inert", lisp_inert);
     lisp_environment_put_comfortably(env, "Object", Lisp_Object);
     lisp_environment_put_comfortably(env, "Class", Lisp_Class);
+    lisp_environment_put_comfortably(env, "Environment", Lisp_Environment);
     lisp_environment_put_comfortably(env, "Symbol", Lisp_Symbol);
-    lisp_environment_put_comfortably(env, "String", Lisp_String);
-    lisp_environment_put_comfortably(env, "Boolean", Lisp_Boolean);
     lisp_environment_put_comfortably(env, "Pair", Lisp_Pair);
     lisp_environment_put_comfortably(env, "Nil", Lisp_Nil);
+    lisp_environment_put_comfortably(env, "String", Lisp_String);
+    lisp_environment_put_comfortably(env, "Boolean", Lisp_Boolean);
     lisp_environment_put_comfortably(env, "Ignore", Lisp_Ignore);
     lisp_environment_put_comfortably(env, "Inert", Lisp_Inert);
-    lisp_environment_put_comfortably(env, "Environment", Lisp_Environment);
     lisp_environment_put_comfortably(env, "Combiner", Lisp_Combiner);
     lisp_environment_put_comfortably(env, "Compound-Combiner", Lisp_Compound_Combiner);
-    lisp_environment_put_comfortably(env, "Native-Combiner", Lisp_Native_Combiner);
     lisp_environment_put_comfortably(env, "Wrapper", Lisp_Wrapper);
+    lisp_environment_put_comfortably(env, "Native-Combiner", Lisp_Native_Combiner);
+    lisp_environment_put_comfortably(env, "make-class", lisp_wrap_native(lisp_lib_make_class, 1, 1));
+    lisp_environment_put_comfortably(env, "make-instance", lisp_wrap_native(lisp_lib_make_instance, 1, 1));
+    lisp_environment_put_comfortably(env, "instance?", lisp_wrap_native(lisp_lib_is_instance, 1, 1));
+    lisp_environment_put_comfortably(env, "subclass?", lisp_wrap_native(lisp_lib_is_subclass, 1, 1));
+    lisp_environment_put_comfortably(env, "get-slot", lisp_wrap_native(lisp_lib_get_slot, 2, 2));
+    lisp_environment_put_comfortably(env, "has-slot?", lisp_wrap_native(lisp_lib_has_slot, 2, 2));
+    lisp_environment_put_comfortably(env, "set-slot!", lisp_wrap_native(lisp_lib_set_slot, 3, 3));
     return env;
 };
 
@@ -124,6 +132,9 @@ function lisp_make_instance(c) {
 
 /* Returns the class of the object. */
 function lisp_class_of(obj) {
+    if (typeof(obj) === "undefined") {
+        lisp_not_an_object_error(obj);
+    }
     var c = obj.lisp_isa;
     if (typeof(c) !== "undefined") {
         return c;
@@ -616,19 +627,32 @@ Lisp_Catch.lisp_combine = function(cmb, otree, env) {
 var Lisp_Native_Combiner = lisp_make_class(Lisp_Combiner, "Lisp_Native_Combiner");
 
 Lisp_Native_Combiner.lisp_combine = function(cmb, otree, env) {
-    return cmb.lisp_native_fun.apply(null, lisp_cons_list_to_array(otree));
+    var args = lisp_cons_list_to_array(otree);
+    if (typeof(cmb.lisp_min_args !== "undefined")) {
+        if (args.length < cmb.lisp_min_args) {
+            lisp_simple_error("Too few arguments.");
+        }
+    }
+    if (typeof(cmb.lisp_max_args !== "undefined")) {
+        if (args.length > cmb.lisp_max_args) {
+            lisp_simple_error("Too many arguments.");
+        }
+    }
+    return cmb.lisp_native_fun.apply(null, args);
 };
 
 /* Creates a new native combiner for the native function. */
-function lisp_make_native(native_fun) {
+function lisp_make_native(native_fun, min_args, max_args) {
     var cmb = lisp_make_instance(Lisp_Native_Combiner);
     cmb.lisp_native_fun = native_fun;
+    cmb.lisp_min_args = min_args;
+    cmb.lisp_max_args = max_args;
     return cmb;
 }
 
 /* Creates a new native wrapper for the native function. */
-function lisp_wrap_native(native_fun) {
-    return lisp_wrap(lisp_make_native(native_fun));
+function lisp_wrap_native(native_fun, min_args, max_args) {
+    return lisp_wrap(lisp_make_native(native_fun, min_args, max_args));
 }
 
 /**** Library ****/
@@ -648,6 +672,48 @@ function lisp_lib_eq(a, b) {
 /* Returns true if the object is nil, false otherwise. */
 function lisp_lib_null(obj) {
     return lisp_lib_eq(obj, lisp_nil);
+}
+
+function lisp_lib_make_class(sc) {
+    return lisp_make_class(sc, "Lisp_UFO");
+}
+
+function lisp_lib_make_instance(c) {
+    return lisp_make_instance(c);
+}
+
+function lisp_lib_is_instance(obj, c) {
+    return lisp_truth(lisp_is_instance(obj, c));
+}
+
+function lisp_lib_is_subclass(c, sc) {
+    return lisp_truth(lisp_is_subclass(c, sc));
+}
+
+function lisp_lib_get_slot(obj, slot) {
+    lisp_assert(lisp_is_instance(obj, Lisp_Object));
+    lisp_assert(lisp_is_instance(slot, Lisp_Symbol));
+    var value = obj[lisp_symbol_native_string(slot)];
+    if (typeof(value) !== "undefined") {
+        return value;
+    } else {
+        lisp_simple_error("Unbound slot.");
+    }
+}
+
+function lisp_lib_has_slot(obj, slot) {
+    lisp_assert(lisp_is_instance(obj, Lisp_Object));
+    lisp_assert(lisp_is_instance(slot, Lisp_Symbol));
+    var value = obj[lisp_symbol_native_string(slot)];
+    return (typeof(value) !== "undefined");
+}
+
+function lisp_lib_set_slot(obj, slot, value) {
+    lisp_assert(lisp_is_instance(obj, Lisp_Object));
+    lisp_assert(lisp_is_instance(slot, Lisp_Symbol));
+    lisp_assert(lisp_is_instance(value, Lisp_Object));
+    obj[lisp_symbol_native_string(slot)] = value;
+    return value;
 }
 
 /*** Printing ***/
