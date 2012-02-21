@@ -98,6 +98,12 @@
                   (cons list symbols))
             (eval exp env))))
 
+;; Execute body expressions in throwaway environment.
+($define! $scope
+   ($vau body #ignore
+      (($lambda ()
+          (eval (list* $sequence body) (get-current-environment))))))
+
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
