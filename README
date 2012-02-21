@@ -1,0 +1,7 @@
+KERNEL OR BUST
+
+serve directory over HTTP and browse index.html
+
+e.g. 
+
+python -m SimpleHTTPServer
