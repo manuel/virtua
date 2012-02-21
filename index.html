@@ -25,6 +25,7 @@ function lisp_repl_load() {
     lisp_environment_put_comfy(lisp_core_env, "print", lisp_wrap_native(lisp_repl_print, 1, 1));
 
     lisp_repl_eval(lisp_parse(lisp_get_file("standard.virtua")));
+    lisp_repl_eval(lisp_parse(lisp_get_file("test.virtua")));
 
     document.forms.evalform.input.focus();
 }
