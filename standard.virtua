@@ -1,4 +1,4 @@
-;; Virtua bootstrap.
+;; Virtua standard language.                        -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
 ($define! $quote ($vau (form) #ignore form))

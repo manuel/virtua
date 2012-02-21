@@ -23,7 +23,7 @@ function lisp_repl_load() {
     lisp_core_env = lisp_make_core_environment();
     lisp_environment_put_comfortably(lisp_core_env, "print", lisp_wrap_native(lisp_repl_print));
 
-    lisp_repl_eval(lisp_parse(lisp_get_file("prelude.v")));
+    lisp_repl_eval(lisp_parse(lisp_get_file("standard.virtua")));
 
     lisp_repl_print(lisp_make_string("LISP READY"));
 }
