@@ -1,6 +1,21 @@
 ;; Test suite for Virtua kernel language.           -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
+;;;; $vau
+($scope
+   ($define! foo ($quote foo))
+   (assert (eq? foo (($vau (x) #ignore x) foo))))
+
+(assert (eq? (($vau #ignore env env))
+             (get-current-environment)))
+
+;;;; $define!
+
+($scope
+   ($define! foo ($quote foo))
+   (assert (eq? foo ($define! x foo))))
+
+
 (assert (instance? 19222222222222222222222222222222222222222222222222222 Number))
 (assert (instance? -19222222222222222222222222222222222222222222222222222 Number))
 (assert (instance? -19222222222222222222222222222222222222222222222222222.5 Number))
