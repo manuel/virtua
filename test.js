@@ -23,13 +23,13 @@
     lisp_assert(lisp_eval(string_foo) === string_foo);
     lisp_assert(lisp_string_native_string(string_foo) === "foo");
     
-    var symbol_foo = lisp_intern_comfortably("foo");
+    var symbol_foo = lisp_intern_comfy("foo");
     lisp_assert(lisp_is_instance(symbol_foo, Lisp_Symbol));
     lisp_assert(!lisp_is_instance(symbol_foo, Lisp_String));
     lisp_assert(!lisp_is_instance(symbol_foo, Lisp_Class));
     lisp_assert(lisp_is_instance(symbol_foo, Lisp_Object));
-    lisp_assert(symbol_foo === lisp_intern_comfortably("foo"));
-    lisp_assert(symbol_foo !== lisp_intern_comfortably("bar"));
+    lisp_assert(symbol_foo === lisp_intern_comfy("foo"));
+    lisp_assert(symbol_foo !== lisp_intern_comfy("bar"));
     lisp_assert(lisp_string_native_string(lisp_symbol_name(symbol_foo)) === "foo");
     lisp_assert(lisp_symbol_native_string(symbol_foo) === "foo");
     
