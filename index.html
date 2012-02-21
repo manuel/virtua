@@ -8,13 +8,11 @@
   <script src="test.js" type="text/javascript"></script>
 </head>
 <body onload="lisp_repl_load()">
-  <div style="float: right"><a href="doc/manual.html">Manual</a></div>
   <div id="output">
   </div>
   <form id="evalform"
         onsubmit="try{lisp_repl_eval(lisp_parse(document.forms.evalform.input.value))}finally{return false}">
-    <input type="text" name="input">
-    <input type="submit" value="&lambda;">
+    <input type="text" name="input" style="width: 100%;">
   </form>
   <script type="text/javascript">
 var lisp_core_env;
@@ -24,8 +22,6 @@ function lisp_repl_load() {
     lisp_environment_put_comfortably(lisp_core_env, "print", lisp_wrap_native(lisp_repl_print));
 
     lisp_repl_eval(lisp_parse(lisp_get_file("standard.virtua")));
-
-    lisp_repl_print(lisp_make_string("LISP READY"));
 
     document.forms.evalform.input.focus();
 }
@@ -53,6 +49,7 @@ function lisp_repl_print(obj) {
     var output = document.getElementById("output");
     output.appendChild(resultDiv);
     document.forms.evalform.input.value = "";
+    window.scrollTo(0, document.body.scrollHeight);
     return lisp_inert;
 }
 
