@@ -52,21 +52,21 @@ function lisp_send(obj, sel, otree) {
 
 /**** Object System ****/
 
-function Lisp_Prototype() {}
+function Lisp_Object_Prototype() {}
 
-Lisp_Prototype.prototype.lisp_eval = function(obj, env) {
+Lisp_Object_Prototype.prototype.lisp_eval = function(obj, env) {
     return obj;
 };
 
-Lisp_Prototype.prototype.lisp_combine = function(obj, otree, env) {
+Lisp_Object_Prototype.prototype.lisp_combine = function(obj, otree, env) {
     lisp_simple_error("Not a combiner.");
 };
 
-Lisp_Prototype.prototype.lisp_match = function(obj, otree, env) {
+Lisp_Object_Prototype.prototype.lisp_match = function(obj, otree, env) {
     lisp_simple_error("Not a pattern.");
 };
 
-Lisp_Prototype.prototype.lisp_send = function(obj, sel, otree) {
+Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     var c = lisp_class_of(obj);
     var method = c[sel];
     if (typeof(method) !== "undefined") {
@@ -79,11 +79,11 @@ Lisp_Prototype.prototype.lisp_send = function(obj, sel, otree) {
 /* Bootstrap the class hierarchy. */
 
 /* The root of the class hierarchy. */
-var Lisp_Object = new Lisp_Prototype();
+var Lisp_Object = new Lisp_Object_Prototype();
 
 /* The class of classes. */
 function Lisp_Class_Prototype() {}
-Lisp_Class_Prototype.prototype = new Lisp_Prototype();
+Lisp_Class_Prototype.prototype = new Lisp_Object_Prototype();
 var Lisp_Class = new Lisp_Class_Prototype();
 
 Lisp_Object.lisp_isa = Lisp_Class;
