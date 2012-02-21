@@ -801,13 +801,26 @@ function lisp_compound_syntax_action(ast) {
     return lisp_array_to_cons_list(exprs, end);
 }
 
+var lisp_line_terminator = choice(ch("\r"), ch("\n"));
+
+var lisp_line_comment_syntax =
+    action(sequence(";",
+                    repeat0(negate(lisp_line_terminator)),
+                    optional(lisp_line_terminator)),
+           lisp_line_comment_action);
+
+function lisp_line_comment_action(ast) {
+    return lisp_inert;
+}
+
 var lisp_expression_syntax =
     whitespace(choice(lisp_nil_syntax,
                       lisp_ignore_syntax,
                       lisp_inert_syntax,
                       lisp_compound_syntax,
                       lisp_identifier_syntax,
-                      lisp_string_syntax));
+                      lisp_string_syntax,
+                      lisp_line_comment_syntax));
 
 var lisp_program_syntax =
     whitespace(repeat1(lisp_expression_syntax));
