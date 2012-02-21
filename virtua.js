@@ -66,7 +66,7 @@ Lisp_Prototype.prototype.lisp_match = function(obj, otree, env) {
 Lisp_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     var c = lisp_class_of(obj);
     var method = c[sel];
-    if (method !== undefined) {
+    if (typeof(method) !== "undefined") {
         return lisp_combine(method, lisp_cons(obj, otree), lisp_make_environment());
     } else {
         lisp_message_not_understood_error(obj, sel);
@@ -108,7 +108,7 @@ function lisp_make_instance(c) {
 /* Returns the class of the object. */
 function lisp_class_of(obj) {
     var c = obj.lisp_isa;
-    if (c !== undefined) {
+    if (typeof(c) !== "undefined") {
         return c;
     } else {
         lisp_not_an_object_error(obj);
@@ -126,7 +126,7 @@ function lisp_is_subclass(c, sc) {
         return true;
     } else {
         var csc = lisp_superclass_of(c);
-        if (csc !== undefined) {
+        if (typeof(csc) !== "undefined") {
             return lisp_is_subclass(csc, sc);
         } else {
             return false;
@@ -180,7 +180,7 @@ function lisp_string_native_string(string) {
 }
 
 function lisp_is_native_string(native_string) {
-    return native_string.substring !== undefined;
+    return typeof(native_string.substring) !== "undefined";
 }
 
 /**** Symbols ****/
@@ -211,7 +211,7 @@ function lisp_make_symbol_do_not_call(name) {
 function lisp_intern(name) {
     var native_string = lisp_string_native_string(name);
     var symbol = lisp_symbols_table[native_string];
-    if (symbol !== undefined) {
+    if (typeof(symbol) !== "undefined") {
         return symbol;
     } else {
         symbol = lisp_make_symbol_do_not_call(name);
@@ -341,7 +341,7 @@ function lisp_environment_lookup(env, name) {
     lisp_assert(lisp_is_instance(env, Lisp_Environment));
     lisp_assert(lisp_is_instance(name, Lisp_Symbol));
     var value = env.lisp_bindings[lisp_symbol_native_string(name)];
-    if (value !== undefined) {
+    if (typeof(value) !== "undefined") {
         return value;
     } else {
         lisp_simple_error("Undefined identifier.");
