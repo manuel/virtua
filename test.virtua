@@ -16,6 +16,25 @@
    (assert (instance? obj c))
    (assert (not? (instance? obj String))))
 
+;;;; Control Flow
+
+;; break out of loop
+($scope
+   ($define! tag ($quote tag))
+   ($define! value ($quote value))
+   (assert (eq? value ($catch tag
+                         ($loop
+                             (throw tag value))))))
+
+;; nested $catch's
+($scope
+   ($define! outer-tag ($quote outer-tag))
+   ($define! inner-tag ($quote inner-tag))
+   ($define! value ($quote value))
+   (assert (eq? value ($catch outer-tag
+                         ($catch inner-tag
+                            (throw outer-tag value))))))
+
 (print "Tests done.")
 
 
