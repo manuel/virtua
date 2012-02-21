@@ -73,67 +73,6 @@
 
 ($define! get-current-environment (wrap ($vau () e e)))
 
-($define! $let
-   ($vau (bindings . body) env
-      (eval (cons (list* $lambda (map car bindings) body)
-                  (map cadr bindings))
-            env)))
-
-($define! $let*
-   ($vau (bindings . body) env
-      (eval ($if (null? bindings)
-                 (list* $let bindings body)
-                 (list $let
-                       (list (car bindings))
-                       (list* $let* (cdr bindings) body)))
-            env)))
-
-($define! $letrec
-   ($vau (bindings . body) env
-      (eval (list* $let ()
-                   (list $define!
-                         (map car bindings)
-                         (list* list (map cadr bindings)))
-                   body)
-            env)))
-
-($define! $letrec*
-   ($vau (bindings . body) env
-      (eval ($if (null? bindings)
-                 (list* $letrec bindings body)
-                 (list $letrec
-                       (list (car bindings))
-                       (list* $letrec* (cdr bindings) body)))
-            env)))
-
-($define! $let-redirect
-   ($vau (exp bindings . body) env
-      (eval (list* (eval (list* $lambda (map car bindings) body)
-                         (eval exp
-                               env))
-                   (map cadr bindings))
-            env)))
-
-($define! $let-safe
-   ($vau (bindings . body) env
-      (eval (list* $let-redirect
-                   (make-kernel-standard-environment)
-                   bindings
-                   body)
-             env)))
-
-($define! $remote-eval
-   ($vau (o e) d
-      (eval o (eval e d))))
-
-($define! $bindings->environment
-   ($vau bindings denv
-      (eval (list $let-redirect
-                  (make-environment)
-                  bindings
-                  (list get-current-environment))
-            denv)))
-
 ($define! $set!
    ($vau (exp1 formals exp2) env
       (eval (list $define! formals
@@ -155,8 +94,3 @@
                   symbols
                   (cons list symbols))
             (eval exp env))))
-
-($define! for-each
-   (wrap ($vau x env
-            (apply map x env)
-            #inert)))
