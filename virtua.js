@@ -373,11 +373,12 @@ function lisp_environment_put_comfy(env, native_string, value) {
 function lisp_environment_lookup(env, name) {
     lisp_assert(lisp_is_instance(env, Lisp_Environment));
     lisp_assert(lisp_is_instance(name, Lisp_Symbol));
-    var value = env.lisp_bindings[lisp_symbol_native_string(name)];
+    var native_name = lisp_symbol_native_string(name);
+    var value = env.lisp_bindings[native_name];
     if (typeof(value) !== "undefined") {
         return value;
     } else {
-        lisp_simple_error("Undefined identifier.");
+        lisp_simple_error("Undefined identifier: " + native_name);
     }
 }
 
