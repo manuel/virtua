@@ -14,7 +14,7 @@ function lisp_make_kernel_environment() {
     lisp_environment_put_comfy(env, "$catch", lisp_make_instance(Lisp_Catch));
     lisp_environment_put_comfy(env, "throw", lisp_make_instance(Lisp_Throw));
     lisp_environment_put_comfy(env, "eq?", lisp_wrap_native(lisp_lib_eq, 2, 2));
-    lisp_environment_put_comfy(env, "make-environment", lisp_wrap_native(lisp_lib_make_environment, 0, 1));
+    lisp_environment_put_comfy(env, "make-environment", lisp_wrap_native(lisp_make_environment, 0, 1));
     lisp_environment_put_comfy(env, "eval", lisp_wrap_native(lisp_eval, 2, 2));
     lisp_environment_put_comfy(env, "wrap", lisp_wrap_native(lisp_wrap, 1, 1));
     lisp_environment_put_comfy(env, "unwrap", lisp_wrap_native(lisp_unwrap, 1, 1));
@@ -351,17 +351,16 @@ function lisp_cons_list_to_array(c) {
 
 var Lisp_Environment = lisp_make_class(Lisp_Object, "Lisp_Environment");
 
-/* Creates a new empty environment. */
-function lisp_make_environment() {
-    return lisp_make_environment_with_bindings({});
-}
-
-/* Creates a new empty environment with a given parent environment. */
-function lisp_make_child_environment(parent) {
-    lisp_assert(lisp_is_instance(parent, Lisp_Environment));
-    function E() {};
-    E.prototype = parent.lisp_bindings;
-    return lisp_make_environment_with_bindings(new E());
+/* Creates a new empty environment with an optional parent environment. */
+function lisp_make_environment(parent) {
+    if (typeof(parent) !== "undefined") {
+        lisp_assert(lisp_is_instance(parent, Lisp_Environment));
+        function E() {};
+        E.prototype = parent.lisp_bindings;
+        return lisp_make_environment_with_bindings(new E());
+    } else {
+        return lisp_make_environment_with_bindings({});        
+    }
 }
 
 function lisp_make_environment_with_bindings(bindings) {
@@ -462,7 +461,7 @@ function lisp_make_combiner(ptree, envformal, body, senv) {
 Lisp_Compound_Combiner.lisp_combine = function(cmb, otree, env) {
     // Match parameter tree against operand tree in new child
     // environment of static environment
-    var xenv = lisp_make_child_environment(cmb.lisp_senv);
+    var xenv = lisp_make_environment(cmb.lisp_senv);
     lisp_match(cmb.lisp_ptree, otree, xenv);
     // Pass in dynamic environment unless ignored
     lisp_match(cmb.lisp_envformal, env, xenv);
@@ -699,15 +698,6 @@ function lisp_lib_eq(a, b) {
 
 function lisp_lib_null(obj) {
     return lisp_lib_eq(obj, lisp_nil);
-}
-
-function lisp_lib_make_environment(optional_parent) {
-    if (typeof(optional_parent) !== "undefined") {
-        lisp_assert(lisp_is_instance(optional_parent, Lisp_Environment));
-        return lisp_make_child_environment(optional_parent);
-    } else {
-        return lisp_make_environment();
-    }
 }
 
 function lisp_lib_make_class(sc) {
