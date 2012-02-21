@@ -25,6 +25,20 @@ function lisp_make_core_environment() {
     lisp_environment_put_comfortably(env, "#f", lisp_f);
     lisp_environment_put_comfortably(env, "#ignore", lisp_ignore);
     lisp_environment_put_comfortably(env, "#inert", lisp_inert);
+    lisp_environment_put_comfortably(env, "Object", Lisp_Object);
+    lisp_environment_put_comfortably(env, "Class", Lisp_Class);
+    lisp_environment_put_comfortably(env, "Symbol", Lisp_Symbol);
+    lisp_environment_put_comfortably(env, "String", Lisp_String);
+    lisp_environment_put_comfortably(env, "Boolean", Lisp_Boolean);
+    lisp_environment_put_comfortably(env, "Pair", Lisp_Pair);
+    lisp_environment_put_comfortably(env, "Nil", Lisp_Nil);
+    lisp_environment_put_comfortably(env, "Ignore", Lisp_Ignore);
+    lisp_environment_put_comfortably(env, "Inert", Lisp_Inert);
+    lisp_environment_put_comfortably(env, "Environment", Lisp_Environment);
+    lisp_environment_put_comfortably(env, "Combiner", Lisp_Combiner);
+    lisp_environment_put_comfortably(env, "Compound-Combiner", Lisp_Compound_Combiner);
+    lisp_environment_put_comfortably(env, "Native-Combiner", Lisp_Native_Combiner);
+    lisp_environment_put_comfortably(env, "Wrapper", Lisp_Wrapper);
     return env;
 };
 
@@ -646,6 +660,11 @@ lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
     return lisp_make_string("#[object]");
 });
 
+// fixme: why is this needed? (get message not understood without)
+lisp_put_native_method(Lisp_Class, "to-string", function(obj) {
+    return lisp_make_string("#[class]");
+});
+
 lisp_put_native_method(Lisp_String, "to-string", function(obj) {
     return obj;
 });
@@ -720,6 +739,7 @@ var lisp_identifier_special_char =
 
 var lisp_identifier_syntax =
     action(join_action(repeat1(choice(range("a", "z"),
+                                      range("A", "Z"),
                                       range("0", "9"),
                                       lisp_identifier_special_char)),
                        ""),
