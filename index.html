@@ -38,7 +38,9 @@ function lisp_repl_eval(forms) {
         } catch(e) {
             result = lisp_make_string("ERROR: " + e);
         }
-        lisp_repl_print(result);
+        if (result !== lisp_inert) {
+            lisp_repl_print(result);
+        }
     }
     return false;
 }
