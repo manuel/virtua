@@ -42,8 +42,8 @@ function lisp_make_core_environment() {
     lisp_environment_put_comfortably(env, "Native-Combiner", Lisp_Native_Combiner);
     lisp_environment_put_comfortably(env, "make-class", lisp_wrap_native(lisp_lib_make_class, 1, 1));
     lisp_environment_put_comfortably(env, "make-instance", lisp_wrap_native(lisp_lib_make_instance, 1, 1));
-    lisp_environment_put_comfortably(env, "instance?", lisp_wrap_native(lisp_lib_is_instance, 1, 1));
-    lisp_environment_put_comfortably(env, "subclass?", lisp_wrap_native(lisp_lib_is_subclass, 1, 1));
+    lisp_environment_put_comfortably(env, "instance?", lisp_wrap_native(lisp_lib_is_instance, 2, 2));
+    lisp_environment_put_comfortably(env, "subclass?", lisp_wrap_native(lisp_lib_is_subclass, 2, 2));
     lisp_environment_put_comfortably(env, "get-slot", lisp_wrap_native(lisp_lib_get_slot, 2, 2));
     lisp_environment_put_comfortably(env, "has-slot?", lisp_wrap_native(lisp_lib_has_slot, 2, 2));
     lisp_environment_put_comfortably(env, "set-slot!", lisp_wrap_native(lisp_lib_set_slot, 3, 3));
