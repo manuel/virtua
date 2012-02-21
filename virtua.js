@@ -97,7 +97,7 @@ var Lisp_Object = new Lisp_Object_Prototype();
 
 /* The class of classes. */
 function Lisp_Class_Prototype() {}
-Lisp_Class_Prototype.prototype = new Lisp_Object_Prototype();
+Lisp_Class_Prototype.prototype = Lisp_Object;
 var Lisp_Class = new Lisp_Class_Prototype();
 
 Lisp_Object.lisp_isa = Lisp_Class;
@@ -660,7 +660,6 @@ lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
     return lisp_make_string("#[object]");
 });
 
-// fixme: why is this needed? (get message not understood without)
 lisp_put_native_method(Lisp_Class, "to-string", function(obj) {
     return lisp_make_string("#[class]");
 });
