@@ -1,6 +1,6 @@
 <!-- Virtua browser REPL.
      Copyright (c) 2012 Manuel Simoni. See license at end of file. -->
-<html>
+<html style="font-family:mono;">
 <head>
   <title>Virtua 0.1.0</title>
   <script src="jsparse.js" type="text/javascript"></script>
@@ -8,11 +8,14 @@
   <script src="test.js" type="text/javascript"></script>
 </head>
 <body onload="lisp_repl_load()">
+  <div style="float:right">
+    VIRTUA REPL
+  </div>
   <div id="output">
   </div>
   <form id="evalform"
         onsubmit="try{lisp_repl_eval(lisp_parse(document.forms.evalform.input.value))}finally{return false}">
-    <input type="text" name="input" style="width: 100%;">
+    <input type="text" name="input" style="width: 100%; font-family:mono; font-size:medium;">
   </form>
   <script type="text/javascript">
 var lisp_core_env;
