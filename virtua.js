@@ -29,6 +29,7 @@ function lisp_make_kernel_environment() {
     /* Objects */
     lisp_environment_put_comfy(env, "make-class", lisp_wrap_native(lisp_lib_make_class, 1, 1));
     lisp_environment_put_comfy(env, "make-instance", lisp_wrap_native(lisp_lib_make_instance, 1, 1));
+    lisp_environment_put_comfy(env, "class-of", lisp_wrap_native(lisp_class_of, 1, 1));
     lisp_environment_put_comfy(env, "instance?", lisp_wrap_native(lisp_lib_is_instance, 2, 2));
     lisp_environment_put_comfy(env, "subclass?", lisp_wrap_native(lisp_lib_is_subclass, 2, 2));
     lisp_environment_put_comfy(env, "get-slot", lisp_wrap_native(lisp_lib_get_slot, 2, 2));
