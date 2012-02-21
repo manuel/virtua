@@ -44,7 +44,7 @@
     var env = lisp_make_environment();
     lisp_assert(lisp_environment_put(env, symbol_foo, string_foo) === string_foo);
     lisp_assert(lisp_environment_lookup(env, symbol_foo) === string_foo);
-    var child_env = lisp_make_child_environment(env);
+    var child_env = lisp_make_environment(env);
     lisp_assert(lisp_environment_lookup(child_env, symbol_foo) === string_foo);
     var string_bar = lisp_make_string("bar");
     lisp_environment_put(child_env, symbol_foo, string_bar);
