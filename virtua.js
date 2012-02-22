@@ -154,17 +154,26 @@ Lisp_Class.lisp_isa = Lisp_Class;
 Lisp_Object.lisp_superclasses = [];
 Lisp_Class.lisp_superclasses = [Lisp_Object];
 
-/* Creates a new class with the given superclass and native name (for debuggability). */
-function lisp_make_class(sc, native_name) {
-    lisp_assert(lisp_is_instance(sc, Lisp_Class));
+/* Creates a new class with the given prototype, superclasses and
+   native name (for debuggability). */
+function lisp_make_class(proto, sups, native_name) {
+    lisp_assert(lisp_is_native_array(sups));
     lisp_assert(lisp_is_native_string(native_name));
     var f = eval("(function " + native_name + "() {})");
-    f.prototype = sc;
+    f.prototype = proto;
     var c = new f();
     c.lisp_isa = Lisp_Class;
-    c.lisp_superclasses = [sc];
+    c.lisp_superclasses = sups;
     c.lisp_methods = {};
     return c;
+}
+
+function lisp_make_system_class(proto, native_name) {
+    return lisp_make_class(proto, [proto], native_name);
+}
+
+function lisp_make_user_class(sups, native_name) {
+    return lisp_make_class(Lisp_Object, sups, native_name);
 }
 
 /* Creates an instance of the given class. */
@@ -239,7 +248,7 @@ function lisp_put_native_method(c, sel, native_fun) {
 
 /**** Strings ****/
 
-var Lisp_String = lisp_make_class(Lisp_Object, "Lisp_String");
+var Lisp_String = lisp_make_system_class(Lisp_Object, "Lisp_String");
 
 /* Creates a new string with the given native string. */
 function lisp_make_string(native_string) {
@@ -259,9 +268,13 @@ function lisp_is_native_string(native_string) {
     return typeof(native_string.substring) !== "undefined";
 }
 
+function lisp_is_native_array(native_array) {
+    return (native_array instanceof Array);
+}
+
 /**** Numbers ****/
 
-var Lisp_Number = lisp_make_class(Lisp_Object, "Lisp_Number");
+var Lisp_Number = lisp_make_system_class(Lisp_Object, "Lisp_Number");
 
 /* Creates a new number from the given native string number
    representation. */
@@ -276,7 +289,7 @@ function lisp_make_number(repr) {
 
 var lisp_symbols_table = {};
 
-var Lisp_Symbol = lisp_make_class(Lisp_Object, "Lisp_Symbol");
+var Lisp_Symbol = lisp_make_system_class(Lisp_Object, "Lisp_Symbol");
 
 /* A symbol evaluates to the value of the binding it names. */
 Lisp_Symbol.lisp_eval = function(symbol, env) {
@@ -327,7 +340,7 @@ function lisp_symbol_native_string(symbol) {
 
 /**** Pairs ****/
 
-var Lisp_Pair = lisp_make_class(Lisp_Object, "Lisp_Pair");
+var Lisp_Pair = lisp_make_system_class(Lisp_Object, "Lisp_Pair");
 
 /* A pair evaluates to the combination of its operator (car) with its
    operand tree (cdr). */
@@ -394,7 +407,7 @@ function lisp_list() {
 
 /**** Environments ****/
 
-var Lisp_Environment = lisp_make_class(Lisp_Object, "Lisp_Environment");
+var Lisp_Environment = lisp_make_system_class(Lisp_Object, "Lisp_Environment");
 
 /* Creates a new empty environment with an optional parent environment. */
 function lisp_make_environment(parent) {
@@ -443,7 +456,7 @@ function lisp_environment_lookup(env, name) {
 
 /**** Booleans ****/
 
-var Lisp_Boolean = lisp_make_class(Lisp_Object, "Lisp_Boolean");
+var Lisp_Boolean = lisp_make_system_class(Lisp_Object, "Lisp_Boolean");
 
 var lisp_t = lisp_make_instance(Lisp_Boolean);
 
@@ -451,7 +464,7 @@ var lisp_f = lisp_make_instance(Lisp_Boolean);
 
 /**** Nil ****/
 
-var Lisp_Nil = lisp_make_class(Lisp_Object, "Lisp_Nil");
+var Lisp_Nil = lisp_make_system_class(Lisp_Object, "Lisp_Nil");
 
 var lisp_nil = lisp_make_instance(Lisp_Nil);
 
@@ -464,7 +477,7 @@ Lisp_Nil.lisp_match = function(nil, otree, env) {
 
 /**** Ignore ****/
 
-var Lisp_Ignore = lisp_make_class(Lisp_Object, "Lisp_Ignore");
+var Lisp_Ignore = lisp_make_system_class(Lisp_Object, "Lisp_Ignore");
 
 var lisp_ignore = lisp_make_instance(Lisp_Ignore);
 
@@ -474,13 +487,13 @@ Lisp_Ignore.lisp_match = function(ignore, otree, env) {
 
 /**** Inert ****/
 
-var Lisp_Inert = lisp_make_class(Lisp_Object, "Lisp_Inert");
+var Lisp_Inert = lisp_make_system_class(Lisp_Object, "Lisp_Inert");
 
 var lisp_inert = lisp_make_instance(Lisp_Inert);
 
 /**** Combiners ****/
 
-var Lisp_Combiner = lisp_make_class(Lisp_Object, "Lisp_Combiner");
+var Lisp_Combiner = lisp_make_system_class(Lisp_Object, "Lisp_Combiner");
 
 /*** Compound Combiners ***/
 
@@ -488,7 +501,7 @@ var Lisp_Combiner = lisp_make_class(Lisp_Object, "Lisp_Combiner");
    parameter tree, a formal lexical environment parameter, a body, and
    a static lexical environment link. */
 
-var Lisp_Compound_Combiner = lisp_make_class(Lisp_Combiner, "Lisp_Compound_Combiner");
+var Lisp_Compound_Combiner = lisp_make_system_class(Lisp_Combiner, "Lisp_Compound_Combiner");
 
 function lisp_make_combiner(ptree, envformal, body, senv) {
     lisp_assert(lisp_is_instance(ptree, Lisp_Object));
@@ -521,7 +534,7 @@ Lisp_Compound_Combiner.lisp_combine = function(cmb, otree, env) {
    be a list, and all elements are evaluated to yield an arguments
    list, which is passed to the underlying combiner. */
 
-var Lisp_Wrapper = lisp_make_class(Lisp_Combiner, "Lisp_Wrapper");
+var Lisp_Wrapper = lisp_make_system_class(Lisp_Combiner, "Lisp_Wrapper");
 
 /* Creates a new wrapper around an underlying combiner. */
 function lisp_wrap(underlying) {
@@ -556,7 +569,7 @@ function lisp_eval_args(otree, env) {
 
    ($vau ptree envformal body) -> combiner */
 
-var Lisp_Vau = lisp_make_class(Lisp_Combiner, "Lisp_Vau");
+var Lisp_Vau = lisp_make_system_class(Lisp_Combiner, "Lisp_Vau");
 
 Lisp_Vau.lisp_combine = function(cmb, otree, env) {
     var ptree = lisp_elt(otree, 0);
@@ -572,7 +585,7 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
 
    ($define! name value) -> value */
 
-var Lisp_Define = lisp_make_class(Lisp_Combiner, "Lisp_Define");
+var Lisp_Define = lisp_make_system_class(Lisp_Combiner, "Lisp_Define");
 
 Lisp_Define.lisp_combine = function(cmb, otree, env) {
     var name = lisp_elt(otree, 0);
@@ -587,7 +600,7 @@ Lisp_Define.lisp_combine = function(cmb, otree, env) {
 
    ($if test consequent alternative) -> result */
 
-var Lisp_If = lisp_make_class(Lisp_Combiner, "Lisp_If");
+var Lisp_If = lisp_make_system_class(Lisp_Combiner, "Lisp_If");
 
 Lisp_If.lisp_combine = function(cmb, otree, env) {
     var test = lisp_elt(otree, 0);
@@ -609,7 +622,7 @@ Lisp_If.lisp_combine = function(cmb, otree, env) {
 
    ($loop body) -> | */
 
-var Lisp_Loop = lisp_make_class(Lisp_Combiner, "Lisp_Loop");
+var Lisp_Loop = lisp_make_system_class(Lisp_Combiner, "Lisp_Loop");
 
 Lisp_Loop.lisp_combine = function(cmb, otree, env) {
     var body = lisp_elt(otree, 0);
@@ -625,7 +638,7 @@ Lisp_Loop.lisp_combine = function(cmb, otree, env) {
 
    ($unwind-protect protected cleanup) -> result */
 
-var Lisp_Unwind_Protect = lisp_make_class(Lisp_Combiner, "Lisp_Unwind_Protect");
+var Lisp_Unwind_Protect = lisp_make_system_class(Lisp_Combiner, "Lisp_Unwind_Protect");
 
 Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
     var protect = lisp_elt(otree, 0);
@@ -645,7 +658,7 @@ Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
 
    (throw tag value) -> | */
 
-var Lisp_Throw = lisp_make_class(Lisp_Combiner, "Lisp_Throw");
+var Lisp_Throw = lisp_make_system_class(Lisp_Combiner, "Lisp_Throw");
 
 Lisp_Throw.lisp_combine = function(cmb, otree, env) {
     var tag = lisp_elt(otree, 0);
@@ -668,7 +681,7 @@ function Lisp_Control_Exception(tag, value) {
 
    ($catch tag body) -> result */
 
-var Lisp_Catch = lisp_make_class(Lisp_Combiner, "Lisp_Catch");
+var Lisp_Catch = lisp_make_system_class(Lisp_Combiner, "Lisp_Catch");
 
 Lisp_Catch.lisp_combine = function(cmb, otree, env) {
     var tag = lisp_elt(otree, 0);
@@ -689,7 +702,7 @@ Lisp_Catch.lisp_combine = function(cmb, otree, env) {
 
 /* A native combiner contains a native function. */
 
-var Lisp_Native_Combiner = lisp_make_class(Lisp_Combiner, "Lisp_Native_Combiner");
+var Lisp_Native_Combiner = lisp_make_system_class(Lisp_Combiner, "Lisp_Native_Combiner");
 
 Lisp_Native_Combiner.lisp_combine = function(cmb, otree, env) {
     var args = lisp_cons_list_to_array(otree);
@@ -745,8 +758,8 @@ function lisp_lib_null(obj) {
     return lisp_lib_eq(obj, lisp_nil);
 }
 
-function lisp_lib_make_class(sc) {
-    return lisp_make_class(sc, "Lisp_UFO");
+function lisp_lib_make_class(sups) {
+    return lisp_make_user_class(lisp_cons_list_to_array(sups), "Lisp_User_Class");
 }
 
 function lisp_lib_make_instance(c) {

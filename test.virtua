@@ -56,7 +56,7 @@
 (assert (instance? Class Class))
 
 (scope
-   (define c (make-class Object))
+   (define c (make-class (list Object)))
    (define obj (make-instance c))
    (assert (instance? obj c))
    (assert (not? (instance? obj String))))
