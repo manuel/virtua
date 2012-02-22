@@ -199,9 +199,9 @@ function lisp_put_method(c, sel, cmb) {
     c[sel] = cmb;
 }
 
-/* Puts a native function as implementation for a message selector. */
+/* Puts a wrapped native function as implementation for a message selector. */
 function lisp_put_native_method(c, sel, native_fun) {
-    lisp_put_method(c, sel, lisp_make_wrapped_native(native_fun));
+    lisp_put_method(c, sel, lisp_make_native(native_fun));
 }
 
 /**** Strings ****/
@@ -794,11 +794,11 @@ lisp_put_native_method(Lisp_String, "=", function(obj, other) {
     return lisp_truth(obj.lisp_native_string === other.lisp_native_string);
 });
 
-lisp_put_method(Lisp_Pair, "=", lisp_make_native(function(obj, other) {
+lisp_put_native_method(Lisp_Pair, "=", function(obj, other) {
     if (!lisp_is_instance(other, Lisp_Pair)) return lisp_f;
     if (lisp_equal(lisp_car(obj), lisp_car(other)) == lisp_f) return lisp_f;
     else return lisp_equal(lisp_cdr(obj), lisp_cdr(other));
-}));
+});
 
 /*** Printing ***/
 
@@ -826,19 +826,15 @@ lisp_put_native_method(Lisp_Boolean, "to-string", function(obj) {
     return obj === lisp_t ? lisp_make_string("#t") : lisp_make_string("#f");
 });
 
-// Have to use non-wrapped natives for pairs or symbols or we get an
-// extra-evaluation.  Need to look into how to handle this more
-// elegantly.
-
-lisp_put_method(Lisp_Pair, "to-string", lisp_make_native(function(obj) {
+lisp_put_native_method(Lisp_Pair, "to-string", function(obj) {
     var car_string = lisp_string_native_string(lisp_to_string(lisp_car(obj)));
     var cdr_string = lisp_string_native_string(lisp_to_string(lisp_cdr(obj)));
     return lisp_make_string("(" + car_string + " . " + cdr_string + ")");
-}));
+});
 
-lisp_put_method(Lisp_Symbol, "to-string", lisp_make_native(function(obj) {
+lisp_put_native_method(Lisp_Symbol, "to-string", function(obj) {
     return lisp_symbol_name(obj);
-}));
+});
 
 lisp_put_native_method(Lisp_Nil, "to-string", function(obj) {
     return lisp_make_string("()");
