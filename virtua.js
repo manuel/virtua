@@ -29,7 +29,7 @@ function lisp_make_kernel_environment() {
     lisp_environment_put_comfy(env, "#inert", lisp_inert);
     /* Objects */
     lisp_environment_put_comfy(env, "make-class",
-                               lisp_make_wrapped_native(lisp_lib_make_class, 1, 1));
+                               lisp_make_native(lisp_lib_make_class, 1, 1));
     lisp_environment_put_comfy(env, "make-instance",
                                lisp_make_wrapped_native(lisp_lib_make_instance, 1, 1));
     lisp_environment_put_comfy(env, "class-of", lisp_make_wrapped_native(lisp_class_of, 1, 1));
