@@ -28,7 +28,7 @@ function lisp_eval_forms(forms, do_print) {
         } catch(e) {
             result = lisp_make_string("ERROR: " + e);
         }
-        if (do_print && typeof(result !== lisp_inert)) {
+        if (do_print && (result !== lisp_inert)) {
             lisp_repl_print(result);
         }
     }
