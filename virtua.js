@@ -190,7 +190,7 @@ function lisp_message_not_understood_error(obj, sel) {
 function lisp_put_method(c, sel, cmb) {
     lisp_assert(lisp_is_instance(c, Lisp_Class));
     lisp_assert(lisp_is_native_string(sel));
-    lisp_assert(lisp_is_instance(cmb, Lisp_Object));
+    lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
     c[sel] = cmb;
 }
 
