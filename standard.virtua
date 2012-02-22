@@ -68,6 +68,29 @@
                 (make-environment)
                 (car opt)))))
 
+(define or?
+   (lambda (a b) (if a #t (if b #t #f))))
+
+(define map-list
+   (lambda (fn list)
+      (if (null? list)
+          ()
+          (cons (fn (car list))
+                (map-list fn (cdr list))))))
+
+(define map-2-lists
+   (lambda (fn list-1 list-2)
+      (if (or? (null? list-1) (null? list-2))
+          ()
+          (cons (fn (car list-1) (car list-2))
+                (map-2-lists fn (cdr list-1) (cdr list-2))))))
+
+(define let
+   (vau (bindings . body) env
+      (eval (cons (list* lambda (map-list car bindings) body)
+                  (map-list cadr bindings))
+            env)))
+
 (define cond
    (vau clauses env
       (define aux
@@ -86,16 +109,35 @@
 ;;;; Virtua-specific forms
 
 (define assert
-  (lambda (that)
-    (if (not? that)
-        (error "Assertion failed.")
-        #void)))
+   (lambda (that)
+      (if (not? that)
+          (error "Assertion failed.")
+          #void)))
 
 ;; Execute body expressions in throwaway environment.
 (define scope
-  (vau body _
-    ((lambda ()
-       (eval (list* begin body) (get-current-environment))))))
+   (vau body _
+      ((lambda ()
+          (eval (list* begin body) (get-current-environment))))))
+
+(define define-class
+   (vau (name (superclass)) env
+      (eval (list define name (list make-class superclass)) env)))
+
+
+(define define-constructor
+   (vau (name class slots) env
+      (eval (list define name (list lambda slots
+                                 (list construct-with-slots class slots)))
+            env)))
+
+(define construct-with-slots
+   (vau (class slots) env
+      (let ((obj (make-instance (eval class env))))
+         (map-list (lambda (slot)
+                      (set-slot! obj (to-string slot) (eval slot env)))
+                   slots)
+         obj)))
 
 
 ;; Permission is hereby granted, free of charge, to any person
