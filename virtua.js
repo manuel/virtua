@@ -52,7 +52,6 @@ function lisp_make_kernel_environment() {
     lisp_environment_put_comfy(env, "Wrapper", Lisp_Wrapper);
     lisp_environment_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
     /* Misc */
-    lisp_environment_put_comfy(env, "assert", lisp_wrap_native(lisp_lib_assert, 1, 1));
     lisp_environment_put_comfy(env, "error", lisp_wrap_native(lisp_lib_error, 1, 1));
     return env;
 };
@@ -740,11 +739,6 @@ function lisp_lib_set_slot(obj, slot, value) {
     lisp_assert(lisp_is_instance(value, Lisp_Object));
     obj[lisp_symbol_native_string(slot)] = value;
     return value;
-}
-
-function lisp_lib_assert(lisp_bool) {
-    lisp_assert(lisp_native_truth(lisp_bool));
-    return lisp_inert;
 }
 
 function lisp_lib_error(string) {
