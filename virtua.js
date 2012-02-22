@@ -827,9 +827,15 @@ lisp_put_native_method(Lisp_Boolean, "to-string", function(obj) {
 });
 
 lisp_put_native_method(Lisp_Pair, "to-string", function(obj) {
-    var car_string = lisp_string_native_string(lisp_to_string(lisp_car(obj)));
-    var cdr_string = lisp_string_native_string(lisp_to_string(lisp_cdr(obj)));
-    return lisp_make_string("(" + car_string + " . " + cdr_string + ")");
+    var car = lisp_car(obj);
+    var cdr = lisp_cdr(obj);
+    var car_string = lisp_string_native_string(lisp_to_string(car));
+    if (cdr !== lisp_nil) {
+        var cdr_string = lisp_string_native_string(lisp_to_string(cdr));
+        return lisp_make_string("(" + car_string + " . " + cdr_string + ")");
+    } else {
+        return lisp_make_string("(" + car_string + ")");
+    }
 });
 
 lisp_put_native_method(Lisp_Symbol, "to-string", function(obj) {
