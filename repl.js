@@ -14,6 +14,8 @@ function lisp_repl_onsubmit() {
         lisp_repl_print(lisp_make_string("\u25B6 " + input));
         lisp_eval_forms(lisp_parse(input), true);
         lisp_repl_line().value = "";
+    } catch(e) {
+        lisp_repl_print(lisp_make_string("ERROR: " + e));
     } finally {
         return false;
     }
@@ -22,14 +24,13 @@ function lisp_repl_onsubmit() {
 function lisp_eval_forms(forms, do_print) {
     for (var i = 0; i < forms.length; i++) {
         var form = forms[i];
-        var result;
         try {
-            result = lisp_eval(form, lisp_repl_env);
+            var result = lisp_eval(form, lisp_repl_env);
+            if (do_print && (result !== lisp_inert)) {
+                lisp_repl_print(result);
+            }
         } catch(e) {
-            result = lisp_make_string("ERROR: " + e);
-        }
-        if (do_print && (result !== lisp_inert)) {
-            lisp_repl_print(result);
+            lisp_repl_print(lisp_make_string("ERROR: " + e));
         }
     }
 }
