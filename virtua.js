@@ -37,6 +37,8 @@ function lisp_make_kernel_environment() {
     lisp_environment_put_comfy(env, "set-slot!", lisp_wrap_native(lisp_lib_set_slot, 3, 3));
     lisp_environment_put_comfy(env, "put-method!", lisp_wrap_native(lisp_lib_put_method, 3, 3));
     lisp_environment_put_comfy(env, "send", lisp_wrap_native(lisp_lib_send, 3, 3));
+    lisp_environment_put_comfy(env, "=", lisp_wrap_native(lisp_equal, 2, 2));
+    lisp_environment_put_comfy(env, "to-string", lisp_wrap_native(lisp_to_string, 1, 1));
     /* Classes */
     lisp_environment_put_comfy(env, "Object", Lisp_Object);
     lisp_environment_put_comfy(env, "Class", Lisp_Class);
@@ -348,6 +350,10 @@ function lisp_cons_list_to_array(c) {
         c = lisp_cdr(c);
     }
     return res;
+}
+
+function lisp_list() {
+    return lisp_array_to_cons_list(Array.prototype.slice.call(arguments));
 }
 
 /**** Environments ****/
@@ -764,6 +770,32 @@ function lisp_lib_error(string) {
     lisp_assert(lisp_is_instance(string, Lisp_String));
     lisp_simple_error(lisp_string_native_string(string));
 }
+
+/*** Equality ***/
+
+function lisp_equal(a, b) {
+    return lisp_send(a, "=", lisp_list(b));
+}
+
+lisp_put_native_method(Lisp_Object, "=", function(obj, other) {
+    return lisp_lib_eq(obj, other);
+});
+
+lisp_put_native_method(Lisp_Number, "=", function(obj, other) {
+    lisp_assert(lisp_is_instance(other, Lisp_Number));
+    return lisp_truth(jsnums.equals(obj.lisp_number, other.lisp_number));
+});
+
+lisp_put_native_method(Lisp_String, "=", function(obj, other) {
+    lisp_assert(lisp_is_instance(other, Lisp_String));
+    return lisp_truth(obj.lisp_native_string === other.lisp_native_string);
+});
+
+lisp_put_method(Lisp_Pair, "=", lisp_make_native(function(obj, other) {
+    lisp_assert(lisp_is_instance(other, Lisp_Pair));
+    if (lisp_equal(lisp_car(obj), lisp_car(other)) == lisp_f) return lisp_f;
+    else return lisp_equal(lisp_cdr(obj), lisp_cdr(other));
+}));
 
 /*** Printing ***/
 
