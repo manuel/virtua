@@ -730,8 +730,8 @@ function lisp_lib_is_subclass(c, sc) {
 
 function lisp_lib_get_slot(obj, slot) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
-    lisp_assert(lisp_is_instance(slot, Lisp_Symbol));
-    var value = obj[lisp_symbol_native_string(slot)];
+    lisp_assert(lisp_is_instance(slot, Lisp_String));
+    var value = obj[lisp_string_native_string(slot)];
     if (typeof(value) !== "undefined") {
         return value;
     } else {
@@ -741,16 +741,16 @@ function lisp_lib_get_slot(obj, slot) {
 
 function lisp_lib_has_slot(obj, slot) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
-    lisp_assert(lisp_is_instance(slot, Lisp_Symbol));
-    var value = obj[lisp_symbol_native_string(slot)];
+    lisp_assert(lisp_is_instance(slot, Lisp_String));
+    var value = obj[lisp_string_native_string(slot)];
     return lisp_truth(typeof(value) !== "undefined");
 }
 
 function lisp_lib_set_slot(obj, slot, value) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
-    lisp_assert(lisp_is_instance(slot, Lisp_Symbol));
+    lisp_assert(lisp_is_instance(slot, Lisp_String));
     lisp_assert(lisp_is_instance(value, Lisp_Object));
-    obj[lisp_symbol_native_string(slot)] = value;
+    obj[lisp_string_native_string(slot)] = value;
     return value;
 }
 
