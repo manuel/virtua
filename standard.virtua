@@ -1,102 +1,100 @@
 ;; Virtua standard language.                        -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
-;;;; These are taken from John Shutt's SINK and the R-1RK.
+($define! def $define!)
+(def if $if)
+(def void #inert)
+(def _ #ignore)
+(def vau $vau)
 
-($define! $quote ($vau (form) #ignore form))
+(def quote (vau (form) _ form))
 
-($define! $sequence
-   ((wrap ($vau ($seq2) #ignore
-             ($seq2
-                ($define! $aux
-                   ($vau (head . tail) env
-                      ($if (null? tail)
-                           (eval head env)
-                           ($seq2
-                              (eval head env)
-                              (eval (cons $aux tail) env)))))
-                ($vau body env
-                   ($if (null? body)
-                        #inert
-                        (eval (cons $aux body) env))))))
+;;;; These are adapted from John Shutt's SINK and the R-1RK.
 
-      ($vau (first second) env
-         ((wrap ($vau #ignore #ignore (eval second env)))
+(def do
+   ((wrap (vau (seq2) _
+             (seq2
+                (def aux
+                   (vau (head . tail) env
+                      (if (null? tail)
+                          (eval head env)
+                          (seq2
+                             (eval head env)
+                             (eval (cons aux tail) env)))))
+                (vau body env
+                   (if (null? body)
+                       void
+                       (eval (cons aux body) env))))))
+      (vau (first second) env
+         ((wrap (vau _ _ (eval second env)))
           (eval first env)))))
 
-($define! list (wrap ($vau x #ignore x)))
+(def list (wrap (vau x _ x)))
 
-($define! list*
-   (wrap ($vau args #ignore
-            ($sequence
-               ($define! aux
-                  (wrap ($vau ((head . tail)) #ignore
-                           ($if (null? tail)
-                                head
-                                (cons head (aux tail))))))
+(def list*
+   (wrap (vau args _
+            (do
+               (def aux
+                  (wrap (vau ((head . tail)) _
+                           (if (null? tail)
+                               head
+                               (cons head (aux tail))))))
                (aux args)))))
 
-($define! $vau
-   ((wrap ($vau ($vau) #ignore
-             ($vau (formals eformal . body) env
-                (eval (list $vau formals eformal
-                           (cons $sequence body))
+(def vau
+   ((wrap (vau (vau) _
+             (vau (formals eformal . body) env
+                (eval (list vau formals eformal
+                            (cons do body))
                       env))))
-      $vau))
+      vau))
 
-($define! $lambda
-   ($vau (formals . body) env
-      (wrap (eval (list* $vau formals #ignore body)
+(def lambda
+   (vau (formals . body) env
+      (wrap (eval (list* vau formals _ body)
                   env))))
 
-($define! caar ($lambda (((x . #ignore) . #ignore)) x))
-($define! cdar ($lambda (((#ignore . x) . #ignore)) x))
-($define! cadr ($lambda ((#ignore . (x . #ignore))) x))
-($define! cddr ($lambda ((#ignore . (#ignore . x))) x))
+(def caar (lambda (((x . _) . _)) x))
+(def cdar (lambda (((_ . x) . _)) x))
+(def cadr (lambda ((_ . (x . _))) x))
+(def cddr (lambda ((_ . (_ . x))) x))
 
-($define! apply
-   ($lambda (appv arg . opt)
+(def apply
+   (lambda (appv arg . opt)
       (eval (cons (unwrap appv) arg)
-            ($if (null? opt)
-                 (make-environment)
-                 (car opt)))))
+            (if (null? opt)
+                (make-environment)
+                (car opt)))))
 
-($define! $cond
-   ($vau clauses env
+(def cond
+   (vau clauses env
+      (def aux
+         (lambda ((test . body) . clauses)
+            (if (eval test env)
+                (apply (wrap $sequence) body env)
+                (apply (wrap $cond) clauses env))))
+      (if (null? clauses)
+          void
+          (apply aux clauses))))
 
-      ($define! aux
-         ($lambda ((test . body) . clauses)
-            ($if (eval test env)
-                 (apply (wrap $sequence) body env)
-                 (apply (wrap $cond) clauses env))))
+(def not? (lambda (x) (if x #f #t)))
 
-      ($if (null? clauses)
-           #inert
-           (apply aux clauses))))
-
-($define! not? ($lambda (x) ($if x #f #t)))
-
-($define! get-current-environment (wrap ($vau () e e)))
+(def get-current-environment (wrap (vau () e e)))
 
 ;;;; Virtua-specific forms
 
-($define! assert
-   ($lambda (that)
-      ($if (not? that)
-         (error "Assertion failed.")
-         #inert)))
+(def assert
+   (lambda (that)
+      (if (not? that)
+          (error "Assertion failed.")
+          void)))
 
 ;; Execute body expressions in throwaway environment.
-($define! $scope
-   ($vau body #ignore
-      (($lambda ()
-          (eval (list* $sequence body) (get-current-environment))))))
+(def scope
+   (vau body _
+      ((lambda ()
+          (eval (list* do body) (get-current-environment))))))
 
-;;;; Object System
-
-($define! $define-class!
-   ($vau (name (superclass) . slots) env
-       #f))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
