@@ -1,19 +1,15 @@
 ;; Test suite for Virtua kernel language.           -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
-;;;; $vau
-($scope
-   ($define! foo ($quote foo))
-   (assert (eq? foo (($vau (x) #ignore x) foo))))
-
-(assert (eq? (($vau #ignore env env))
+;;;; vau
+(assert (eq? ((vau _ env env))
              (get-current-environment)))
 
-;;;; $define!
+;;;; def
 
-($scope
-   ($define! foo ($quote foo))
-   (assert (eq? foo ($define! x foo))))
+(scope
+   (assert (eq? (' foo)
+                (define x (' foo)))))
 
 
 (assert (instance? 19222222222222222222222222222222222222222222222222222 Number))
@@ -32,30 +28,23 @@
 (assert (instance? Object Class))
 (assert (instance? Class Class))
 
-($scope
-   ($define! c (make-class Object))
-   ($define! obj (make-instance c))
+(scope
+   (define c (make-class Object))
+   (define obj (make-instance c))
    (assert (instance? obj c))
    (assert (not? (instance? obj String))))
 
 ;;;; Control Flow
 
 ;; break out of loop
-($scope
-   ($define! tag ($quote tag))
-   ($define! value ($quote value))
-   (assert (eq? value ($catch tag
-                         ($loop
-                             (throw tag value))))))
+(assert (eq? (' value) (catch (' tag)
+                          (loop
+                             (throw (' tag) (' value))))))
 
-;; nested $catch's
-($scope
-   ($define! outer-tag ($quote outer-tag))
-   ($define! inner-tag ($quote inner-tag))
-   ($define! value ($quote value))
-   (assert (eq? value ($catch outer-tag
-                         ($catch inner-tag
-                            (throw outer-tag value))))))
+;; nested catch's
+(assert (eq? (' value) (catch (' outer-tag)
+                          (catch (' inner-tag)
+                             (throw (' outer-tag) (' value))))))
 
 
 ;; Permission is hereby granted, free of charge, to any person

@@ -1,20 +1,22 @@
 ;; Virtua standard language.                        -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
-($define! def $define!)
-(def if $if)
-(def void #inert)
-(def _ #ignore)
-(def vau $vau)
+($define! define $define!)
+(define if $if)
+(define #void #inert)
+(define _ #ignore)
+(define vau $vau)
+(define catch $catch)
+(define loop $loop)
 
-(def quote (vau (form) _ form))
+(define ' (vau (form) _ form))
 
 ;;;; These are adapted from John Shutt's SINK and the R-1RK.
 
-(def do
+(define begin
    ((wrap (vau (seq2) _
              (seq2
-                (def aux
+                (define aux
                    (vau (head . tail) env
                       (if (null? tail)
                           (eval head env)
@@ -23,77 +25,77 @@
                              (eval (cons aux tail) env)))))
                 (vau body env
                    (if (null? body)
-                       void
+                       #void
                        (eval (cons aux body) env))))))
       (vau (first second) env
          ((wrap (vau _ _ (eval second env)))
           (eval first env)))))
 
-(def list (wrap (vau x _ x)))
+(define list (wrap (vau x _ x)))
 
-(def list*
+(define list*
    (wrap (vau args _
-            (do
-               (def aux
+            (begin
+               (define aux
                   (wrap (vau ((head . tail)) _
                            (if (null? tail)
                                head
                                (cons head (aux tail))))))
                (aux args)))))
 
-(def vau
+(define vau
    ((wrap (vau (vau) _
              (vau (formals eformal . body) env
                 (eval (list vau formals eformal
-                            (cons do body))
+                            (cons begin body))
                       env))))
       vau))
 
-(def lambda
+(define lambda
    (vau (formals . body) env
       (wrap (eval (list* vau formals _ body)
                   env))))
 
-(def caar (lambda (((x . _) . _)) x))
-(def cdar (lambda (((_ . x) . _)) x))
-(def cadr (lambda ((_ . (x . _))) x))
-(def cddr (lambda ((_ . (_ . x))) x))
+(define caar (lambda (((x . _) . _)) x))
+(define cdar (lambda (((_ . x) . _)) x))
+(define cadr (lambda ((_ . (x . _))) x))
+(define cddr (lambda ((_ . (_ . x))) x))
 
-(def apply
+(define apply
    (lambda (appv arg . opt)
       (eval (cons (unwrap appv) arg)
             (if (null? opt)
                 (make-environment)
                 (car opt)))))
 
-(def cond
+(define cond
    (vau clauses env
-      (def aux
+      (define aux
          (lambda ((test . body) . clauses)
             (if (eval test env)
-                (apply (wrap $sequence) body env)
-                (apply (wrap $cond) clauses env))))
+                (apply (wrap begin) body env)
+                (apply (wrap cond) clauses env))))
       (if (null? clauses)
-          void
+          #void
           (apply aux clauses))))
 
-(def not? (lambda (x) (if x #f #t)))
+(define not? (lambda (x) (if x #f #t)))
 
-(def get-current-environment (wrap (vau () e e)))
+(define get-current-environment (wrap (vau () e e)))
 
 ;;;; Virtua-specific forms
 
-(def assert
-   (lambda (that)
-      (if (not? that)
-          (error "Assertion failed.")
-          void)))
+(define assert
+  (lambda (that)
+    (if (not? that)
+        (error "Assertion failed.")
+        #void)))
 
 ;; Execute body expressions in throwaway environment.
-(def scope
-   (vau body _
-      ((lambda ()
-          (eval (list* do body) (get-current-environment))))))
+(define scope
+  (vau body _
+    ((lambda ()
+       (eval (list* begin body) (get-current-environment))))))
 
 
 ;; Permission is hereby granted, free of charge, to any person

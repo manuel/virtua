@@ -851,9 +851,9 @@ var lisp_expression_syntax =
 
 var lisp_identifier_special_char =
     choice(// R5RS sans "."
-           "-", "&", "!", ":", "=", ">","<", "%", "+", "?", "/", "*", "#",
+            "-", "&", "!", ":", "=", ">","<", "%", "+", "?", "/", "*", "#",
            // Additional
-           "$", "_");
+           "$", "_", "'");
 
 var lisp_identifier_syntax =
     action(join_action(repeat1(choice(range("a", "z"),
