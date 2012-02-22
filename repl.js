@@ -11,9 +11,12 @@ function lisp_repl_onload() {
 function lisp_repl_onsubmit() {
     try {
         var input = lisp_repl_line().value;
-        lisp_repl_print(lisp_make_string("\u25B6 " + input));
-        lisp_eval_forms(lisp_parse(input), true);
-        lisp_repl_line().value = "";
+        var forms = lisp_parse(input);
+        if (forms.length > 0) {
+            lisp_repl_print(lisp_make_string("\u25B6 " + input));
+            lisp_eval_forms(forms, true);
+            lisp_repl_line().value = "";
+        }
     } catch(e) {
         lisp_repl_print(lisp_make_string("ERROR: " + e));
     } finally {
