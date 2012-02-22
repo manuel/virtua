@@ -87,7 +87,9 @@ function lisp_send(obj, sel, otree) {
 
 /**** Object System ****/
 
-function Lisp_Object_Prototype() {}
+function Lisp_Object_Prototype() {
+    this.lisp_methods = {};
+}
 
 Lisp_Object_Prototype.prototype.lisp_eval = function(obj, env) {
     return obj;
@@ -106,7 +108,7 @@ Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     lisp_assert(lisp_is_native_string(sel));
     lisp_assert(lisp_is_instance(otree, Lisp_Object));
     var c = lisp_class_of(obj);
-    var method = c[sel];
+    var method = lisp_lookup_method(c, sel);
     if (typeof(method) !== "undefined") {
         return lisp_combine(method, lisp_cons(obj, otree), lisp_make_environment());
     } else {
@@ -114,19 +116,43 @@ Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     }
 };
 
+function lisp_lookup_method(c, sel) {
+    /* Temporary hack: simply disallow inheriting a method from more
+       than one class.  Will be replaced by Touretzky's inferential
+       distance ordering. */
+    var method = c.lisp_methods[sel];
+    if (typeof(method) !== "undefined") {
+        return method;
+    } else {
+        var sups = lisp_superclasses_of(c);
+        for (var i = 0; i < sups.length; i++) {
+            var sup_method = lisp_lookup_method(sups[i], sel);
+            if (typeof(method) !== "undefined") {
+                lisp_simple_error("More than one method found.");
+            } else {
+                method = sup_method;
+            }
+        }
+        return method;
+    }
+}
+
 /* Bootstrap the class hierarchy. */
 
 /* The root of the class hierarchy. */
 var Lisp_Object = new Lisp_Object_Prototype();
 
 /* The class of classes. */
-function Lisp_Class_Prototype() {}
+function Lisp_Class_Prototype() {
+    this.lisp_methods = {};
+}
 Lisp_Class_Prototype.prototype = Lisp_Object;
 var Lisp_Class = new Lisp_Class_Prototype();
 
 Lisp_Object.lisp_isa = Lisp_Class;
 Lisp_Class.lisp_isa = Lisp_Class;
-Lisp_Class.lisp_superclass = Lisp_Object;
+Lisp_Object.lisp_superclasses = [];
+Lisp_Class.lisp_superclasses = [Lisp_Object];
 
 /* Creates a new class with the given superclass and native name (for debuggability). */
 function lisp_make_class(sc, native_name) {
@@ -136,7 +162,8 @@ function lisp_make_class(sc, native_name) {
     f.prototype = sc;
     var c = new f();
     c.lisp_isa = Lisp_Class;
-    c.lisp_superclass = sc;
+    c.lisp_superclasses = [sc];
+    c.lisp_methods = {};
     return c;
 }
 
@@ -169,18 +196,24 @@ function lisp_is_subclass(c, sc) {
     if (c === sc) {
         return true;
     } else {
-        var csc = lisp_superclass_of(c);
-        if (typeof(csc) !== "undefined") {
-            return lisp_is_subclass(csc, sc);
-        } else {
-            return false;
+        var sups = lisp_superclasses_of(c);
+        for (var i = 0; i < sups.length; i++) {
+            if (lisp_is_subclass(sups[i], sc)) {
+                return true;
+            }
         }
+        return false;
     }
 }
 
-/* Returns the superclass of a class, or undefined for the root class. */
-function lisp_superclass_of(c) {
-    return c.lisp_superclass;
+/* Returns the superclasses of a class, which are empty for the root class. */
+function lisp_superclasses_of(c) {
+    var sups = c.lisp_superclasses;
+    if (typeof(sups) !== "undefined") {
+        return sups;
+    } else {
+        lisp_simple_error("Not a class.");
+    }
 }
 
 function lisp_not_an_object_error(obj) {
@@ -196,7 +229,7 @@ function lisp_put_method(c, sel, cmb) {
     lisp_assert(lisp_is_instance(c, Lisp_Class));
     lisp_assert(lisp_is_native_string(sel));
     lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
-    c[sel] = cmb;
+    c.lisp_methods[sel] = cmb;
 }
 
 /* Puts a wrapped native function as implementation for a message selector. */
