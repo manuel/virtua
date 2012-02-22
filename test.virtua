@@ -24,6 +24,12 @@
 (assert (not? (= "foo" "bar")))
 (assert (= (cons 1 2) (cons 1 2)))
 (assert (not? (= (cons 2 1) (cons 1 2))))
+(assert (not? (= "foo" #t)))
+(assert (not? (= #t "foo")))
+(assert (not? (= "foo" 12)))
+(assert (not? (= 12 "foo")))
+(assert (not? (= (cons 1 2) 12)))
+(assert (not? (= 12 (cons 1 2))))
 
 (assert (instance? 19222222222222222222222222222222222222222222222222222 Number))
 (assert (instance? -19222222222222222222222222222222222222222222222222222 Number))

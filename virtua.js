@@ -782,17 +782,17 @@ lisp_put_native_method(Lisp_Object, "=", function(obj, other) {
 });
 
 lisp_put_native_method(Lisp_Number, "=", function(obj, other) {
-    lisp_assert(lisp_is_instance(other, Lisp_Number));
+    if (!lisp_is_instance(other, Lisp_Number)) return lisp_f;
     return lisp_truth(jsnums.equals(obj.lisp_number, other.lisp_number));
 });
 
 lisp_put_native_method(Lisp_String, "=", function(obj, other) {
-    lisp_assert(lisp_is_instance(other, Lisp_String));
+    if (!lisp_is_instance(other, Lisp_String)) return lisp_f;
     return lisp_truth(obj.lisp_native_string === other.lisp_native_string);
 });
 
 lisp_put_method(Lisp_Pair, "=", lisp_make_native(function(obj, other) {
-    lisp_assert(lisp_is_instance(other, Lisp_Pair));
+    if (!lisp_is_instance(other, Lisp_Pair)) return lisp_f;
     if (lisp_equal(lisp_car(obj), lisp_car(other)) == lisp_f) return lisp_f;
     else return lisp_equal(lisp_cdr(obj), lisp_cdr(other));
 }));
