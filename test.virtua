@@ -31,6 +31,14 @@
 (assert (not? (= (cons 1 2) 12)))
 (assert (not? (= 12 (cons 1 2))))
 
+;;;; Printing
+
+(assert (= "#t" (to-string #t)))
+(assert (= "#f" (to-string #f)))
+(assert (= "()" (to-string ())))
+(assert (= "1" (to-string 1)))
+(assert (= "1.22" (to-string 1.22)))
+
 (assert (instance? 19222222222222222222222222222222222222222222222222222 Number))
 (assert (instance? -19222222222222222222222222222222222222222222222222222 Number))
 (assert (instance? -19222222222222222222222222222222222222222222222222222.5 Number))
