@@ -852,6 +852,11 @@ lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
     return lisp_make_string("#[combiner]");
 });
 
+lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
+    // hack
+    return lisp_make_string("#[compound-combiner " + lisp_string_native_string(lisp_to_string(obj.lisp_ptree)) + " " + lisp_string_native_string(lisp_to_string(obj.lisp_envformal)) + " " + lisp_string_native_string(lisp_to_string(obj.lisp_body)) + "]");
+});
+
 /**** Errors & Assertions ****/
 
 function lisp_simple_error(msg) {
