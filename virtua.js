@@ -858,9 +858,14 @@ lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
     return lisp_make_string("#[combiner]");
 });
 
-lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
+lisp_put_native_method(Lisp_Compound_Combiner, "to-string", function(obj) {
     // hack
-    return lisp_make_string("#[compound-combiner " + lisp_string_native_string(lisp_to_string(obj.lisp_ptree)) + " " + lisp_string_native_string(lisp_to_string(obj.lisp_envformal)) + " " + lisp_string_native_string(lisp_to_string(obj.lisp_body)) + "]");
+    return lisp_make_string("#[compound-combiner " + lisp_string_native_string(lisp_to_string(obj.lisp_ptree)) + "]");
+});
+
+lisp_put_native_method(Lisp_Wrapper, "to-string", function(obj) {
+    // hack
+    return lisp_make_string("#[wrapper " + lisp_string_native_string(lisp_to_string(obj.lisp_underlying)) + "]");
 });
 
 /**** Errors & Assertions ****/
