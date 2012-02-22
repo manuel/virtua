@@ -1000,7 +1000,7 @@ var lisp_expression_syntax =
                       lisp_line_comment_syntax));
 
 var lisp_program_syntax =
-    whitespace(repeat1(lisp_expression_syntax));
+    whitespace(repeat0(lisp_expression_syntax));
 
 
 // Permission is hereby granted, free of charge, to any person
