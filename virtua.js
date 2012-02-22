@@ -907,26 +907,18 @@ function lisp_number_syntax_action(ast) {
     return lisp_make_number(sign + integral_digits + fractional_digits);
 }
 
-var lisp_nil_syntax =
-    action("()", lisp_nil_syntax_action);
-
-function lisp_nil_syntax_action(ast) {
-    return lisp_nil;
+function lisp_make_constant_syntax(string, constant) {
+    return action(string, function(ast) { return constant; });
 }
+
+var lisp_nil_syntax = 
+    lisp_make_constant_syntax("()", lisp_nil);
 
 var lisp_ignore_syntax =
-    action("#ignore", lisp_ignore_syntax_action);
-
-function lisp_ignore_syntax_action(ast) {
-    return lisp_ignore;
-}
+    lisp_make_constant_syntax("#ignore", lisp_ignore);
 
 var lisp_inert_syntax =
-    action("#inert", lisp_inert_syntax_action);
-
-function lisp_inert_syntax_action(ast) {
-    return lisp_inert;
-}
+    lisp_make_constant_syntax("#inert", lisp_inert);
 
 var lisp_dot_syntax =
     action(wsequence(".", lisp_expression_syntax),
