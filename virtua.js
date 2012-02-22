@@ -730,7 +730,7 @@ function lisp_lib_has_slot(obj, slot) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(slot, Lisp_Symbol));
     var value = obj[lisp_symbol_native_string(slot)];
-    return (typeof(value) !== "undefined");
+    return lisp_truth(typeof(value) !== "undefined");
 }
 
 function lisp_lib_set_slot(obj, slot, value) {
