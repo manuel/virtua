@@ -56,10 +56,22 @@
 (assert (instance? Class Class))
 
 (scope
-   (define c (make-class (list Object)))
-   (define obj (make-instance c))
-   (assert (instance? obj c))
+   (define-class C (Object))
+   (define obj (make-instance C))
+   (assert (instance? obj C))
    (assert (not? (instance? obj String))))
+
+(scope
+   (define-class A (Object))
+   (define-class B (Object))
+   (define-class C (A B))
+   (assert (subclass? A Object))
+   (assert (subclass? C A))
+   (assert (subclass? C B))
+   (assert (not? (subclass? A B)))
+   (assert (not? (subclass? A C)))
+   (assert (not? (subclass? B A)))
+   (assert (not? (subclass? B C))))
 
 ;;;; Control Flow
 

@@ -109,9 +109,9 @@
 ;;;; Virtua-specific forms
 
 (define assert
-   (lambda (that)
-      (if (not? that)
-          (error "Assertion failed.")
+   (vau (that) env
+      (if (not? (eval that env))
+          (error (to-string that))
           #void)))
 
 ;; Execute body expressions in throwaway environment.
@@ -121,8 +121,12 @@
           (eval (list* begin body) (get-current-environment))))))
 
 (define define-class
-   (vau (name (superclass)) env
-      (eval (list define name (list make-class superclass)) env)))
+   (vau (name superclasses) env
+      (eval (list define name
+               (list make-class (map-list (lambda (class-name)
+                                             (eval class-name env))
+                                          superclasses)))
+            env)))
 
 
 (define define-constructor
