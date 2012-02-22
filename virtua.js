@@ -35,6 +35,8 @@ function lisp_make_kernel_environment() {
     lisp_environment_put_comfy(env, "get-slot", lisp_wrap_native(lisp_lib_get_slot, 2, 2));
     lisp_environment_put_comfy(env, "has-slot?", lisp_wrap_native(lisp_lib_has_slot, 2, 2));
     lisp_environment_put_comfy(env, "set-slot!", lisp_wrap_native(lisp_lib_set_slot, 3, 3));
+    lisp_environment_put_comfy(env, "put-method!", lisp_wrap_native(lisp_lib_put_method, 3, 3));
+    lisp_environment_put_comfy(env, "send", lisp_wrap_native(lisp_lib_send, 3, 3));
     /* Classes */
     lisp_environment_put_comfy(env, "Object", Lisp_Object);
     lisp_environment_put_comfy(env, "Class", Lisp_Class);
@@ -95,6 +97,9 @@ Lisp_Object_Prototype.prototype.lisp_match = function(obj, otree, env) {
 };
 
 Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
+    lisp_assert(lisp_is_instance(obj, Lisp_Object));
+    lisp_assert(lisp_is_native_string(sel));
+    lisp_assert(lisp_is_instance(otree, Lisp_Object));
     var c = lisp_class_of(obj);
     var method = c[sel];
     if (typeof(method) !== "undefined") {
@@ -187,12 +192,11 @@ function lisp_put_method(c, sel, cmb) {
     lisp_assert(lisp_is_native_string(sel));
     lisp_assert(lisp_is_instance(cmb, Lisp_Object));
     c[sel] = cmb;
-    return lisp_inert;
 }
 
 /* Puts a native function as implementation for a message selector. */
 function lisp_put_native_method(c, sel, native_fun) {
-    return lisp_put_method(c, sel, lisp_wrap_native(native_fun));
+    lisp_put_method(c, sel, lisp_wrap_native(native_fun));
 }
 
 /**** Strings ****/
@@ -739,6 +743,21 @@ function lisp_lib_set_slot(obj, slot, value) {
     lisp_assert(lisp_is_instance(value, Lisp_Object));
     obj[lisp_symbol_native_string(slot)] = value;
     return value;
+}
+
+function lisp_lib_put_method(c, sel, cmb) {
+    lisp_assert(lisp_is_instance(c, Lisp_Class));
+    lisp_assert(lisp_is_instance(sel, Lisp_String));
+    lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
+    lisp_put_method(c, lisp_string_native_string(sel), cmb);
+    return sel;
+}
+
+function lisp_lib_send(obj, sel, otree) {
+    lisp_assert(lisp_is_instance(obj, Lisp_Object));
+    lisp_assert(lisp_is_instance(sel, Lisp_String));
+    lisp_assert(lisp_is_instance(otree, Lisp_Object));
+    return lisp_send(obj, lisp_string_native_string(sel), otree);
 }
 
 function lisp_lib_error(string) {
