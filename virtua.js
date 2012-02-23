@@ -207,6 +207,10 @@ function lisp_make_system_class(proto, native_name) {
 /* User classes always have Object as prototype, regardless of what
    classes they inherit from. */
 function lisp_make_user_class(sups, native_name) {
+    lisp_assert(lisp_is_native_array(sups));
+    if (sups.length === 0) {
+        sups = [Lisp_Object];
+    }
     return lisp_make_class(Lisp_Object, sups, native_name);
 }
 
