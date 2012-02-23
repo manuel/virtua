@@ -223,13 +223,13 @@ function lisp_make_instance(c) {
 /* Returns the class of the object. */
 function lisp_class_of(obj) {
     if (typeof(obj) === "undefined") {
-        lisp_not_an_object_error(obj);
+        lisp_simple_error("Segmentation violation.");
     }
     var c = obj.lisp_isa;
     if (typeof(c) !== "undefined") {
         return c;
     } else {
-        lisp_not_an_object_error(obj);
+        lisp_simple_error("Not an object.");
     }
 }
 
@@ -261,10 +261,6 @@ function lisp_superclasses_of(c) {
     } else {
         lisp_simple_error("Not a class.");
     }
-}
-
-function lisp_not_an_object_error(obj) {
-    lisp_simple_error("Not an object.");
 }
 
 function lisp_message_not_understood_error(obj, sel) {
