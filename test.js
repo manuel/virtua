@@ -7,7 +7,7 @@
     lisp_assert(lisp_is_instance(Lisp_Class, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_String, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Symbol, Lisp_Class));
-    lisp_assert(lisp_is_instance(Lisp_Environment, Lisp_Class));
+    lisp_assert(lisp_is_instance(Lisp_Env, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Pair, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Boolean, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Nil, Lisp_Class));
@@ -41,15 +41,15 @@
     lisp_assert(lisp_car(cons) === string_foo);
     lisp_assert(lisp_cdr(cons) === symbol_foo);
 
-    var env = lisp_make_environment();
-    lisp_assert(lisp_environment_put(env, symbol_foo, string_foo) === string_foo);
-    lisp_assert(lisp_environment_lookup(env, symbol_foo) === string_foo);
-    var child_env = lisp_make_environment(env);
-    lisp_assert(lisp_environment_lookup(child_env, symbol_foo) === string_foo);
+    var env = lisp_make_env();
+    lisp_assert(lisp_env_put(env, symbol_foo, string_foo) === string_foo);
+    lisp_assert(lisp_env_lookup(env, symbol_foo) === string_foo);
+    var child_env = lisp_make_env(env);
+    lisp_assert(lisp_env_lookup(child_env, symbol_foo) === string_foo);
     var string_bar = lisp_make_string("bar");
-    lisp_environment_put(child_env, symbol_foo, string_bar);
-    lisp_assert(lisp_environment_lookup(child_env, symbol_foo) === string_bar);
-    lisp_assert(lisp_environment_lookup(env, symbol_foo) === string_foo);
+    lisp_env_put(child_env, symbol_foo, string_bar);
+    lisp_assert(lisp_env_lookup(child_env, symbol_foo) === string_bar);
+    lisp_assert(lisp_env_lookup(env, symbol_foo) === string_foo);
 
     lisp_assert(lisp_eval(symbol_foo, env) === string_foo);
     lisp_assert(lisp_eval(symbol_foo, child_env) === string_bar);

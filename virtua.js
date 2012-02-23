@@ -3,63 +3,60 @@
 
 /**** Kernel Environment ****/
 
-function lisp_make_kernel_environment() {
-    var env = lisp_make_environment();
+function lisp_make_kernel_env() {
+    var env = lisp_make_env();
     /* Basics */
-    lisp_environment_put_comfy(env, "$vau", lisp_make_instance(Lisp_Vau));
-    lisp_environment_put_comfy(env, "$define!", lisp_make_instance(Lisp_Define));
-    lisp_environment_put_comfy(env, "$if", lisp_make_instance(Lisp_If));
-    lisp_environment_put_comfy(env, "$loop", lisp_make_instance(Lisp_Loop));
-    lisp_environment_put_comfy(env, "$unwind-protect", lisp_make_instance(Lisp_Unwind_Protect));
-    lisp_environment_put_comfy(env, "$catch", lisp_make_instance(Lisp_Catch));
-    lisp_environment_put_comfy(env, "throw", lisp_make_instance(Lisp_Throw));
-    lisp_environment_put_comfy(env, "eq?", lisp_make_wrapped_native(lisp_lib_eq, 2, 2));
-    lisp_environment_put_comfy(env, "make-environment",
-                               lisp_make_wrapped_native(lisp_make_environment, 0, 1));
-    lisp_environment_put_comfy(env, "eval", lisp_make_wrapped_native(lisp_eval, 2, 2));
-    lisp_environment_put_comfy(env, "wrap", lisp_make_wrapped_native(lisp_wrap, 1, 1));
-    lisp_environment_put_comfy(env, "unwrap", lisp_make_wrapped_native(lisp_unwrap, 1, 1));
-    lisp_environment_put_comfy(env, "cons", lisp_make_wrapped_native(lisp_cons, 2, 2));
-    lisp_environment_put_comfy(env, "car", lisp_make_wrapped_native(lisp_car, 1, 1));
-    lisp_environment_put_comfy(env, "cdr", lisp_make_wrapped_native(lisp_cdr, 1, 1));
-    lisp_environment_put_comfy(env, "null?", lisp_make_wrapped_native(lisp_lib_null, 1, 1));
-    lisp_environment_put_comfy(env, "#t", lisp_t);
-    lisp_environment_put_comfy(env, "#f", lisp_f);
-    lisp_environment_put_comfy(env, "#ignore", lisp_ignore);
-    lisp_environment_put_comfy(env, "#inert", lisp_inert);
+    lisp_env_put_comfy(env, "$vau", lisp_make_instance(Lisp_Vau));
+    lisp_env_put_comfy(env, "$define!", lisp_make_instance(Lisp_Define));
+    lisp_env_put_comfy(env, "$if", lisp_make_instance(Lisp_If));
+    lisp_env_put_comfy(env, "$loop", lisp_make_instance(Lisp_Loop));
+    lisp_env_put_comfy(env, "$unwind-protect", lisp_make_instance(Lisp_Unwind_Protect));
+    lisp_env_put_comfy(env, "$catch", lisp_make_instance(Lisp_Catch));
+    lisp_env_put_comfy(env, "throw", lisp_make_instance(Lisp_Throw));
+    lisp_env_put_comfy(env, "eq?", lisp_make_wrapped_native(lisp_lib_eq, 2, 2));
+    lisp_env_put_comfy(env, "make-environment", lisp_make_wrapped_native(lisp_make_env, 0, 1));
+    lisp_env_put_comfy(env, "eval", lisp_make_wrapped_native(lisp_eval, 2, 2));
+    lisp_env_put_comfy(env, "wrap", lisp_make_wrapped_native(lisp_wrap, 1, 1));
+    lisp_env_put_comfy(env, "unwrap", lisp_make_wrapped_native(lisp_unwrap, 1, 1));
+    lisp_env_put_comfy(env, "cons", lisp_make_wrapped_native(lisp_cons, 2, 2));
+    lisp_env_put_comfy(env, "car", lisp_make_wrapped_native(lisp_car, 1, 1));
+    lisp_env_put_comfy(env, "cdr", lisp_make_wrapped_native(lisp_cdr, 1, 1));
+    lisp_env_put_comfy(env, "null?", lisp_make_wrapped_native(lisp_lib_null, 1, 1));
+    lisp_env_put_comfy(env, "#t", lisp_t);
+    lisp_env_put_comfy(env, "#f", lisp_f);
+    lisp_env_put_comfy(env, "#ignore", lisp_ignore);
+    lisp_env_put_comfy(env, "#inert", lisp_inert);
     /* Objects */
-    lisp_environment_put_comfy(env, "make-class",
-                               lisp_make_native(lisp_lib_make_class, 1, 1));
-    lisp_environment_put_comfy(env, "make-instance",
-                               lisp_make_wrapped_native(lisp_lib_make_instance, 1, 1));
-    lisp_environment_put_comfy(env, "class-of", lisp_make_wrapped_native(lisp_class_of, 1, 1));
-    lisp_environment_put_comfy(env, "instance?", lisp_make_wrapped_native(lisp_lib_is_instance, 2, 2));
-    lisp_environment_put_comfy(env, "subclass?", lisp_make_wrapped_native(lisp_lib_is_subclass, 2, 2));
-    lisp_environment_put_comfy(env, "get-slot", lisp_make_wrapped_native(lisp_lib_get_slot, 2, 2));
-    lisp_environment_put_comfy(env, "has-slot?", lisp_make_wrapped_native(lisp_lib_has_slot, 2, 2));
-    lisp_environment_put_comfy(env, "set-slot!", lisp_make_wrapped_native(lisp_lib_set_slot, 3, 3));
-    lisp_environment_put_comfy(env, "put-method!", lisp_make_wrapped_native(lisp_lib_put_method, 3, 3));
-    lisp_environment_put_comfy(env, "send", lisp_make_wrapped_native(lisp_lib_send, 3, 3));
-    lisp_environment_put_comfy(env, "=", lisp_make_wrapped_native(lisp_equal, 2, 2));
-    lisp_environment_put_comfy(env, "to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
+    lisp_env_put_comfy(env, "make-class", lisp_make_native(lisp_lib_make_class, 1, 1));
+    lisp_env_put_comfy(env, "make-instance", lisp_make_wrapped_native(lisp_lib_make_instance, 1, 1));
+    lisp_env_put_comfy(env, "class-of", lisp_make_wrapped_native(lisp_class_of, 1, 1));
+    lisp_env_put_comfy(env, "instance?", lisp_make_wrapped_native(lisp_lib_is_instance, 2, 2));
+    lisp_env_put_comfy(env, "subclass?", lisp_make_wrapped_native(lisp_lib_is_subclass, 2, 2));
+    lisp_env_put_comfy(env, "get-slot", lisp_make_wrapped_native(lisp_lib_get_slot, 2, 2));
+    lisp_env_put_comfy(env, "has-slot?", lisp_make_wrapped_native(lisp_lib_has_slot, 2, 2));
+    lisp_env_put_comfy(env, "set-slot!", lisp_make_wrapped_native(lisp_lib_set_slot, 3, 3));
+    lisp_env_put_comfy(env, "put-method!", lisp_make_wrapped_native(lisp_lib_put_method, 3, 3));
+    lisp_env_put_comfy(env, "send", lisp_make_wrapped_native(lisp_lib_send, 3, 3));
+    lisp_env_put_comfy(env, "=", lisp_make_wrapped_native(lisp_equal, 2, 2));
+    lisp_env_put_comfy(env, "to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
     /* Classes */
-    lisp_environment_put_comfy(env, "Object", Lisp_Object);
-    lisp_environment_put_comfy(env, "Class", Lisp_Class);
-    lisp_environment_put_comfy(env, "Environment", Lisp_Environment);
-    lisp_environment_put_comfy(env, "Symbol", Lisp_Symbol);
-    lisp_environment_put_comfy(env, "Pair", Lisp_Pair);
-    lisp_environment_put_comfy(env, "Nil", Lisp_Nil);
-    lisp_environment_put_comfy(env, "String", Lisp_String);
-    lisp_environment_put_comfy(env, "Number", Lisp_Number);
-    lisp_environment_put_comfy(env, "Boolean", Lisp_Boolean);
-    lisp_environment_put_comfy(env, "Ignore", Lisp_Ignore);
-    lisp_environment_put_comfy(env, "Inert", Lisp_Inert);
-    lisp_environment_put_comfy(env, "Combiner", Lisp_Combiner);
-    lisp_environment_put_comfy(env, "Compound-Combiner", Lisp_Compound_Combiner);
-    lisp_environment_put_comfy(env, "Wrapper", Lisp_Wrapper);
-    lisp_environment_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
+    lisp_env_put_comfy(env, "Object", Lisp_Object);
+    lisp_env_put_comfy(env, "Class", Lisp_Class);
+    lisp_env_put_comfy(env, "Environment", Lisp_Env);
+    lisp_env_put_comfy(env, "Symbol", Lisp_Symbol);
+    lisp_env_put_comfy(env, "Pair", Lisp_Pair);
+    lisp_env_put_comfy(env, "Nil", Lisp_Nil);
+    lisp_env_put_comfy(env, "String", Lisp_String);
+    lisp_env_put_comfy(env, "Number", Lisp_Number);
+    lisp_env_put_comfy(env, "Boolean", Lisp_Boolean);
+    lisp_env_put_comfy(env, "Ignore", Lisp_Ignore);
+    lisp_env_put_comfy(env, "Inert", Lisp_Inert);
+    lisp_env_put_comfy(env, "Combiner", Lisp_Combiner);
+    lisp_env_put_comfy(env, "Compound-Combiner", Lisp_Compound_Combiner);
+    lisp_env_put_comfy(env, "Wrapper", Lisp_Wrapper);
+    lisp_env_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
     /* Misc */
-    lisp_environment_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
+    lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
     return env;
 };
 
@@ -110,7 +107,7 @@ Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     var c = lisp_class_of(obj);
     var method = lisp_lookup_method(c, sel);
     if (typeof(method) !== "undefined") {
-        return lisp_combine(method, lisp_cons(obj, otree), lisp_make_environment());
+        return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env());
     } else {
         lisp_message_not_understood_error(obj, sel);
     }
@@ -293,12 +290,12 @@ var Lisp_Symbol = lisp_make_system_class(Lisp_Object, "Lisp_Symbol");
 
 /* A symbol evaluates to the value of the binding it names. */
 Lisp_Symbol.lisp_eval = function(symbol, env) {
-    return lisp_environment_lookup(env, symbol);
+    return lisp_env_lookup(env, symbol);
 };
 
 /* A symbol matches anything and binds the operand in the environment. */
 Lisp_Symbol.lisp_match = function(symbol, otree, env) {
-    lisp_environment_put(env, symbol, otree);
+    lisp_env_put(env, symbol, otree);
 };
 
 /* Use lisp_intern. */
@@ -407,29 +404,29 @@ function lisp_list() {
 
 /**** Environments ****/
 
-var Lisp_Environment = lisp_make_system_class(Lisp_Object, "Lisp_Environment");
+var Lisp_Env = lisp_make_system_class(Lisp_Object, "Lisp_Env");
 
 /* Creates a new empty environment with an optional parent environment. */
-function lisp_make_environment(parent) {
+function lisp_make_env(parent) {
     if (typeof(parent) !== "undefined") {
-        lisp_assert(lisp_is_instance(parent, Lisp_Environment));
+        lisp_assert(lisp_is_instance(parent, Lisp_Env));
         function E() {};
         E.prototype = parent.lisp_bindings;
-        return lisp_make_environment_with_bindings(new E());
+        return lisp_make_env_with_bindings(new E());
     } else {
-        return lisp_make_environment_with_bindings({});        
+        return lisp_make_env_with_bindings({});        
     }
 }
 
-function lisp_make_environment_with_bindings(bindings) {
-    var env = lisp_make_instance(Lisp_Environment);
+function lisp_make_env_with_bindings(bindings) {
+    var env = lisp_make_instance(Lisp_Env);
     env.lisp_bindings = bindings;
     return env;
 }
 
 /* Updates or creates a binding from a name to a value. */
-function lisp_environment_put(env, name, value) {
-    lisp_assert(lisp_is_instance(env, Lisp_Environment));
+function lisp_env_put(env, name, value) {
+    lisp_assert(lisp_is_instance(env, Lisp_Env));
     lisp_assert(lisp_is_instance(name, Lisp_Symbol));
     lisp_assert(lisp_is_instance(value, Lisp_Object));
     env.lisp_bindings[lisp_symbol_native_string(name)] = value;
@@ -437,13 +434,13 @@ function lisp_environment_put(env, name, value) {
 }
 
 /* Updates or creates a binding from a native string name to a value. */
-function lisp_environment_put_comfy(env, native_string, value) {
-    return lisp_environment_put(env, lisp_intern_comfy(native_string), value);
+function lisp_env_put_comfy(env, native_string, value) {
+    return lisp_env_put(env, lisp_intern_comfy(native_string), value);
 }
 
 /* Looks up the value of a name in the environment and its ancestors. */
-function lisp_environment_lookup(env, name) {
-    lisp_assert(lisp_is_instance(env, Lisp_Environment));
+function lisp_env_lookup(env, name) {
+    lisp_assert(lisp_is_instance(env, Lisp_Env));
     lisp_assert(lisp_is_instance(name, Lisp_Symbol));
     var native_name = lisp_symbol_native_string(name);
     var value = env.lisp_bindings[native_name];
@@ -507,7 +504,7 @@ function lisp_make_combiner(ptree, envformal, body, senv) {
     lisp_assert(lisp_is_instance(ptree, Lisp_Object));
     lisp_assert(lisp_is_instance(envformal, Lisp_Object));
     lisp_assert(lisp_is_instance(body, Lisp_Object));
-    lisp_assert(lisp_is_instance(senv, Lisp_Environment));
+    lisp_assert(lisp_is_instance(senv, Lisp_Env));
     var cmb = lisp_make_instance(Lisp_Compound_Combiner);
     cmb.lisp_ptree = ptree;
     cmb.lisp_envformal = envformal;
@@ -519,7 +516,7 @@ function lisp_make_combiner(ptree, envformal, body, senv) {
 Lisp_Compound_Combiner.lisp_combine = function(cmb, otree, env) {
     // Match parameter tree against operand tree in new child
     // environment of static environment
-    var xenv = lisp_make_environment(cmb.lisp_senv);
+    var xenv = lisp_make_env(cmb.lisp_senv);
     lisp_match(cmb.lisp_ptree, otree, xenv);
     // Pass in dynamic environment unless ignored
     lisp_match(cmb.lisp_envformal, env, xenv);
@@ -590,7 +587,7 @@ var Lisp_Define = lisp_make_system_class(Lisp_Combiner, "Lisp_Define");
 Lisp_Define.lisp_combine = function(cmb, otree, env) {
     var name = lisp_elt(otree, 0);
     var value = lisp_elt(otree, 1);
-    return lisp_environment_put(env, name, lisp_eval(value, env));
+    return lisp_env_put(env, name, lisp_eval(value, env));
 };
 
 /*** $if ***/
