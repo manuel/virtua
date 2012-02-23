@@ -60,7 +60,32 @@ function lisp_make_kernel_env() {
     return env;
 };
 
-/**** Core Behaviors ****/
+/**** Object System ****/
+
+/*
+   Virtua has a class-based object system with multiple inheritance.
+   Every object has a .lisp_isa property that points to its class, and
+   every class (which is also an object, and thus has .lisp_isa
+   pointing to Lisp_Class) has a .lisp_superclasses property
+   containing its superclasses.  IOW, JavaScript's prototype system is
+   ignored.
+
+   Except: in order to simplify the bootstrap process, the object
+   system is implemented in a slightly schizophrenic way.  Core
+   behaviors of objects (how they evaluate themselves, how they act as
+   pattern-matching left-hand sides, how they act when used as
+   combiner, and how they respond to messages), are implemented via
+   JavaScript's prototype system.  System classes (all classes that
+   are not user-defined) redundantly use JavaScript's prototype chain
+   in parallel to the inheritance hierarchy.  This works because
+   user-defined classes are not expected to be able to override these
+   core behaviors.
+
+   In short: classes inherit their core behaviors from their
+   prototype, and their methods from their superclasses.
+*/
+
+/*** Core Behaviors ***/
 
 /* Evaluates the object in the environment. */
 function lisp_eval(obj, env) {
@@ -82,24 +107,33 @@ function lisp_send(obj, sel, otree) {
     return lisp_class_of(obj).lisp_send(obj, sel, otree);
 }
 
-/**** Object System ****/
+/*** Prototypes ***/
+
+/* This is the prototype of the root class of the hierarchy, Object.
+   It defines core behaviors that are then overridden in some cases by
+   system classes (e.g. symbols and pairs override their evaluation
+   behavior). */
 
 function Lisp_Object_Prototype() {
     this.lisp_methods = {};
 }
 
+/* By default, objects evaluate to themselves. */
 Lisp_Object_Prototype.prototype.lisp_eval = function(obj, env) {
     return obj;
 };
 
+/* By default, objects cannot be used as combiners. */
 Lisp_Object_Prototype.prototype.lisp_combine = function(obj, otree, env) {
     lisp_simple_error("Not a combiner.");
 };
 
+/* By default, objects cannot be used as left-hand side patterns. */
 Lisp_Object_Prototype.prototype.lisp_match = function(obj, otree, env) {
     lisp_simple_error("Not a pattern.");
 };
 
+/* All objects use the same method lookup algorithm. */
 Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_native_string(sel));
@@ -165,10 +199,13 @@ function lisp_make_class(proto, sups, native_name) {
     return c;
 }
 
+/* System classes may use a different prototype than Object. */
 function lisp_make_system_class(proto, native_name) {
     return lisp_make_class(proto, [proto], native_name);
 }
 
+/* User classes always have Object as prototype, regardless of what
+   classes they inherit from. */
 function lisp_make_user_class(sups, native_name) {
     return lisp_make_class(Lisp_Object, sups, native_name);
 }
