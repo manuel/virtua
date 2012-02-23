@@ -614,17 +614,18 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
 
 /*** $define! ***/
 
-/* Updates the binding of a name to a value in the current
+/* Matches a parameter tree against an operand tree in the current
    environment.
 
-   ($define! name value) -> value */
+   ($define! ptree otree) -> #inert */
 
 var Lisp_Define = lisp_make_system_class(Lisp_Combiner, "Lisp_Define");
 
 Lisp_Define.lisp_combine = function(cmb, otree, env) {
-    var name = lisp_elt(otree, 0);
-    var value = lisp_elt(otree, 1);
-    return lisp_env_put(env, name, lisp_eval(value, env));
+    var lhs = lisp_elt(otree, 0);
+    var rhs = lisp_elt(otree, 1);
+    lisp_match(lhs, lisp_eval(rhs, env), env);
+    return lisp_inert;
 };
 
 /*** $if ***/

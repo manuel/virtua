@@ -5,12 +5,6 @@
 (assert (eq? ((vau _ env env))
              (get-current-environment)))
 
-;;;; def
-
-(scope
-   (assert (eq? (' foo)
-                (define x (' foo)))))
-
 ;;;; Equality
 
 (assert (= #t #t))
