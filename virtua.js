@@ -77,7 +77,7 @@ function lisp_make_kernel_env() {
    combiner, and how they respond to messages), are implemented via
    JavaScript's prototype system.  System classes (all classes that
    are not user-defined) redundantly use JavaScript's prototype chain
-   in parallel to the inheritance hierarchy.  This works because
+   in parallel to the inheritance heterarchy.  This works because
    user-defined classes are not expected to be able to override these
    core behaviors.
 
@@ -109,7 +109,7 @@ function lisp_send(obj, sel, otree) {
 
 /*** Prototypes ***/
 
-/* This is the prototype of the root class of the hierarchy, Object.
+/* This is the prototype of the root class of the heterarchy, Object.
    It defines core behaviors that are then overridden in some cases by
    system classes (e.g. symbols and pairs override their evaluation
    behavior). */
@@ -168,9 +168,9 @@ function lisp_lookup_method(c, sel) {
     }
 }
 
-/* Bootstrap the class hierarchy. */
+/* Bootstrap the class heterarchy. */
 
-/* The root of the class hierarchy. */
+/* The root of the class heterarchy. */
 var Lisp_Object = new Lisp_Object_Prototype();
 
 /* The class of classes. */
