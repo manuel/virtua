@@ -29,7 +29,7 @@ function lisp_eval_forms(forms, do_print) {
         var form = forms[i];
         try {
             var result = lisp_eval(form, lisp_repl_env);
-            if (do_print && (result !== lisp_inert)) {
+            if (do_print) {
                 lisp_repl_print(result);
             }
         } catch(e) {
