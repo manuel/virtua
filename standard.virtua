@@ -124,9 +124,8 @@
 
 ;; Execute body expressions in throwaway environment.
 (define scope
-   (vau body _
-      ((lambda ()
-          (eval (list* begin body) (get-current-environment))))))
+   (vau body env
+      (eval (list* let () body) env)))
 
 (define define-class
    (vau (name superclasses) env

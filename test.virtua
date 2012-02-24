@@ -1,6 +1,17 @@
 ;; Test suite for Virtua kernel language.           -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
+;;;; scope
+(assert (= 1 (scope
+                (define x 1)
+                (assert (= x 1))
+                (scope
+                   (assert (= x 1))
+                   (define x 2)
+                   (assert (= x 2)))
+                (assert (= x 1))
+                x)))
+
 ;;;; vau
 (assert (eq? ((vau _ env env))
              (get-current-environment)))
