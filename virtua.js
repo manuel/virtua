@@ -537,7 +537,7 @@ var Lisp_Combiner = lisp_make_system_class(Lisp_Object, "Lisp_Combiner");
 
 var Lisp_Compound_Combiner = lisp_make_system_class(Lisp_Combiner, "Lisp_Compound_Combiner");
 
-function lisp_make_combiner(ptree, envformal, body, senv) {
+function lisp_make_compound_combiner(ptree, envformal, body, senv) {
     lisp_assert(lisp_is_instance(ptree, Lisp_Object));
     lisp_assert(lisp_is_instance(envformal, Lisp_Object));
     lisp_assert(lisp_is_instance(body, Lisp_Object));
@@ -609,7 +609,7 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
     var ptree = lisp_elt(otree, 0);
     var envformal = lisp_elt(otree, 1);
     var body = lisp_elt(otree, 2);
-    return lisp_make_combiner(ptree, envformal, body, env);
+    return lisp_make_compound_combiner(ptree, envformal, body, env);
 };
 
 /*** $define! ***/
