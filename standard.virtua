@@ -136,9 +136,7 @@
 (define define-class
    (vau (name superclasses) env
       (eval (list define name
-               (list make-class (map-list (lambda (class-name)
-                                             (eval class-name env))
-                                          superclasses)))
+               (list make-class (list* list superclasses)))
             env)))
 
 
