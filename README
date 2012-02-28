@@ -1,6 +1,9 @@
-KERNEL OR BUST
+Virtua is an experimental interpreter written in JavaScript for a
+Lisp-like language with lexically-scoped fexprs, as in John Shutt's
+Kernel language.
 
-serve directory over HTTP and browse index.html
+To try it out, visit REPL at http://manuel.github.com/virtua/ or serve
+directory locally over HTTP and browse index.html
 
 e.g. 
 
