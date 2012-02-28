@@ -133,27 +133,32 @@
    (vau body env
       (eval (list* let () body) env)))
 
-(define define-class
-   (vau (name superclasses) env
-      (eval (list define name
-               (list make-class (list* list superclasses)))
-            env)))
+;;;; Object System
 
+(provide (define-class)
 
-(define define-constructor
-   (vau (name class slots) env
-      (eval (list define name (list lambda slots
-                                 (list construct-with-slots class slots)))
-            env)))
+   (define define-class
+      (vau (name superclasses) env
+         (eval (list define name
+                  (list make-class (list* list superclasses)))
+               env)))
 
-(define construct-with-slots
-   (vau (class slots) env
-      (let ((obj (make-instance (eval class env))))
-         (map-list (lambda (slot)
-                      (set-slot! obj (to-string slot) (eval slot env)))
-                   slots)
-         obj)))
+   (define define-constructor
+      (vau (name class slots) env
+         (eval (list define name
+                  (list lambda slots
+                     (list construct-with-slots class slots)))
+               env)))
 
+   (define construct-with-slots
+      (vau (class slots) env
+         (let ((obj (make-instance (eval class env))))
+            (map-list (lambda (slot)
+                         (set-slot! obj (to-string slot) (eval slot env)))
+                      slots)
+            obj)))
+
+)
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
