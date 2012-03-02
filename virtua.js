@@ -294,14 +294,6 @@ function lisp_string_native_string(string) {
     return string.lisp_native_string;
 }
 
-function lisp_is_native_string(native_string) {
-    return typeof(native_string.substring) !== "undefined";
-}
-
-function lisp_is_native_array(native_array) {
-    return (native_array instanceof Array);
-}
-
 /**** Numbers ****/
 
 var Lisp_Number = lisp_make_system_class(Lisp_Object, "Lisp_Number");
@@ -945,7 +937,7 @@ lisp_put_native_method(Lisp_Wrapper, "to-string", function(obj) {
     return lisp_make_string("#[wrapper " + lisp_string_native_string(lisp_to_string(obj.lisp_underlying)) + "]");
 });
 
-/**** Errors & Assertions ****/
+/**** Errors, Assertions, and Abominations ****/
 
 function lisp_simple_error(msg) {
     throw msg;
@@ -955,6 +947,14 @@ function lisp_assert(bool) {
     if (!bool) {
         lisp_simple_error("Assertion failed.");
     }
+}
+
+function lisp_is_native_string(native_string) {
+    return typeof(native_string.substring) !== "undefined";
+}
+
+function lisp_is_native_array(native_array) {
+    return (native_array instanceof Array);
 }
 
 /**** Parser ****/
