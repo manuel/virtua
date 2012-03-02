@@ -845,6 +845,10 @@ function lisp_lib_error(string) {
 
 /*** Equality ***/
 
+/* A note: native functions implementing these methods don't need to
+   be wrapped, because the generic functions already evaluate the
+   arguments. */
+
 function lisp_equal(a, b) {
     return lisp_send(a, "=", lisp_list(b));
 }
