@@ -121,6 +121,17 @@
           (error (to-string that))
           #void)))
 
+(define block
+   (vau (name . body) env
+      ((eval (list lambda (list name)
+                (list* catch name body))
+             env)
+       (cons () ()))))
+
+(define return-from
+   (lambda (name value)
+      (throw name value)))
+
 ;; Execute body expressions in throwaway environment.
 (define scope
    (vau body env

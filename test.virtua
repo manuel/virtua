@@ -103,6 +103,8 @@
                           (catch (' inner-tag)
                              (throw (' outer-tag) (' value))))))
 
+(assert (= 12 (block x 12)))
+(assert (= 13 (block x (return-from x 13) 12)))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
