@@ -135,7 +135,7 @@
 
 ;;;; Object System
 
-(provide (define-class)
+(provide (define-class define-generic define-method)
 
    (define define-class
       (vau (name superclasses) env
@@ -157,6 +157,18 @@
                          (set-slot! obj (to-string slot) (eval slot env)))
                       slots)
             obj)))
+
+   (define define-generic
+      (vau (name . _) env
+         (eval (list define name
+                  (lambda (self . otree) (send self (to-string name) otree)))
+               env)))
+
+   (define define-method
+      (vau (name ((rcv class) . rest) . body) env
+         (put-method! (eval class env)
+                      (to-string name)
+                      (eval (list* lambda (list* rcv rest) body) env))))
 
 )
 

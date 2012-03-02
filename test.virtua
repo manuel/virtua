@@ -57,6 +57,8 @@
 (assert (eq? #ignore #ignore))
 (assert (eq? #inert #inert))
 
+;;;; Object System
+
 (assert (instance? Object Class))
 (assert (instance? Class Class))
 
@@ -77,6 +79,12 @@
    (assert (not? (subclass? A C)))
    (assert (not? (subclass? B A)))
    (assert (not? (subclass? B C))))
+
+(scope
+   (define-class X (Object))
+   (define-generic quux)
+   (define-method quux ((self X)) "quux")
+   (assert (= (quux (make-instance X)) "quux")))
 
 ;;;; Control Flow
 
