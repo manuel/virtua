@@ -132,6 +132,10 @@
    (lambda (name value)
       (throw name value)))
 
+(define unwind-protect
+   (vau (protected . cleanup) env
+      (eval (list $unwind-protect protected (list* begin cleanup)) env)))
+
 ;; Execute body expressions in throwaway environment.
 (define scope
    (vau body env

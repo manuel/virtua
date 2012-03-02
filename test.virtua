@@ -106,6 +106,13 @@
 (assert (= 12 (block x 12)))
 (assert (= 13 (block x (return-from x 13) 12)))
 
+(assert (= 1 (unwind-protect 1)))
+(assert (= 1 (unwind-protect 1 2)))
+(assert (= 1 (unwind-protect 1 2 3)))
+(assert (= 1 (block x (unwind-protect (return-from x 1) 2 3))))
+(assert (= 3 (block x (unwind-protect 1 2 (return-from x 3)))))
+(assert (= 3 (block x (unwind-protect (return-from x 1) 2 (return-from x 3)))))
+
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
 ;; files (the "Software"), to deal in the Software without
