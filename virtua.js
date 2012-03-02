@@ -143,7 +143,7 @@ Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     if (typeof(method) !== "undefined") {
         return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env());
     } else {
-        lisp_message_not_understood_error(obj, sel);
+        lisp_simple_error("Message not understood:" + sel);
     }
 };
 
@@ -261,10 +261,6 @@ function lisp_superclasses_of(c) {
     } else {
         lisp_simple_error("Not a class.");
     }
-}
-
-function lisp_message_not_understood_error(obj, sel) {
-    lisp_simple_error("Message not understood.");
 }
 
 /* Puts a combiner as implementation for a message selector. */
