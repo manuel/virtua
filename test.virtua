@@ -82,9 +82,14 @@
 
 (scope
    (define-class X (Object))
-   (define-generic quux)
-   (define-method quux ((self X)) "quux")
-   (assert (= (quux (make-instance X)) "quux")))
+   (define-class Y (Object))
+   (define-class Z (Y))
+   (define-generic say)
+   (define-method say ((self X)) "x")
+   (define-method say ((self Y)) "y")
+   (assert (= (say (make-instance X)) "x"))
+   (assert (= (say (make-instance Y)) "y"))
+   (assert (= (say (make-instance Z)) "y")))
 
 ;;;; Control Flow
 
