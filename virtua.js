@@ -1008,10 +1008,7 @@ var lisp_expression_syntax =
     function(input) { return lisp_expression_syntax(input); }; // forward decl.
 
 var lisp_identifier_special_char =
-    choice(// R5RS sans "."
-            "-", "&", "!", ":", "=", ">","<", "%", "+", "?", "/", "*", "#",
-           // Additional
-           "$", "_", "'");
+    choice("-", "&", "!", ":", "=", ">","<", "%", "+", "?", "/", "*", "#", "$", "_", "'", ".");
 
 var lisp_identifier_syntax =
     action(join_action(repeat1(choice(range("a", "z"),
