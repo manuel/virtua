@@ -57,6 +57,8 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "Wrapper", Lisp_Wrapper);
     lisp_env_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
     /* Misc */
+    lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern), 1, 1);
+    lisp_env_put_comfy(env, "strcat", lisp_make_wrapped_native(lisp_lib_strcat), 2, 2);
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
     return env;
 };
@@ -769,6 +771,13 @@ function lisp_make_wrapped_native(native_fun, min_args, max_args) {
 
 /**** Library ****/
 
+/* Library functions are those that are exported to Lisp, but usually
+   not directly used in the implementation from JavaScript.  However,
+   there is no clear distinction between library and "non-library"
+   functions - there are also functions exported to Lisp that are not
+   marked as library.  It's important that all exported functions deal
+   with Lisp values (e.g. booleans), and not JavaScript values. */
+
 /*** Helpers ***/
 
 /* Returns a Lisp boolean for a native one. */
@@ -852,6 +861,12 @@ function lisp_lib_send(obj, sel, otree) {
 function lisp_lib_error(string) {
     lisp_assert(lisp_is_instance(string, Lisp_String));
     lisp_simple_error(lisp_string_native_string(string));
+}
+
+function lisp_lib_strcat(s1, s2) {
+    lisp_assert(lisp_is_instance(s1, Lisp_String));
+    lisp_assert(lisp_is_instance(s2, Lisp_String));
+    return lisp_make_string(lisp_string_native_string(s1) + lisp_string_native_string(s2));
 }
 
 /*** Equality ***/
