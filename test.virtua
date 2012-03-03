@@ -97,6 +97,15 @@
    (define-implementation Bar Foo)
    (assert (subclass? Bar Foo)))
 
+(scope
+   (define-class Foo (Object))
+   (define-slot the-slot)
+   (define-constructor make-foo Foo (the-slot))
+   (define the-foo (make-foo 12))
+   (assert (= (.the-slot the-foo) 12))
+   (set! (.the-slot the-foo) 13)
+   (assert (= (.the-slot the-foo) 13)))
+
 ;;;; Control Flow
 
 ;; break out of loop

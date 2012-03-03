@@ -156,6 +156,8 @@
 (provide (define-class
           define-interface
           define-implementation
+          define-constructor
+          define-slot
           define-generic
           define-method)
 
@@ -185,6 +187,16 @@
                     (set-slot! obj (to-string slot) (eval slot env)))
                  slots)
             obj)))
+
+   (define define-slot
+      (vau (name) env
+         (let* ((slot (to-string name))
+                (generic-name (intern (strcat "." slot)))
+                (reader (lambda (obj) (get-slot obj slot)))
+                (writer (lambda (obj val) (set-slot! obj slot val))))
+            (set! (setter reader) writer)
+            (eval (list define generic-name reader) env))
+         name))
 
    (define define-generic
       (vau (name . _) env
