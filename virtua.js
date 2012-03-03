@@ -28,6 +28,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "#inert", lisp_inert);
     /* Objects */
     lisp_env_put_comfy(env, "make-class", lisp_make_wrapped_native(lisp_lib_make_class, 1, 1));
+    lisp_env_put_comfy(env, "add-superclass!", lisp_make_wrapped_native(lisp_add_superclass, 2, 2));
     lisp_env_put_comfy(env, "make-instance", lisp_make_wrapped_native(lisp_lib_make_instance, 1, 1));
     lisp_env_put_comfy(env, "class-of", lisp_make_wrapped_native(lisp_class_of, 1, 1));
     lisp_env_put_comfy(env, "instance?", lisp_make_wrapped_native(lisp_lib_is_instance, 2, 2));
@@ -261,6 +262,16 @@ function lisp_superclasses_of(c) {
     } else {
         lisp_simple_error("Not a class.");
     }
+}
+
+/* Adds a superclass to a class. */
+function lisp_add_superclass(c, sc) {
+    lisp_assert(lisp_is_instance(c, Lisp_Class));
+    lisp_assert(lisp_is_instance(sc, Lisp_Class));
+    if (!lisp_native_array_contains(c.lisp_superclasses, sc)) {
+        c.lisp_superclasses.push(sc);
+    }
+    return lisp_inert;
 }
 
 /* Puts a combiner as implementation for a message selector. */
@@ -959,6 +970,10 @@ function lisp_is_native_string(native_string) {
 
 function lisp_is_native_array(native_array) {
     return (native_array instanceof Array);
+}
+
+function lisp_native_array_contains(native_array, obj) {
+    return (native_array.indexOf(obj) !== -1);
 }
 
 /**** Parser ****/

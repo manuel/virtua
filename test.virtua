@@ -91,6 +91,12 @@
    (assert (= (say (make-instance Y)) "y"))
    (assert (= (say (make-instance Z)) "y")))
 
+(scope
+   (define-interface Foo)
+   (define-class Bar (Object))
+   (define-implementation Bar Foo)
+   (assert (subclass? Bar Foo)))
+
 ;;;; Control Flow
 
 ;; break out of loop

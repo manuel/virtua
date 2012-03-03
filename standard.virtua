@@ -136,20 +136,29 @@
    (vau (protected . cleanup) env
       (eval (list $unwind-protect protected (list* begin cleanup)) env)))
 
-;; Execute body expressions in throwaway environment.
 (define scope
    (vau body env
       (eval (list* let () body) env)))
 
 ;;;; Object System
 
-(provide (define-class define-generic define-method)
+(provide (define-class
+          define-interface
+          define-implementation
+          define-generic
+          define-method)
 
    (define define-class
       (vau (name superclasses) env
          (eval (list define name
                   (list make-class (list* list superclasses)))
                env)))
+
+   (define define-interface
+      (vau (name) env
+         (eval (list define-class name ()) env)))
+
+   (define define-implementation add-superclass!)
 
    (define define-constructor
       (vau (name class slots) env
@@ -176,9 +185,7 @@
       (vau (name ((rcv class) . rest) . body) env
          (put-method! (eval class env)
                       (to-string name)
-                      (eval (list* lambda (list* rcv rest) body) env))))
-
-)
+                      (eval (list* lambda (list* rcv rest) body) env)))))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
