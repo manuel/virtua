@@ -165,7 +165,8 @@
       (vau (name superclasses) env
          (eval (list define name
                   (list make-class (list* list superclasses)))
-               env)))
+               env)
+         name))
 
    (define define-interface
       (vau (name) env
@@ -202,7 +203,8 @@
       (vau (name . _) env
          (eval (list define name
                   (lambda (self . otree) (send self (to-string name) otree)))
-               env)))
+               env)
+         name))
 
    (define define-method
       (vau (name ((rcv class) . rest) . body) env
