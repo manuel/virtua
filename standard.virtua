@@ -210,7 +210,43 @@
       (vau (name ((rcv class) . rest) . body) env
          (put-method! (eval class env)
                       (to-string name)
-                      (eval (list* lambda (list* rcv rest) body) env)))))
+                      (eval (list* lambda (list* rcv rest) body) env))
+         name)))
+
+;;;; Collections
+
+(provide (Iterable
+          Iterator
+          iterator
+          has-next?
+          next!)
+
+   (define-interface Iterable)
+   (define-interface Iterator)
+   (define-generic iterator)
+   (define-generic has-next?)
+   (define-generic next!)
+
+   (scope
+      (define-implementation Pair Iterable)
+      (define-method iterator ((p Pair))
+         (make-pair-iterator p))
+
+      (define-implementation Nil Iterable)
+      (define-method iterator ((n Nil))
+         (make-pair-iterator n))
+
+      (define-class Pair-Iterator ())
+      (define-slot current)
+      (define-constructor make-pair-iterator Pair-Iterator (current))
+
+      (define-method has-next? ((it Pair-Iterator))
+         (null? (.current it)))
+      (define-method next! ((it Pair-Iterator))
+         (let ((obj (car (get-slot it "current"))))
+            (set! (.current it) (cdr (.current it))))))
+
+)
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
