@@ -98,13 +98,24 @@
    (assert (subclass? Bar Foo)))
 
 
+(scope
    (define-class Foo (Object)
       (the-slot)
       (:constructor make-foo (the-slot)))
    (define the-foo (make-foo 12))
    (assert (= (.the-slot the-foo) 12))
    (set! (.the-slot the-foo) 13)
-   (assert (= (.the-slot the-foo) 13))
+   (assert (= (.the-slot the-foo) 13)))
+
+(scope
+   (define-class Point ()
+      (x y)
+      (:constructor make-point (x y)))
+   (define pt (make-point 12 24))
+   (assert (instance? pt Point))
+   (assert (instance? pt Object))
+   (assert (= 12 (.x pt)))
+   (assert (= 24 (.y pt))))
 
 ;;;; Control Flow
 
