@@ -250,8 +250,8 @@
          (make-pair-iterator n))
 
       (define-class Pair-Iterator (Iterator)
-         (current))
-      (define-constructor make-pair-iterator Pair-Iterator (current))
+         (current)
+         (:constructor make-pair-iterator (current)))
 
       (define-method has-next? ((it Pair-Iterator))
          (null? (.current it)))
