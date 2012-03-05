@@ -163,8 +163,6 @@
 (provide (define-class
           define-interface
           define-implementation
-          define-constructor
-          define-slot
           define-generic
           define-method)
 
@@ -177,7 +175,10 @@
             (let ((slots (car stuff)))
                (map (lambda (slot)
                        (eval (list define-slot slot) env))
-                    slots)))
+                    slots))
+            (unless (null? (cdr stuff))
+               (let (((_ ctor-name args) (cadr stuff)))
+                  (eval (list define-constructor ctor-name name args) env))))
          name))
 
    (define define-interface

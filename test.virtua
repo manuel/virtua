@@ -99,8 +99,8 @@
 
 
    (define-class Foo (Object)
-      (the-slot))
-   (define-constructor make-foo Foo (the-slot))
+      (the-slot)
+      (:constructor make-foo (the-slot)))
    (define the-foo (make-foo 12))
    (assert (= (.the-slot the-foo) 12))
    (set! (.the-slot the-foo) 13)
