@@ -997,10 +997,10 @@ function lisp_native_array_contains(native_array, obj) {
 function lisp_parse(string) {
     lisp_assert(lisp_is_native_string(string));
     var result = lisp_program_syntax(ps(string));
-    if (result.ast) {
+    if (result.remaining.index === string.length) {
         return result.ast;
     } else {
-        lisp_simple_error("Parse error.");
+        lisp_simple_error("Parse error at index: " + result.remaining.index);
     }
 }
 
