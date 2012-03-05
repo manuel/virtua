@@ -22,9 +22,6 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-// Note: I have removed parser combinators I don't need from this file
-// -- Manuel Simoni, 2012 Feb 21
-
 function foldl(f, initial, seq) {
     for(var i=0; i< seq.length; ++i)
         initial = f(initial, seq[i]);
@@ -221,6 +218,29 @@ function join_action(p, sep) {
     return action(p, function(ast) { return ast.join(sep); });
 }
 
+// Given an ast of the form [ Expression, [ a, b, ...] ], convert to
+// [ [ [ Expression [ a ] ] b ] ... ]
+// This is used for handling left recursive entries in the grammar. e.g.
+// MemberExpression:
+//   PrimaryExpression
+//   FunctionExpression
+//   MemberExpression [ Expression ]
+//   MemberExpression . Identifier
+//   new MemberExpression Arguments
+function left_factor(ast) {
+    return foldl(function(v, action) {
+                     return [ v, action ];
+                 },
+                 ast[0],
+                 ast[1]);
+}
+
+// Return a parser that left factors the ast result of the original
+// parser.
+function left_factor_action(p) {
+    return action(p, left_factor);
+}
+
 // 'negate' will negate a single character parser. So given 'ch("a")' it will successfully
 // parse any character except for 'a'. Or 'negate(range("a", "z"))' will successfully parse
 // anything except the lowercase characters a-z.
@@ -246,6 +266,19 @@ function negate(p) {
         savedState.putCached(pid, cached);
         return cached;
     };
+}
+
+// 'end_p' is a parser that is successful if the input string is empty (ie. end of parse).
+function end_p(state) {
+    if(state.length == 0)
+        return make_result(state, undefined, undefined);
+    else
+        return false;
+}
+
+// 'nothing_p' is a parser that always fails.
+function nothing_p(state) {
+    return false;
 }
 
 // 'sequence' is a parser combinator that processes a number of parsers in sequence.
@@ -331,6 +364,102 @@ function choice() {
     }
 }
 
+// 'butnot' is a parser combinator that takes two parsers, 'p1' and 'p2'.
+// It returns a parser that succeeds if 'p1' matches and 'p2' does not, or
+// 'p1' matches and the matched text is longer that p2's.
+// Useful for things like: butnot(IdentifierName, ReservedWord)
+function butnot(p1,p2) {
+    var p1 = toParser(p1);
+    var p2 = toParser(p2);
+    var pid = parser_id++;
+
+    // match a but not b. if both match and b's matched text is shorter
+    // than a's, a failed match is made
+    return function(state) {
+        var savedState = state;
+        var cached = savedState.getCached(pid);
+        if(cached)
+            return cached;
+
+        var br = p2(state);
+        if(!br) {
+            cached = p1(state);
+        } else {
+            var ar = p1(state);
+
+            if (ar) {
+              if(ar.matched.length > br.matched.length)
+                  cached = ar;
+              else
+                  cached = false;
+            }
+            else {
+              cached = false;
+            }
+        }
+        savedState.putCached(pid, cached);
+        return cached;
+    }
+}
+
+// 'difference' is a parser combinator that takes two parsers, 'p1' and 'p2'.
+// It returns a parser that succeeds if 'p1' matches and 'p2' does not. If
+// both match then if p2's matched text is shorter than p1's it is successfull.
+function difference(p1,p2) {
+    var p1 = toParser(p1);
+    var p2 = toParser(p2);
+    var pid = parser_id++;
+
+    // match a but not b. if both match and b's matched text is shorter
+    // than a's, a successfull match is made
+    return function(state) {
+        var savedState = state;
+        var cached = savedState.getCached(pid);
+        if(cached)
+            return cached;
+
+        var br = p2(state);
+        if(!br) {
+            cached = p1(state);
+        } else {
+            var ar = p1(state);
+            if(ar.matched.length >= br.matched.length)
+                cached = br;
+            else
+                cached = ar;
+        }
+        savedState.putCached(pid, cached);
+        return cached;
+    }
+}
+
+
+// 'xor' is a parser combinator that takes two parsers, 'p1' and 'p2'.
+// It returns a parser that succeeds if 'p1' or 'p2' match but fails if
+// they both match.
+function xor(p1, p2) {
+    var p1 = toParser(p1);
+    var p2 = toParser(p2);
+    var pid = parser_id++;
+
+    // match a or b but not both
+    return function(state) {
+        var savedState = state;
+        var cached = savedState.getCached(pid);
+        if(cached)
+            return cached;
+
+        var ar = p1(state);
+        var br = p2(state);
+        if(ar && br)
+            cached = false;
+        else
+            cached = ar || br;
+        savedState.putCached(pid, cached);
+        return cached;
+    }
+}
+
 // A parser combinator that takes one parser. It returns a parser that
 // looks for zero or more matches of the original parser.
 function repeat0(p) {
@@ -409,3 +538,120 @@ function optional(p) {
         return cached;
     }
 }
+
+// A parser combinator that ensures that the given parser succeeds but
+// ignores its result. This can be useful for parsing literals that you
+// don't want to appear in the ast. eg:
+// sequence(expect("("), Number, expect(")")) => ast: Number
+function expect(p) {
+    return action(p, function(ast) { return undefined; });
+}
+
+function chain(p, s, f) {
+    var p = toParser(p);
+
+    return action(sequence(p, repeat0(action(sequence(s, p), f))),
+                  function(ast) { return [ast[0]].concat(ast[1]); });
+}
+
+// A parser combinator to do left chaining and evaluation. Like 'chain', it expects a parser
+// for an item and for a seperator. The seperator parser's AST result should be a function
+// of the form: function(lhs,rhs) { return x; }
+// Where 'x' is the result of applying some operation to the lhs and rhs AST's from the item
+// parser.
+function chainl(p, s) {
+    var p = toParser(p);
+    return action(sequence(p, repeat0(sequence(s, p))),
+                  function(ast) {
+                      return foldl(function(v, action) { return action[0](v, action[1]); }, ast[0], ast[1]);
+                  });
+}
+
+// A parser combinator that returns a parser that matches lists of things. The parser to
+// match the list item and the parser to match the seperator need to
+// be provided. The AST is the array of matched items.
+function list(p, s) {
+    return chain(p, s, function(ast) { return ast[1]; });
+}
+
+// Like list, but ignores whitespace between individual parsers.
+function wlist() {
+    var parsers = [];
+    for(var i=0; i < arguments.length; ++i) {
+        parsers.push(whitespace(arguments[i]));
+    }
+    return list.apply(null, parsers);
+}
+
+// A parser that always returns a zero length match
+function epsilon_p(state) {
+    return make_result(state, "", undefined);
+}
+
+// Allows attaching of a function anywhere in the grammer. If the function returns
+// true then parse succeeds otherwise it fails. Can be used for testing if a symbol
+// is in the symbol table, etc.
+function semantic(f) {
+    var pid = parser_id++;
+    return function(state) {
+        var savedState = state;
+        var cached = savedState.getCached(pid);
+        if(cached)
+            return cached;
+        cached = f() ? make_result(state, "", undefined) : false;
+        savedState.putCached(pid, cached);
+        return cached;
+    }
+}
+
+// The and predicate asserts that a certain conditional
+// syntax is satisfied before evaluating another production. Eg:
+// sequence(and("0"), oct_p)
+// (if a leading zero, then parse octal)
+// It succeeds if 'p' succeeds and fails if 'p' fails. It never
+// consume any input however, and doesn't put anything in the resulting
+// AST.
+function and(p) {
+    var p = toParser(p);
+    var pid = parser_id++;
+    return function(state) {
+        var savedState = state;
+        var cached = savedState.getCached(pid);
+        if(cached)
+            return cached;
+        var r = p(state);
+        cached = r ? make_result(state, "", undefined) : false;
+        savedState.putCached(pid, cached);
+        return cached;
+    }
+}
+
+// The opposite of 'and'. It fails if 'p' succeeds and succeeds if
+// 'p' fails. It never consumes any input. This combined with 'and' can
+// be used for 'lookahead' and disambiguation of cases.
+//
+// Compare:
+// sequence("a",choice("+","++"),"b")
+//   parses a+b
+//   but not a++b because the + matches the first part and peg's don't
+//   backtrack to other choice options if they succeed but later things fail.
+//
+// sequence("a",choice(sequence("+", not("+")),"++"),"b")
+//    parses a+b
+//    parses a++b
+//
+function not(p) {
+    var p = toParser(p);
+    var pid = parser_id++;
+    return function(state) {
+        var savedState = state;
+        var cached = savedState.getCached(pid);
+        if(cached)
+            return cached;
+        cached = p(state) ? false : make_result(state, "", undefined);
+        savedState.putCached(pid, cached);
+        return cached;
+    }
+}
+
+
