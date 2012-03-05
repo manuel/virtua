@@ -106,6 +106,14 @@
 
 (define not? (lambda (x) (if x #f #t)))
 
+(define when
+   (vau (test . body) env
+      (eval (list if test (list* begin body) #void) env)))
+
+(define unless
+   (vau (test . body) env
+      (eval (list if test #void (list* begin body)) env)))
+
 (define get-current-environment (wrap (vau () e e)))
 
 (define provide
