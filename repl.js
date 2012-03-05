@@ -11,12 +11,9 @@ function lisp_repl_onload() {
 function lisp_repl_onsubmit() {
     try {
         var input = lisp_repl_line().value;
-        var forms = lisp_parse(input);
-        if (forms.length > 0) {
-            lisp_repl_print(lisp_make_string("\u25B6 " + input));
-            lisp_eval_forms(forms, true);
-            lisp_repl_line().value = "";
-        }
+        lisp_repl_print(lisp_make_string("\u25B6 " + input));
+        lisp_eval_forms(lisp_parse(input), true);
+        lisp_repl_line().value = "";
     } catch(e) {
         lisp_repl_print(lisp_make_string("ERROR: " + e));
     } finally {
@@ -27,13 +24,9 @@ function lisp_repl_onsubmit() {
 function lisp_eval_forms(forms, do_print) {
     for (var i = 0; i < forms.length; i++) {
         var form = forms[i];
-        try {
-            var result = lisp_eval(form, lisp_repl_env);
-            if (do_print) {
-                lisp_repl_print(result);
-            }
-        } catch(e) {
-            lisp_repl_print(lisp_make_string("ERROR: " + e));
+        var result = lisp_eval(form, lisp_repl_env);
+        if (do_print) {
+            lisp_repl_print(result);
         }
     }
 }
@@ -45,7 +38,11 @@ function lisp_repl_load_file(path) {
     req.open("GET", path + "?" + Math.random(), false);
     req.send(null);
     if(req.status == 200) {
-        lisp_eval_forms(lisp_parse(req.responseText), false);
+        try {
+            lisp_eval_forms(lisp_parse(req.responseText), false);
+        } catch(e) {
+            lisp_repl_print(lisp_make_string("ERROR: " + e));
+        }
     } else {
         lisp_simple_error("XHR error: " + req.status);
     }
