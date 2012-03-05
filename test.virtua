@@ -115,7 +115,13 @@
    (assert (instance? pt Point))
    (assert (instance? pt Object))
    (assert (= 12 (.x pt)))
-   (assert (= 24 (.y pt))))
+   (assert (= 24 (.y pt)))
+   (set! (.x pt) 100)
+   (assert (= 100 (.x pt)))
+   (assert (= 24 (.y pt)))
+   (set! (.y pt) 200)
+   (assert (= 100 (.x pt)))
+   (assert (= 200 (.y pt))))
 
 ;;;; Control Flow
 
