@@ -824,7 +824,7 @@ function lisp_lib_get_slot(obj, slot) {
     if (typeof(value) !== "undefined") {
         return value;
     } else {
-        lisp_simple_error("Unbound slot.");
+        lisp_simple_error("Unbound slot: " + lisp_string_native_string(slot));
     }
 }
 
