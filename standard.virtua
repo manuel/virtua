@@ -149,7 +149,6 @@
 
 (define setter (lambda (obj) (get-slot obj "setter")))
 (define set-setter! (lambda (obj setter) (set-slot! obj "setter" setter)))
-(set-setter! setter set-setter!)
 
 ;;;; Object System
 
