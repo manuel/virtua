@@ -1008,14 +1008,19 @@ var lisp_expression_syntax =
     function(input) { return lisp_expression_syntax(input); }; // forward decl.
 
 var lisp_identifier_special_char =
-    choice("-", "&", "!", ":", "=", ">","<", "%", "+", "?", "/", "*", "#", "$", "_", "'", ".");
+    choice("-", "&", "!", ":", "=", ">", "<", "%",
+           "+", "?", "/", "*", "#", "$", "_", "'", ".");
 
+var lisp_identifier_char =
+    choice(range("a", "z"),
+           range("A", "Z"),
+           range("0", "9"),
+           lisp_identifier_special_char);
+
+// Kludge: don't allow single dot as identifier, so as not to conflict
+// with dotted pair syntax.
 var lisp_identifier_syntax =
-    action(join_action(repeat1(choice(range("a", "z"),
-                                      range("A", "Z"),
-                                      range("0", "9"),
-                                      lisp_identifier_special_char)),
-                       ""),
+    action(join_action(butnot(repeat1(lisp_identifier_char), "."), ""),
            lisp_identifier_syntax_action);
 
 function lisp_identifier_syntax_action(ast) {
