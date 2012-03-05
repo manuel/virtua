@@ -161,10 +161,15 @@
           define-method)
 
    (define define-class
-      (vau (name superclasses) env
+      (vau (name superclasses . stuff) env
          (eval (list define name
                   (list make-class (list* list superclasses)))
                env)
+         (unless (null? stuff)
+            (let ((slots (car stuff)))
+               (map (lambda (slot)
+                       (eval (list define-slot slot) env))
+                    slots)))
          name))
 
    (define define-interface
@@ -193,8 +198,8 @@
          (let* ((slot (to-string name))
                 (generic-name (intern (strcat "." slot)))
                 (reader (lambda (obj) (get-slot obj slot)))
-                (writer (lambda (obj val) (set-slot! obj slot val))))
-            (set! (setter reader) writer)
+                (writer (lambda (val obj) (set-slot! obj slot val))))
+            (set-setter! reader writer)
             (eval (list define generic-name reader) env))
          name))
 
@@ -235,8 +240,8 @@
       (define-method iterator ((n Nil))
          (make-pair-iterator n))
 
-      (define-class Pair-Iterator ())
-      (define-slot current)
+      (define-class Pair-Iterator (Iterator)
+         (current))
       (define-constructor make-pair-iterator Pair-Iterator (current))
 
       (define-method has-next? ((it Pair-Iterator))
