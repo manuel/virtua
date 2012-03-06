@@ -6,7 +6,6 @@
 (define #void #inert)
 (define _ #ignore)
 (define vau $vau)
-(define catch $catch)
 (define loop $loop)
 
 (define ' (vau (form) _ form))
@@ -131,6 +130,10 @@
       (if (not? (eval that env))
           (error (to-string that))
           #void)))
+
+(define catch
+   (vau (tag . body) env
+      (eval (list $catch tag (list* begin body)) env)))
 
 (define block
    (vau (name . body) env

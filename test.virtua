@@ -136,6 +136,7 @@
                              (throw (' outer-tag) (' value))))))
 
 (assert (= 12 (block x 12)))
+(assert (= 12 (block x 1 2 3 12)))
 (assert (= 13 (block x (return-from x 13) 12)))
 
 (assert (= 1 (unwind-protect 1)))
