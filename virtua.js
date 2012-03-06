@@ -618,7 +618,7 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
 /* Matches a parameter tree against an operand tree in the current
    environment.
 
-   ($define! ptree otree) -> #inert */
+   ($define! ptree otree) -> ptree */
 
 var Lisp_Define = lisp_make_system_class(Lisp_Combiner, "Lisp_Define");
 
@@ -626,7 +626,7 @@ Lisp_Define.lisp_combine = function(cmb, otree, env) {
     var lhs = lisp_elt(otree, 0);
     var rhs = lisp_elt(otree, 1);
     lisp_match(lhs, lisp_eval(rhs, env), env);
-    return lisp_inert;
+    return lhs;
 };
 
 /*** $if ***/
