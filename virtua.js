@@ -1126,9 +1126,12 @@ var lisp_line_comment_syntax =
     action(sequence(";",
                     repeat0(negate(lisp_line_terminator)),
                     optional(lisp_line_terminator)),
-           lisp_line_comment_action);
+           lisp_nothing_action);
 
-function lisp_line_comment_action(ast) {
+var lisp_whitespace_syntax =
+    action(choice(" ", "\n", "\r", "\t"), lisp_nothing_action);
+
+function lisp_nothing_action(ast) { // HACK!
     return lisp_inert;
 }
 
@@ -1143,7 +1146,8 @@ var lisp_expression_syntax =
                       lisp_line_comment_syntax));
 
 var lisp_program_syntax =
-    whitespace(repeat0(lisp_expression_syntax));
+    whitespace(repeat0(choice(lisp_expression_syntax,
+                              lisp_whitespace_syntax))); // HACK!
 
 
 // Permission is hereby granted, free of charge, to any person
