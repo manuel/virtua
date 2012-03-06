@@ -1,13 +1,11 @@
 var lisp_repl_env;
 
 function lisp_repl_onload() {
-    var start = new Date().getTime();
     lisp_repl_env = lisp_make_kernel_env();
     lisp_env_put_comfy(lisp_repl_env, "print", lisp_make_wrapped_native(lisp_repl_print, 1, 1));
     lisp_repl_load_file("standard.virtua");
     lisp_repl_load_file("test.virtua");
-    var elapsed = new Date().getTime() - start;
-    lisp_repl_print(lisp_make_string(elapsed + "ms"));
+    lisp_repl_load_file("conditions.virtua");
     lisp_repl_line().focus();
 }
 
@@ -42,7 +40,11 @@ function lisp_repl_load_file(path) {
     req.send(null);
     if(req.status == 200) {
         try {
-            lisp_eval_forms(lisp_parse(req.responseText), false);
+            var forms = lisp_parse(req.responseText);
+            var start = new Date().getTime();
+            lisp_eval_forms(forms, false);
+            var elapsed = new Date().getTime() - start;
+            lisp_repl_print(lisp_make_string(elapsed + "ms"));
         } catch(e) {
             lisp_repl_print(lisp_make_string("ERROR: " + e));
         }
