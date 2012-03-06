@@ -2,6 +2,7 @@
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
 ($define! define $define!)
+(define begin $begin)
 (define if $if)
 (define #void #inert)
 (define _ #ignore)
@@ -11,24 +12,6 @@
 (define ' (vau (form) _ form))
 
 ;;;; These are adapted from John Shutt's SINK and the R-1RK.
-
-(define begin
-   ((wrap (vau (seq2) _
-             (seq2
-                (define aux
-                   (vau (head . tail) env
-                      (if (null? tail)
-                          (eval head env)
-                          (seq2
-                             (eval head env)
-                             (eval (cons aux tail) env)))))
-                (vau body env
-                   (if (null? body)
-                       #void
-                       (eval (cons aux body) env))))))
-      (vau (first second) env
-         ((wrap (vau _ _ (eval second env)))
-          (eval first env)))))
 
 (define list (wrap (vau x _ x)))
 

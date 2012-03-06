@@ -7,6 +7,7 @@ function lisp_make_kernel_env() {
     var env = lisp_make_env();
     /* Basics */
     lisp_env_put_comfy(env, "$vau", lisp_make_instance(Lisp_Vau));
+    lisp_env_put_comfy(env, "$begin", lisp_make_instance(Lisp_Begin));
     lisp_env_put_comfy(env, "$define!", lisp_make_instance(Lisp_Define));
     lisp_env_put_comfy(env, "$if", lisp_make_instance(Lisp_If));
     lisp_env_put_comfy(env, "$loop", lisp_make_instance(Lisp_Loop));
@@ -611,6 +612,24 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
     var envformal = lisp_elt(otree, 1);
     var body = lisp_elt(otree, 2);
     return lisp_make_compound_combiner(ptree, envformal, body, env);
+};
+
+/*** $begin ***/
+
+/* Evaluates forms in sequence, returning value of last, or #inert if
+   there are no forms.
+
+   ($begin . forms) -> result */
+
+var Lisp_Begin = lisp_make_system_class(Lisp_Combiner, "Lisp_Begin");
+
+Lisp_Begin.lisp_combine = function(cmb, otree, env) {
+    var res = lisp_inert;
+    while(otree !== lisp_nil) {
+        res = lisp_eval(lisp_car(otree), env);
+        otree = lisp_cdr(otree);
+    };
+    return res;
 };
 
 /*** $define! ***/
