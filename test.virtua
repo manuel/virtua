@@ -63,14 +63,14 @@
 (assert (instance? Class Class))
 
 (scope
-   (define-class C (Object))
+   (define-class C)
    (define obj (make-instance C))
    (assert (instance? obj C))
    (assert (not? (instance? obj String))))
 
 (scope
-   (define-class A (Object))
-   (define-class B (Object))
+   (define-class A)
+   (define-class B)
    (define-class C (A B))
    (assert (subclass? A Object))
    (assert (subclass? C A))
@@ -81,8 +81,8 @@
    (assert (not? (subclass? B C))))
 
 (scope
-   (define-class X (Object))
-   (define-class Y (Object))
+   (define-class X)
+   (define-class Y)
    (define-class Z (Y))
    (define-generic say)
    (define-method say ((self X)) "x")
@@ -99,7 +99,7 @@
 
 
 (scope
-   (define-class Foo (Object)
+   (define-class Foo ()
       (the-slot)
       (:constructor make-foo (the-slot)))
    (define the-foo (make-foo 12))
