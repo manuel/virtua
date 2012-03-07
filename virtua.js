@@ -164,7 +164,7 @@ function lisp_lookup_method(c, sel) {
         for (var i = 0; i < sups.length; i++) {
             var sup_method = lisp_lookup_method(sups[i], sel);
             if (typeof(method) !== "undefined") {
-                lisp_simple_error("More than one method found.");
+                lisp_simple_error("More than one method found: " + sel);
             } else {
                 method = sup_method;
             }
