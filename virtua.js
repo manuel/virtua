@@ -1102,7 +1102,7 @@ function lisp_string_syntax_action(ast) {
     return lisp_make_string(ast[1]);
 }
 
-var lisp_digits = 
+var lisp_digits =
     join_action(repeat1(range("0", "9")), "");
 
 var lisp_number_syntax =
@@ -1111,7 +1111,7 @@ var lisp_number_syntax =
                     optional(join_action(sequence(".", lisp_digits), ""))),
            lisp_number_syntax_action);
 
-function lisp_number_syntax_action(ast) {    
+function lisp_number_syntax_action(ast) {
     var sign = ast[0] ? ast[0] : "+";
     var integral_digits = ast[1];
     var fractional_digits = ast[2] || "";
@@ -1122,7 +1122,7 @@ function lisp_make_constant_syntax(string, constant) {
     return action(string, function(ast) { return constant; });
 }
 
-var lisp_nil_syntax = 
+var lisp_nil_syntax =
     lisp_make_constant_syntax("()", lisp_nil);
 
 var lisp_ignore_syntax =
