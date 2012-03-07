@@ -130,7 +130,7 @@ Lisp_Object_Prototype.prototype.lisp_eval = function(obj, env) {
 
 /* By default, objects cannot be used as combiners. */
 Lisp_Object_Prototype.prototype.lisp_combine = function(obj, otree, env) {
-    lisp_simple_error("Not a combiner.");
+    lisp_simple_error("Not a combiner: " + lisp_to_string(obj));
 };
 
 /* By default, objects cannot be used as left-hand side patterns. */
