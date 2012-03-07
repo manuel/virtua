@@ -130,7 +130,7 @@ Lisp_Object_Prototype.prototype.lisp_eval = function(obj, env) {
 
 /* By default, objects cannot be used as combiners. */
 Lisp_Object_Prototype.prototype.lisp_combine = function(obj, otree, env) {
-    lisp_simple_error("Not a combiner: " + lisp_to_string(obj));
+    lisp_simple_error("Not a combiner: " + lisp_to_native_string(obj));
 };
 
 /* By default, objects cannot be used as left-hand side patterns. */
@@ -148,7 +148,7 @@ Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     if (typeof(method) !== "undefined") {
         return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env());
     } else {
-        lisp_simple_error("Message not understood: " + sel + " by " + lisp_to_string(obj));
+        lisp_simple_error("Message not understood: " + sel + " by " + lisp_to_native_string(obj));
     }
 };
 
@@ -954,6 +954,10 @@ lisp_put_native_method(Lisp_Pair, "=", function(obj, other) {
 
 function lisp_to_string(obj) {
     return lisp_send(obj, "to-string", lisp_nil);
+}
+
+function lisp_to_native_string(obj) {
+    return lisp_string_native_string(lisp_to_string(obj));
 }
 
 lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
