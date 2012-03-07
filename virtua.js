@@ -148,7 +148,7 @@ Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     if (typeof(method) !== "undefined") {
         return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env());
     } else {
-        lisp_simple_error("Message not understood:" + sel);
+        lisp_simple_error("Message not understood: " + sel);
     }
 };
 
