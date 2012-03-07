@@ -35,9 +35,9 @@
 (define call-with-handler
    (lambda (matcher handler thunk)
       (let ((saved-stack *handler-stack*))
-         (set! *handler-stack* (make-handler-frame (option *handler-stack*)
-                                                   matcher
-                                                   handler))
+         (set! *handler-stack* (option (make-handler-frame *handler-stack*
+                                                           matcher
+                                                           handler)))
          (unwind-protect (thunk)
             (set! *handler-stack* saved-stack)))))
 
@@ -50,7 +50,7 @@
                    ((.handler frame) condition)
                    (do-signal (.parent-option frame)))
                (default-handler condition))))
-      (do-signal condition)))
+      (do-signal *handler-stack*)))
 
 ;; The default handler generic function is called when a condition is
 ;; unhandled.
@@ -69,4 +69,4 @@
 (define-method default-handler ((r Restart))
    (signal (unhandled-restart-error r)))
 
-) ;; edivorp
+)

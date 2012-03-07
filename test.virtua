@@ -156,6 +156,10 @@
 (assert (= 13 (if-option (name none) name 13)))
 (assert (= #void (if-option (name none) name)))
 
+;;;; Conditions
+
+(assert (= 12 (call-with-handler (lambda _ #t) (lambda _ 12) (lambda () (signal "foo")))))
+
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
 ;; files (the "Software"), to deal in the Software without
