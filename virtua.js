@@ -9,6 +9,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "$vau", lisp_make_instance(Lisp_Vau));
     lisp_env_put_comfy(env, "$begin", lisp_make_instance(Lisp_Begin));
     lisp_env_put_comfy(env, "$define!", lisp_make_instance(Lisp_Define));
+    lisp_env_put_comfy(env, "$set!", lisp_make_instance(Lisp_Set));
     lisp_env_put_comfy(env, "$if", lisp_make_instance(Lisp_If));
     lisp_env_put_comfy(env, "$loop", lisp_make_instance(Lisp_Loop));
     lisp_env_put_comfy(env, "$unwind-protect", lisp_make_instance(Lisp_Unwind_Protect));
@@ -447,19 +448,10 @@ var Lisp_Env = lisp_make_system_class(Lisp_Object, "Lisp_Env");
 
 /* Creates a new empty environment with an optional parent environment. */
 function lisp_make_env(parent) {
-    if (typeof(parent) !== "undefined") {
-        lisp_assert(lisp_is_instance(parent, Lisp_Env));
-        function E() {};
-        E.prototype = parent.lisp_bindings;
-        return lisp_make_env_with_bindings(new E());
-    } else {
-        return lisp_make_env_with_bindings({});        
-    }
-}
-
-function lisp_make_env_with_bindings(bindings) {
+    lisp_assert((parent === undefined) || lisp_is_instance(parent, Lisp_Env));
     var env = lisp_make_instance(Lisp_Env);
-    env.lisp_bindings = bindings;
+    env.lisp_parent = parent;
+    env.lisp_bindings = Object.create(null);
     return env;
 }
 
@@ -486,7 +478,33 @@ function lisp_env_lookup(env, name) {
     if (typeof(value) !== "undefined") {
         return value;
     } else {
-        lisp_simple_error("Undefined identifier: " + native_name);
+        if (env.lisp_parent) {
+            return lisp_env_lookup(env.lisp_parent, name);
+        } else {
+            lisp_simple_error("Undefined identifier: " + native_name);
+        }
+    }
+}
+
+/* Updates an existing binding from a name to a value. */
+function lisp_env_set(env, name, value) {
+    lisp_assert(lisp_is_instance(name, Lisp_Symbol));
+    lisp_assert(lisp_is_instance(value, Lisp_Object));
+    var native_name = lisp_symbol_native_string(name);
+    return lisp_do_set(env, native_name, value);
+
+    function lisp_do_set(env, native_name, value) {
+        lisp_assert(lisp_is_instance(env, Lisp_Env));
+        if (env.lisp_bindings[native_name] !== undefined) {
+            env.lisp_bindings[native_name] = value;
+            return value;
+        } else {
+            if (env.lisp_parent !== undefined) {
+                return lisp_do_set(env.lisp_parent, native_name, value);
+            } else {
+                lisp_simple_error("Cannot set undefined identifier: " + native_name);
+            }
+        }
     }
 }
 
@@ -646,6 +664,20 @@ Lisp_Define.lisp_combine = function(cmb, otree, env) {
     var rhs = lisp_elt(otree, 1);
     lisp_match(lhs, lisp_eval(rhs, env), env);
     return lhs;
+};
+
+/*** $set! ***/
+
+/* Updates the value of an existing binding.
+
+   ($set! name value) -> value */
+
+var Lisp_Set = lisp_make_system_class(Lisp_Combiner, "Lisp_Set");
+
+Lisp_Set.lisp_combine = function(cmb, otree, env) {
+    var name = lisp_elt(otree, 0);
+    var value = lisp_elt(otree, 1);
+    return lisp_env_set(env, name, lisp_eval(value, env));
 };
 
 /*** $if ***/
