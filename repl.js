@@ -4,8 +4,8 @@ function lisp_repl_onload() {
     lisp_repl_env = lisp_make_kernel_env();
     lisp_env_put_comfy(lisp_repl_env, "print", lisp_make_wrapped_native(lisp_repl_print, 1, 1));
     lisp_repl_load_file("standard.virtua");
-    lisp_repl_load_file("test.virtua");
     lisp_repl_load_file("conditions.virtua");
+    lisp_repl_load_file("test.virtua");
     lisp_repl_line().focus();
 }
 
