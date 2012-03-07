@@ -150,6 +150,12 @@
 
 (assert (= "foobar" (strcat "foo" "bar")))
 
+;;;; Options
+
+(assert (= 12 (if-option (name (option 12)) name 13)))
+(assert (= 13 (if-option (name none) name 13)))
+(assert (= #void (if-option (name none) name)))
+
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
 ;; files (the "Software"), to deal in the Software without

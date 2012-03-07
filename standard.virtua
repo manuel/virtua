@@ -215,6 +215,30 @@
                       (eval (list* lambda (list* rcv rest) body) env))
          name)))
 
+;;;; Options
+
+(define-interface Option)
+
+(define-class None (Option))
+
+(define none (make-instance None))
+
+(define-class Some (Option)
+   (value)
+   (:constructor option (value)))
+
+(define-generic option-supplied? (option))
+(define-method option-supplied? ((n None)) #f)
+(define-method option-supplied? ((s Some)) #t)
+
+(define if-option
+   (vau ((name option) then . else) env
+      (let ((o (eval option env)))
+         (if (option-supplied? o)
+             (eval (list let (list (list name (.value o))) then) env)
+             (unless (null? else)
+                (eval (car else) env))))))
+
 ;;;; Collections
 
 (provide (Iterable
