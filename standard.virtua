@@ -157,17 +157,17 @@
 
    (define define-class
       (vau (name . stuff) env
-         (let ((c (make-class ())))
-            (eval (list define name c) env)
-            (unless (null? stuff)
-               (let (((superclasses . stuff) stuff))
-                  (map (lambda (sc) (add-superclass! c (eval sc env))) superclasses)
-                  (unless (null? stuff)
-                     (let (((slots . stuff) stuff))
-                        (map (lambda (slot) (eval (list define-slot slot) env)) slots)
-                        (unless (null? stuff)
-                           (let (((_ ctor-name args) (car stuff)))
-                              (eval (list define-constructor ctor-name name args) env))))))))
+         (if (null? stuff)
+             (eval (list define name (make-class ())) env)
+             (let (((superclasses . stuff) stuff))
+                (let ((c (make-class (map (lambda (sc) (eval sc env)) superclasses))))
+                   (eval (list define name c) env)
+                   (unless (null? stuff)
+                      (let (((slots . stuff) stuff))
+                         (map (lambda (slot) (eval (list define-slot slot) env)) slots)
+                         (unless (null? stuff)
+                            (let (((_ ctor-name args) (car stuff)))
+                               (eval (list define-constructor ctor-name name args) env))))))))
          name))
 
    (define define-interface
