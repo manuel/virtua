@@ -126,8 +126,8 @@
        (cons () ()))))
 
 (define return-from
-   (lambda (name value)
-      (throw name value)))
+   (lambda (name . value)
+      (throw name (if (null? value) #void (car value)))))
 
 (define unwind-protect
    (vau (protected . cleanup) env
