@@ -3,3 +3,7 @@
 * Line comments and the whitespace of a file parse as #inert.
 This means that the programs "12 ;; foo" and "12 " evaluate to #inert,
 clearly evil.
+
+* DEFINE-CLASS adds Object as superclass to every class.
+It should only do that if list of superclasses is empty.
+
