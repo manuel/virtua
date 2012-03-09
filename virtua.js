@@ -59,8 +59,8 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "Wrapper", Lisp_Wrapper);
     lisp_env_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
     /* Misc */
-    lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern), 1, 1);
-    lisp_env_put_comfy(env, "strcat", lisp_make_wrapped_native(lisp_lib_strcat), 2, 2);
+    lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
+    lisp_env_put_comfy(env, "strcat", lisp_make_wrapped_native(lisp_lib_strcat, 2, 2));
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
     return env;
 };
