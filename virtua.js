@@ -4,7 +4,7 @@
 /**** Kernel Environment ****/
 
 function lisp_make_kernel_env() {
-    var env = lisp_make_env();
+    var env = lisp_make_env(null);
     /* Basics */
     lisp_env_put_comfy(env, "$vau", lisp_make_instance(Lisp_Vau));
     lisp_env_put_comfy(env, "$begin", lisp_make_instance(Lisp_Begin));
@@ -146,7 +146,7 @@ Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
     var c = lisp_class_of(obj);
     var method = lisp_lookup_method(c, sel);
     if (typeof(method) !== "undefined") {
-        return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env());
+        return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env(null));
     } else {
         lisp_simple_error("Message not understood: " + sel + " by " + lisp_to_native_string(obj));
     }
@@ -448,7 +448,7 @@ var Lisp_Env = lisp_make_system_class(Lisp_Object, "Lisp_Env");
 
 /* Creates a new empty environment with an optional parent environment. */
 function lisp_make_env(parent) {
-    lisp_assert((parent === undefined) || lisp_is_instance(parent, Lisp_Env));
+    lisp_assert((parent === null) || lisp_is_instance(parent, Lisp_Env));
     var env = lisp_make_instance(Lisp_Env);
     env.lisp_parent = parent;
     env.lisp_bindings = Object.create(null);
@@ -478,7 +478,7 @@ function lisp_env_lookup(env, name) {
     if (typeof(value) !== "undefined") {
         return value;
     } else {
-        if (env.lisp_parent) {
+        if (env.lisp_parent !== null) {
             return lisp_env_lookup(env.lisp_parent, name);
         } else {
             lisp_simple_error("Undefined identifier: " + native_name);
@@ -499,7 +499,7 @@ function lisp_env_set(env, name, value) {
             env.lisp_bindings[native_name] = value;
             return value;
         } else {
-            if (env.lisp_parent !== undefined) {
+            if (env.lisp_parent !== null) {
                 return lisp_do_set(env.lisp_parent, native_name, value);
             } else {
                 lisp_simple_error("Cannot set undefined identifier: " + native_name);
