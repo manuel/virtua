@@ -16,7 +16,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "$catch", lisp_make_instance(Lisp_Catch));
     lisp_env_put_comfy(env, "throw", lisp_make_instance(Lisp_Throw));
     lisp_env_put_comfy(env, "eq?", lisp_make_wrapped_native(lisp_lib_eq, 2, 2));
-    lisp_env_put_comfy(env, "make-environment", lisp_make_wrapped_native(lisp_make_env, 0, 1));
+    lisp_env_put_comfy(env, "make-environment", lisp_make_wrapped_native(lisp_lib_make_env, 0, 1));
     lisp_env_put_comfy(env, "eval", lisp_make_wrapped_native(lisp_eval, 2, 2));
     lisp_env_put_comfy(env, "wrap", lisp_make_wrapped_native(lisp_wrap, 1, 1));
     lisp_env_put_comfy(env, "unwrap", lisp_make_wrapped_native(lisp_unwrap, 1, 1));
@@ -843,6 +843,10 @@ function lisp_native_truth(lisp_bool) {
 }
 
 /*** Library Functions ***/
+
+function lisp_lib_make_env(optional_parent) {
+    return lisp_make_env(optional_parent !== undefined ? optional_parent : null);
+}
 
 function lisp_lib_eq(a, b) {
     return lisp_truth(a === b);
