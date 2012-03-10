@@ -41,7 +41,7 @@
     lisp_assert(lisp_car(cons) === string_foo);
     lisp_assert(lisp_cdr(cons) === symbol_foo);
 
-    var env = lisp_make_env();
+    var env = lisp_make_env(null);
     lisp_assert(lisp_env_put(env, symbol_foo, string_foo) === string_foo);
     lisp_assert(lisp_env_lookup(env, symbol_foo) === string_foo);
     var child_env = lisp_make_env(env);
