@@ -808,6 +808,7 @@ Lisp_Native_Combiner.lisp_combine = function(cmb, otree, env) {
 
 /* Creates a new native combiner for the native function. */
 function lisp_make_native(native_fun, min_args, max_args) {
+    lisp_assert(lisp_is_native_function(native_fun));
     var cmb = lisp_make_instance(Lisp_Native_Combiner);
     cmb.lisp_native_fun = native_fun;
     cmb.lisp_min_args = min_args;
@@ -1044,6 +1045,10 @@ function lisp_is_native_string(native_string) {
 
 function lisp_is_native_array(native_array) {
     return (native_array instanceof Array);
+}
+
+function lisp_is_native_function(native_function) {
+    return typeof(native_function) === "function";
 }
 
 function lisp_native_array_contains(native_array, obj) {
