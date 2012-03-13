@@ -1096,6 +1096,10 @@ lisp_put_native_method(Lisp_Boolean, "to-js", function(obj) {
     }
 });
 
+lisp_put_native_method(Lisp_Number, "to-js", function(obj) {
+    return jsnums.toFixnum(obj.lisp_number);
+});
+
 /**** Errors, Assertions, and Abominations ****/
 
 function lisp_simple_error(msg) {
