@@ -64,7 +64,8 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
     /* JS interop */
     lisp_env_put_comfy(env, "to-js", lisp_make_wrapped_native(lisp_to_js, 1, 1));
-    lisp_env_put_comfy(env, "js-var", lisp_make_wrapped_native(lisp_js_var, 1, 1));
+    lisp_env_put_comfy(env, "js-global", lisp_make_wrapped_native(lisp_js_global, 1, 1));
+    lisp_env_put_comfy(env, "js-call", lisp_make_wrapped_native(lisp_js_call, 2));
     return env;
 };
 
@@ -312,9 +313,15 @@ Lisp_JS_Object.lisp_combine = function(cmb, otree, env) {
 };
 
 /* Returns global variable with given name. */
-function lisp_js_var(name) {
+function lisp_js_global(name) {
     lisp_assert(lisp_is_instance(name, Lisp_String));
-    return eval(lisp_string_native_string(name));
+    return window[lisp_string_native_string(name)];
+}
+
+/* Calls a method of an object. */
+function lisp_js_call(obj, sel) {
+    var args = Array.prototype.slice.call(arguments, 2).map(lisp_to_js);
+    return obj[lisp_string_native_string(sel)].apply(obj, args);
 }
 
 /**** Strings ****/
@@ -813,7 +820,9 @@ Lisp_Catch.lisp_combine = function(cmb, otree, env) {
 
 /**** Native Combiners ****/
 
-/* A native combiner contains a native function. */
+/* A native combiner contains a native function.  By default, it gets
+   called with the list of unevaluated arguments (it doesn't receive
+   the operand tree as is).  To have arguments evaluated, wrap it. */
 
 var Lisp_Native_Combiner = lisp_make_system_class(Lisp_Combiner, "Lisp_Native_Combiner");
 
