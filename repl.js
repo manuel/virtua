@@ -53,6 +53,7 @@ function lisp_repl_load_file(path) {
 }
 
 function lisp_repl_print(obj) {
+    if (console) console.log(obj);
     var s = lisp_string_native_string(lisp_to_string(obj));
     var div = document.createElement("div");
     div.appendChild(document.createTextNode(s));

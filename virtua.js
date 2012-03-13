@@ -62,6 +62,9 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_env_put_comfy(env, "strcat", lisp_make_wrapped_native(lisp_lib_strcat, 2, 2));
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
+    /* JS interop */
+    lisp_env_put_comfy(env, "to-js", lisp_make_wrapped_native(lisp_to_js, 1, 1));
+    lisp_env_put_comfy(env, "js-var", lisp_make_wrapped_native(lisp_js_var, 1, 1));
     return env;
 };
 
@@ -227,14 +230,14 @@ function lisp_make_instance(c) {
 
 /* Returns the class of the object. */
 function lisp_class_of(obj) {
-    if (typeof(obj) === "undefined") {
-        lisp_simple_error("Segmentation violation.");
+    if ((typeof(obj) === "undefined") || (obj === null)) {
+        return Lisp_JS_Object;
     }
     var c = obj.lisp_isa;
-    if (typeof(c) !== "undefined") {
-        return c;
+    if (typeof(c) === "undefined") {
+        return Lisp_JS_Object;
     } else {
-        lisp_simple_error("Not an object.");
+        return c;
     }
 }
 
@@ -289,6 +292,29 @@ function lisp_put_method(c, sel, cmb) {
 /* Puts a wrapped native function as implementation for a message selector. */
 function lisp_put_native_method(c, sel, native_fun) {
     lisp_put_method(c, sel, lisp_make_native(native_fun));
+}
+
+/**** JS Objects ****/
+
+/* All non-Lisp objects are classified as instances of this class,
+   through magic in lisp_class_of. */
+
+var Lisp_JS_Object = lisp_make_system_class(Lisp_Object, "Lisp_JS_Object");
+
+/* Make JavaScript functions callable. */
+Lisp_JS_Object.lisp_combine = function(cmb, otree, env) {
+    if (lisp_is_native_function(cmb)) {
+        var args = lisp_cons_list_to_array(lisp_eval_args(otree)).map(lisp_to_js);
+        return cmb.apply(null, args);
+    } else {
+        lisp_simple_error("Not a combiner: " + lisp_string_native_string(lisp_to_string(cmb)));
+    }
+};
+
+/* Returns global variable with given name. */
+function lisp_js_var(name) {
+    lisp_assert(lisp_is_instance(name, Lisp_String));
+    return eval(lisp_string_native_string(name));
 }
 
 /**** Strings ****/
@@ -973,6 +999,18 @@ lisp_put_native_method(Lisp_Class, "to-string", function(obj) {
     return lisp_make_string("#[class]");
 });
 
+lisp_put_native_method(Lisp_JS_Object, "to-string", function(obj) {
+    var res;
+    if (typeof(obj) === "undefined") {
+        res = "undefined";
+    } else if (obj === null) {
+        res = "null";
+    } else {
+        res = obj.toString();
+    }
+    return lisp_make_string("#[js-object " + res + "]");
+});
+
 lisp_put_native_method(Lisp_String, "to-string", function(obj) {
     return obj;
 });
@@ -1025,6 +1063,28 @@ lisp_put_native_method(Lisp_Compound_Combiner, "to-string", function(obj) {
 lisp_put_native_method(Lisp_Wrapper, "to-string", function(obj) {
     // hack
     return lisp_make_string("#[wrapper " + lisp_string_native_string(lisp_to_string(obj.lisp_underlying)) + "]");
+});
+
+/*** Converting to JS ***/
+
+function lisp_to_js(obj) {
+    return lisp_send(obj, "to-js", lisp_nil);
+}
+
+lisp_put_native_method(Lisp_Object, "to-js", function(obj) {
+    return obj;
+});
+
+lisp_put_native_method(Lisp_String, "to-js", function(obj) {
+    return obj.lisp_native_string;
+});
+
+lisp_put_native_method(Lisp_Boolean, "to-js", function(obj) {
+    if (lisp_native_truth(obj)) {
+        return true;
+    } else {
+        return false;
+    }
 });
 
 /**** Errors, Assertions, and Abominations ****/
