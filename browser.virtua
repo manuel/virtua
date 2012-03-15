@@ -17,12 +17,13 @@
 
 (define-js-methods
    "appendChild"
+   "clear"
    "createElement"
    "createTextNode"
-   "getElementById"
-   "setAttribute"
    "focus"
-   "clear"
+   "getElementById"
+   "scrollTo"
+   "setAttribute"
    )
 
 (def TEXT (lambda (s) (createTextNode *document* s)))
