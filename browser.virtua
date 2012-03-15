@@ -1,0 +1,55 @@
+(set-setter! js-global (lambda (val name) (set-js-global! name val))) ;; doubleplusungood
+
+(def alert (js-global "alert"))
+
+(def *document* (js-global "document"))
+(def *body* (get-slot *document* "body"))
+
+(def define-js-method
+   (lambda (name)
+      (def js-method (lambda (rcv . args)
+                        (apply js-call (list* rcv name args))))
+      (eval (list def (intern name) js-method) *top-level-environment*)))
+
+(def define-js-methods
+   (lambda names
+      (map define-js-method names)))
+
+(define-js-methods
+   "appendChild"
+   "createElement"
+   "createTextNode"
+   "getElementById"
+   "setAttribute"
+   "focus"
+   "clear"
+   )
+
+(def TEXT (lambda (s) (createTextNode *document* s)))
+
+(def define-dom-element
+   (lambda (name)
+      (def maker (vau (attrs . children) env
+                    (def e (createElement *document* name))
+                    (map-plist (lambda (aname avalue)
+                                  (setAttribute e
+                                                (strslice (to-string aname) 1)
+                                                (eval avalue env)))
+                               attrs)
+                    (map (lambda (child)
+                            (appendChild e (eval child env)))
+                         children)
+                    e))
+      (eval (list def (intern name) maker) *top-level-environment*)))
+
+(def define-dom-elements
+   (lambda names
+      (map define-dom-element names)))
+
+(define-dom-elements
+   "DIV"
+   "FORM"
+   "INPUT"
+   "P"
+   )
+

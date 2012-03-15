@@ -1,0 +1,29 @@
+(def print
+   (lambda (string)
+      (appendChild (getElementById *document* "lisp_output")
+         (DIV () (TEXT (to-string string))))))
+
+(def repl-submit
+   (lambda ()
+      (block exit
+         (unwind-protect
+              (begin
+                 (def input (get-slot (getElementById *document* "lisp_line") "value"))
+                 (print (strcat "> " (to-string input)))
+                 (map (lambda (form)
+                         (print (eval form *top-level-environment*)))
+                      (read-from-string input))
+                 (set-slot! (getElementById *document* "lisp_line") "value" (to-js "")))
+           (return-from exit #f)))))
+
+(set! (js-global "lisp_repl_onsubmit") (js-function repl-submit))
+
+(appendChild *body*
+   (DIV ()
+      (DIV (:id "lisp_output"))
+      (FORM (:id "lisp_input" :onsubmit "return lisp_repl_onsubmit()")
+         (TEXT "> ")
+         (INPUT (:type "text" :id "lisp_line" :name "line")))))
+
+(print "Welcome to Virtua!")
+(focus (getElementById *document* "lisp_line"))

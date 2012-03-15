@@ -1,11 +1,10 @@
 <!-- Virtua browser REPL. -->
 <html>
 <head>
-  <title>Virtua 0.1.0</title>
+  <title>Virtua 0.1.1</title>
   <script src="jsparse.js" type="text/javascript"></script>
   <script src="js-numbers.js" type="text/javascript"></script>
   <script src="virtua.js" type="text/javascript"></script>
-  <script src="repl.js" type="text/javascript"></script>
   <script src="test.js" type="text/javascript"></script>
   <style type="text/css">
     html {
@@ -23,11 +22,44 @@
     }
   </style>
 </head>
-<body onload="lisp_repl_onload()">
-  <div id="lisp_output">
-  </div>
-  <form id="lisp_input" onsubmit="return lisp_repl_onsubmit()">
-    &#x25B6;&nbsp;<input type="text" name="line">
-  </form>
+<body onload="lisp_onload()">
+<script type="text/javascript">
+var lisp_env;
+
+function lisp_onload() {
+    lisp_env = lisp_make_kernel_env();
+    lisp_load_file("standard.virtua");
+//    lisp_load_file("test.virtua");
+    lisp_load_file("browser.virtua");
+    lisp_load_file("repl.virtua");
+}
+
+function lisp_load_file(path) {
+    lisp_console_log("Loading " + path + "...");
+    var req = new XMLHttpRequest();
+    // Append random thang to file path to bypass browser cache.
+    req.open("GET", path + "?" + Math.random(), false);
+    req.send(null);
+    if(req.status == 200) {
+//        try {
+            var forms = lisp_parse(req.responseText);
+            var start = new Date().getTime();
+            for (var i = 0; i < forms.length; i++) {
+                var result = lisp_eval(forms[i], lisp_env);
+            }
+            var elapsed = new Date().getTime() - start;
+            lisp_console_log("Evaluation time " + elapsed + "ms");
+//        } catch(e) {
+//            lisp_console_log("ERROR: " + e);
+//        }
+    } else {
+        lisp_simple_error("XHR error: " + req.status);
+    }
+}
+
+function lisp_console_log(string) {
+    if (console) console.log(string);
+}
+</script>
 </body>
 </html>

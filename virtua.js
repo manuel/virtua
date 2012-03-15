@@ -59,13 +59,18 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "Wrapper", Lisp_Wrapper);
     lisp_env_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
     /* Misc */
+    lisp_env_put_comfy(env, "read-from-string", lisp_make_wrapped_native(lisp_read_from_string, 1, 1));
     lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_env_put_comfy(env, "strcat", lisp_make_wrapped_native(lisp_lib_strcat, 2, 2));
+    lisp_env_put_comfy(env, "strelt", lisp_make_wrapped_native(lisp_lib_strelt, 2, 2));
+    lisp_env_put_comfy(env, "strslice", lisp_make_wrapped_native(lisp_lib_strslice, 2, 2));
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
     /* JS interop */
     lisp_env_put_comfy(env, "to-js", lisp_make_wrapped_native(lisp_to_js, 1, 1));
     lisp_env_put_comfy(env, "js-global", lisp_make_wrapped_native(lisp_js_global, 1, 1));
+    lisp_env_put_comfy(env, "set-js-global!", lisp_make_wrapped_native(lisp_set_js_global, 2, 2));
     lisp_env_put_comfy(env, "js-call", lisp_make_wrapped_native(lisp_js_call, 2));
+    lisp_env_put_comfy(env, "js-function", lisp_make_wrapped_native(lisp_js_function, 1, 1));
     return env;
 };
 
@@ -305,7 +310,7 @@ var Lisp_JS_Object = lisp_make_system_class(Lisp_Object, "Lisp_JS_Object");
 /* Make JavaScript functions callable. */
 Lisp_JS_Object.lisp_combine = function(cmb, otree, env) {
     if (lisp_is_native_function(cmb)) {
-        var args = lisp_cons_list_to_array(lisp_eval_args(otree)).map(lisp_to_js);
+        var args = lisp_cons_list_to_array(lisp_eval_args(otree, env)).map(lisp_to_js);
         return cmb.apply(null, args);
     } else {
         lisp_simple_error("Not a combiner: " + lisp_string_native_string(lisp_to_string(cmb)));
@@ -318,10 +323,29 @@ function lisp_js_global(name) {
     return window[lisp_string_native_string(name)];
 }
 
+/* Updates global variable with given name. */
+function lisp_set_js_global(name, value) {
+    lisp_assert(lisp_is_instance(name, Lisp_String));
+    lisp_assert(lisp_is_instance(value, Lisp_Object));
+    window[lisp_string_native_string(name)] = value;
+    return name;
+}
+
 /* Calls a method of an object. */
 function lisp_js_call(obj, sel) {
+    lisp_assert(lisp_is_instance(obj, Lisp_Object));
+    lisp_assert(lisp_is_instance(sel, Lisp_String));
     var args = Array.prototype.slice.call(arguments, 2).map(lisp_to_js);
     return obj[lisp_string_native_string(sel)].apply(obj, args);
+}
+
+/* Creates a JS function from a combiner. */
+function lisp_js_function(cmb) {
+    lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
+    return function() {
+        var args = lisp_array_to_cons_list(Array.prototype.slice.call(arguments));
+        return lisp_to_js(lisp_combine(cmb, args, lisp_make_env(null)));
+    };
 }
 
 /**** Strings ****/
@@ -960,6 +984,18 @@ function lisp_lib_strcat(s1, s2) {
     return lisp_make_string(lisp_string_native_string(s1) + lisp_string_native_string(s2));
 }
 
+function lisp_lib_strelt(s, i) {
+    lisp_assert(lisp_is_instance(s, Lisp_String));
+    lisp_assert(lisp_is_instance(i, Lisp_Number));
+    return lisp_make_string(lisp_string_native_string(s)[lisp_to_js(i)]);
+}
+
+function lisp_lib_strslice(s, i) {
+    lisp_assert(lisp_is_instance(s, Lisp_String));
+    lisp_assert(lisp_is_instance(i, Lisp_Number));
+    return lisp_make_string(lisp_string_native_string(s).slice(lisp_to_js(i)));
+}
+
 /*** Equality ***/
 
 /* A note: native functions implementing these methods don't need to
@@ -1015,7 +1051,11 @@ lisp_put_native_method(Lisp_JS_Object, "to-string", function(obj) {
     } else if (obj === null) {
         res = "null";
     } else {
-        res = obj.toString();
+        try {
+            res = JSON.stringify(obj);
+        } catch(ignore) {
+            res = obj.toString() + " (non-JSON)";
+        }
     }
     return lisp_make_string("#[js-object " + res + "]");
 });
@@ -1130,7 +1170,12 @@ function lisp_native_array_contains(native_array, obj) {
 
 /**** Parser ****/
 
-/* Returns an array of cons lists of the forms in the string. */
+/* Returns a cons list of the forms in the string. */
+function lisp_read_from_string(s) {
+    return lisp_array_to_cons_list(lisp_parse(s));
+}
+
+/* Returns an array of the forms in the native string. */
 function lisp_parse(string) {
     lisp_assert(lisp_is_native_string(string));
     var result = lisp_program_syntax(ps(string));

@@ -2,6 +2,7 @@
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
 ($define! define $define!)
+(define def define)
 (define begin $begin)
 (define if $if)
 (define #void #inert)
@@ -97,6 +98,8 @@
       (eval (list if test #void (list* begin body)) env)))
 
 (define get-current-environment (wrap (vau () e e)))
+
+(define *top-level-environment* (get-current-environment))
 
 (define provide
    (vau (symbols . body) env
@@ -215,6 +218,16 @@
                       (eval (list* lambda (list* rcv rest) body) env))
          name)))
 
+;;;; Property Lists
+
+;; Calls fun with name and value of each property in plist.
+(define map-plist
+   (lambda (fun plist)
+      (if (null? plist)
+          ()
+          (cons (fun (car plist) (cadr plist))
+                (map-plist fun (cddr plist))))))
+
 ;;;; Options
 
 (define-interface Option)
@@ -245,32 +258,18 @@
           Iterator
           iterator
           has-next?
-          next!)
+          next!
+          at)
 
    (define-interface Iterable)
    (define-interface Iterator)
    (define-generic iterator)
    (define-generic has-next?)
    (define-generic next!)
+   (define-generic at)
 
-   (scope
-      (define-implementation Pair Iterable)
-      (define-method iterator ((p Pair))
-         (make-pair-iterator p))
-
-      (define-implementation Nil Iterable)
-      (define-method iterator ((n Nil))
-         (make-pair-iterator n))
-
-      (define-class Pair-Iterator (Iterator)
-         (current)
-         (:constructor make-pair-iterator (current)))
-
-      (define-method has-next? ((it Pair-Iterator))
-         (null? (.current it)))
-      (define-method next! ((it Pair-Iterator))
-         (let ((obj (car (get-slot it "current"))))
-            (set! (.current it) (cdr (.current it))))))
+   (define-method at ((s String) (i Number))
+      (strelt s i))
 
 )
 
