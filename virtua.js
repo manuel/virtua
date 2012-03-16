@@ -72,6 +72,22 @@ function lisp_make_kernel_env() {
 
 /**** Object System ****/
 
+/* Virtua's object system is class-based with multiple inheritance.
+   JS booleans, strings, numbers, null, and undefined are integrated
+   with the class system through some trickery.  Let me explain.
+
+   In order to make the JS objects appear as Lisp objects, we
+   monkey-patch the classes (Boolean.prototype, String.prototype, ...)
+   with a .lisp_isa property pointing to the class.  This means that
+   the JS objects inherit that.  E.g. String.prototype.lisp_isa points
+   to String.prototype, so all strings inherit that.  This is done by
+   lisp_init_class which is called both for all newly created Lisp
+   classes, as well as all existing JS "classes" (prototypes).
+
+   Note that JS's null is Lisp's void (not nil!), and JS's undefined
+   is a proper object in Lisp, with its own class, Undefined.  See the
+   function lisp_class_of. */
+
 /*** Bootstrap ***/
 
 Lisp_Object = Object.prototype;
@@ -163,7 +179,10 @@ function lisp_lookup_method(c, sel) {
 /*** Object System Functionality ***/
 
 /* Creates a new class with the given prototype, superclasses and
-   native name (for debuggability). */
+   native name (for debuggability).  Note that classes that map to
+   existing JS classes (booleans, strings, ...) are obviously not
+   created by this function.  On them, we only call lisp_init_class,
+   and do not mess with their prototype chain. */
 function lisp_make_class(proto, sups, native_name) {
     lisp_assert(lisp_is_native_array(sups));
     lisp_assert(lisp_is_native_string(native_name));
@@ -175,12 +194,23 @@ function lisp_make_class(proto, sups, native_name) {
 }
 
 function lisp_init_class(c, sups) {
+    /* .lisp_isa points at the class itself.  This means that all its
+       instances inherit that, and that we can tell that an object is
+       a class by checking whether its .lisp_isa points at itself.
+
+       .lisp_superclasses contains a list of superclass objects.  This
+       is independent of the prototype chain.  We fix up all existing
+       JS classes to have Lisp_Object as superclass when we call
+       lisp_init_class on them.
+
+       .lisp_methods is a dictionary of methods, initially empty. */
     c.lisp_isa = c;
     c.lisp_superclasses = sups;
     c.lisp_methods = {};
 }
 
-/* System classes may use a different prototype than Object. */
+/* System classes may use a different prototype than Object.  This is
+   used to inherit core behaviors. */
 function lisp_make_system_class(proto, native_name) {
     return lisp_make_class(proto, [proto], native_name);
 }
@@ -203,6 +233,25 @@ function lisp_make_instance(c) {
 
 /* Returns the class of the object. */
 function lisp_class_of(obj) {
+    /* Brace yourself, trickery ahead!  First of all, undefined and
+       null must be handled specially, because they cannot have
+       properties.  Note that null maps to Lisp's void.
+
+       Once we've determined that an object is not undefined or null,
+       we can look at its .lisp_isa property.  Some JS objects
+       (booleans, strings, ...) and all Lisp objects inherit it from
+       their class.
+
+       Thus, if an object doesn't have a .lisp_isa property, it's
+       something external like a DOM object - we give all these
+       objects the class Object.
+
+       As a second, tricky, case: if the .lisp_isa property points to
+       the object itself, then we know that we are dealing with a
+       class, and give it the class Class.
+
+       Finally, if we're dealing with a proper object we can return
+       its class. */
     if (typeof(obj) === "undefined") {
         return Lisp_Undefined;
     } else if (obj === null) {
