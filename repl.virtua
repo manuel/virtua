@@ -13,7 +13,7 @@
                  (map (lambda (form)
                          (print (eval form *top-level-environment*)))
                       (read-from-string input))
-                 (set-slot! (getElementById *document* "lisp_line") "value" (to-js ""))
+                 (set-slot! (getElementById *document* "lisp_line") "value" "")
                  (scrollTo *window* 0 (get-slot *body* "scrollHeight")))
            (return-from exit #f)))))
 
