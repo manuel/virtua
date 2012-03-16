@@ -61,9 +61,6 @@ function lisp_make_kernel_env() {
     /* Misc */
     lisp_env_put_comfy(env, "read-from-string", lisp_make_wrapped_native(lisp_read_from_string, 1, 1));
     lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
-    lisp_env_put_comfy(env, "strcat", lisp_make_wrapped_native(lisp_lib_strcat, 2, 2));
-    lisp_env_put_comfy(env, "strelt", lisp_make_wrapped_native(lisp_lib_strelt, 2, 2));
-    lisp_env_put_comfy(env, "strslice", lisp_make_wrapped_native(lisp_lib_strslice, 2, 2));
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
     /* JS interop */
     lisp_env_put_comfy(env, "*window*", window);
@@ -945,24 +942,6 @@ function lisp_lib_send(obj, sel, otree) {
 function lisp_lib_error(string) {
     lisp_assert(lisp_is_instance(string, Lisp_String));
     lisp_simple_error(lisp_string_native_string(string));
-}
-
-function lisp_lib_strcat(s1, s2) {
-    lisp_assert(lisp_is_instance(s1, Lisp_String));
-    lisp_assert(lisp_is_instance(s2, Lisp_String));
-    return lisp_make_string(lisp_string_native_string(s1) + lisp_string_native_string(s2));
-}
-
-function lisp_lib_strelt(s, i) {
-    lisp_assert(lisp_is_instance(s, Lisp_String));
-    lisp_assert(lisp_is_instance(i, Lisp_Number));
-    return lisp_make_string(lisp_string_native_string(s)[i]);
-}
-
-function lisp_lib_strslice(s, i) {
-    lisp_assert(lisp_is_instance(s, Lisp_String));
-    lisp_assert(lisp_is_instance(i, Lisp_Number));
-    return lisp_make_string(lisp_string_native_string(s).slice(i));
 }
 
 /*** Equality ***/

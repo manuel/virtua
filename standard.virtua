@@ -148,6 +148,26 @@
 (define setter (lambda (obj) (get-slot obj "setter")))
 (define set-setter! (lambda (obj setter) (set-slot! obj "setter" setter)))
 
+(def define-js-method
+   (lambda (name)
+      (def js-method (lambda (rcv . args)
+                        (apply js-call (list* rcv name args))))
+      (eval (list def (intern name) js-method) *top-level-environment*)))
+
+(def define-js-methods
+   (lambda names
+      (map define-js-method names)))
+
+(define-js-methods
+   "charAt"
+   "concat"
+   "slice"
+   )
+
+(def strcat (lambda strings (apply concat (list* "" strings))))
+(def strelt charAt)
+(def strslice slice)
+
 ;;;; Object System
 
 (provide (define-class

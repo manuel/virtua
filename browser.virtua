@@ -5,16 +5,6 @@
 (def *document* (js-global "document"))
 (def *body* (get-slot *document* "body"))
 
-(def define-js-method
-   (lambda (name)
-      (def js-method (lambda (rcv . args)
-                        (apply js-call (list* rcv name args))))
-      (eval (list def (intern name) js-method) *top-level-environment*)))
-
-(def define-js-methods
-   (lambda names
-      (map define-js-method names)))
-
 (define-js-methods
    "appendChild"
    "clear"
