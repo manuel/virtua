@@ -1,28 +1,27 @@
 ;; Virtua standard language.                      -*- Scheme -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
-($define! define $define!)
-(define def define)
-(define begin $begin)
-(define if $if)
-(define vau $vau)
-(define loop $loop)
+($define! def $define!)
+(def begin $begin)
+(def if $if)
+(def vau $vau)
+(def loop $loop)
 
 ;;;; These are adapted from John Shutt's SINK and the R-1RK.
 
-(define list (wrap (vau x #ignore x)))
+(def list (wrap (vau x #ignore x)))
 
-(define list*
+(def list*
    (wrap (vau args #ignore
             (begin
-               (define aux
+               (def aux
                   (wrap (vau ((head . tail)) #ignore
                            (if (null? tail)
                                head
                                (cons head (aux tail))))))
                (aux args)))))
 
-(define vau
+(def vau
    ((wrap (vau (vau) #ignore
              (vau (formals eformal . body) env
                 (eval (list vau formals eformal
@@ -30,40 +29,40 @@
                       env))))
       vau))
 
-(define lambda
+(def lambda
    (vau (formals . body) env
       (wrap (eval (list* vau formals #ignore body)
                   env))))
 
-(define caar (lambda (((x . #ignore) . #ignore)) x))
-(define cdar (lambda (((#ignore . x) . #ignore)) x))
-(define cadr (lambda ((#ignore . (x . #ignore))) x))
-(define cddr (lambda ((#ignore . (#ignore . x))) x))
+(def caar (lambda (((x . #ignore) . #ignore)) x))
+(def cdar (lambda (((#ignore . x) . #ignore)) x))
+(def cadr (lambda ((#ignore . (x . #ignore))) x))
+(def cddr (lambda ((#ignore . (#ignore . x))) x))
 
-(define apply
+(def apply
    (lambda (appv arg . opt)
       (eval (cons (unwrap appv) arg)
             (if (null? opt)
                 (make-environment)
                 (car opt)))))
 
-(define or?
+(def or?
    (lambda (a b) (if a #t (if b #t #f))))
 
-(define map
+(def map
    (lambda (fn list)
       (if (null? list)
           ()
           (cons (fn (car list))
                 (map fn (cdr list))))))
 
-(define let
+(def let
    (vau (bindings . body) env
       (eval (cons (list* lambda (map car bindings) body)
                   (map cadr bindings))
             env)))
 
-(define let*
+(def let*
    (vau (bindings . body) env
       (eval (if (null? bindings)
                 (list* let bindings body)
@@ -72,9 +71,9 @@
                       (list* let* (cdr bindings) body)))
             env)))
 
-(define cond
+(def cond
    (vau clauses env
-      (define aux
+      (def aux
          (lambda ((test . body) . clauses)
             (if (eval test env)
                 (apply (wrap begin) body env)
@@ -83,23 +82,23 @@
           #void
           (apply aux clauses))))
 
-(define not? (lambda (x) (if x #f #t)))
+(def not? (lambda (x) (if x #f #t)))
 
-(define when
+(def when
    (vau (test . body) env
       (eval (list if test (list* begin body) #void) env)))
 
-(define unless
+(def unless
    (vau (test . body) env
       (eval (list if test #void (list* begin body)) env)))
 
-(define get-current-environment (wrap (vau () e e)))
+(def get-current-environment (wrap (vau () e e)))
 
-(define *top-level-environment* (get-current-environment))
+(def *top-level-environment* (get-current-environment))
 
-(define provide
+(def provide
    (vau (symbols . body) env
-      (eval (list define symbols
+      (eval (list def symbols
                (list let ()
                   (list* begin body)
                   (list* list symbols)))
@@ -107,7 +106,7 @@
 
 ;;;; Virtua-specific forms
 
-(define assert
+(def assert
    (vau (that) env
       (if (not? (eval that env))
           (error (to-string that))
@@ -122,23 +121,23 @@
 
 (def return-from (lambda (exit val) (exit val)))
 
-(define unwind-protect
+(def unwind-protect
    (vau (protected . cleanup) env
       (eval (list $unwind-protect protected (list* begin cleanup)) env)))
 
-(define scope
+(def scope
    (vau body env
       (eval (list* let () body) env)))
 
-(define set!
+(def set!
    (vau (place value) env
       (if (instance? place Pair)
           (let (((cmb . args) place))
              (eval (list* (setter (eval cmb env)) value args) env))
           (eval (list $set! place value) env))))
 
-(define setter (lambda (obj) (get-slot obj "setter")))
-(define set-setter! (lambda (obj setter) (set-slot! obj "setter" setter)))
+(def setter (lambda (obj) (get-slot obj "setter")))
+(def set-setter! (lambda (obj setter) (set-slot! obj "setter" setter)))
 
 (def define-js-method
    (lambda (name)
@@ -162,41 +161,41 @@
 
 ;;;; Object System
 
-(provide (define-class
-          define-interface
-          define-implementation
-          define-generic
-          define-method)
+(provide (defclass
+          definterface
+          defimplementation
+          defgeneric
+          defmethod)
 
-   (define define-class
+   (def defclass
       (vau (name . stuff) env
          (if (null? stuff)
-             (eval (list define name (make-class ())) env)
+             (eval (list def name (make-class ())) env)
              (let (((superclasses . stuff) stuff))
                 (let ((c (make-class (map (lambda (sc) (eval sc env)) superclasses))))
-                   (eval (list define name c) env)
+                   (eval (list def name c) env)
                    (unless (null? stuff)
                       (let (((slots . stuff) stuff))
-                         (map (lambda (slot) (eval (list define-slot slot) env)) slots)
+                         (map (lambda (slot) (eval (list defslot slot) env)) slots)
                          (unless (null? stuff)
                             (let (((#ignore ctor-name args) (car stuff)))
-                               (eval (list define-constructor ctor-name name args) env))))))))
+                               (eval (list defconstructor ctor-name name args) env))))))))
          name))
 
-   (define define-interface
+   (def definterface
       (vau (name) env
-         (eval (list define-class name ()) env)))
+         (eval (list defclass name ()) env)))
 
-   (define define-implementation add-superclass!)
+   (def defimplementation add-superclass!)
 
-   (define define-constructor
+   (def defconstructor
       (vau (name class slots) env
-         (eval (list define name
+         (eval (list def name
                   (list lambda slots
                      (list construct-with-slots class slots)))
                env)))
 
-   (define construct-with-slots
+   (def construct-with-slots
       (vau (class slots) env
          (let ((obj (make-instance (eval class env))))
             (map (lambda (slot)
@@ -204,24 +203,24 @@
                  slots)
             obj)))
 
-   (define define-slot
+   (def defslot
       (vau (name) env
          (let* ((slot (to-string name))
                 (generic-name (intern (strcat "." slot)))
                 (reader (lambda (obj) (get-slot obj slot)))
                 (writer (lambda (val obj) (set-slot! obj slot val))))
             (set-setter! reader writer)
-            (eval (list define generic-name reader) env))
+            (eval (list def generic-name reader) env))
          name))
 
-   (define define-generic
+   (def defgeneric
       (vau (name . #ignore) env
-         (eval (list define name
+         (eval (list def name
                   (lambda (self . otree) (send self (to-string name) otree)))
                env)
          name))
 
-   (define define-method
+   (def defmethod
       (vau (name ((rcv class) . rest) . body) env
          (put-method! (eval class env)
                       (to-string name)
@@ -231,7 +230,7 @@
 ;;;; Property Lists
 
 ;; Calls fun with name and value of each property in plist.
-(define map-plist
+(def map-plist
    (lambda (fun plist)
       (if (null? plist)
           ()
@@ -240,21 +239,21 @@
 
 ;;;; Options
 
-(define-interface Option)
+(definterface Option)
 
-(define-class None (Option))
+(defclass None (Option))
 
-(define none (make-instance None))
+(def none (make-instance None))
 
-(define-class Some (Option)
+(defclass Some (Option)
    (value)
    (:constructor option (value)))
 
-(define-generic option-supplied? (option))
-(define-method option-supplied? ((n None)) #f)
-(define-method option-supplied? ((s Some)) #t)
+(defgeneric option-supplied? (option))
+(defmethod option-supplied? ((n None)) #f)
+(defmethod option-supplied? ((s Some)) #t)
 
-(define if-option
+(def if-option
    (vau ((name option) then . else) env
       (let ((o (eval option env)))
          (if (option-supplied? o)
@@ -271,14 +270,14 @@
           next!
           at)
 
-   (define-interface Iterable)
-   (define-interface Iterator)
-   (define-generic iterator)
-   (define-generic has-next?)
-   (define-generic next!)
-   (define-generic at)
+   (definterface Iterable)
+   (definterface Iterator)
+   (defgeneric iterator)
+   (defgeneric has-next?)
+   (defgeneric next!)
+   (defgeneric at)
 
-   (define-method at ((s String) (i Number))
+   (defmethod at ((s String) (i Number))
       (strelt s i))
 
 )
@@ -294,25 +293,25 @@
           signal
           default-handler)
 
-   (define-class Condition)
-   (define-class Error (Condition))
-   (define-class Warning (Condition))
+   (defclass Condition)
+   (defclass Error (Condition))
+   (defclass Warning (Condition))
 
-   (define-class Restart (Condition))
-   (define-class Unhandled-Restart-Error (Error)
+   (defclass Restart (Condition))
+   (defclass Unhandled-Restart-Error (Error)
       (restart)
       (:constructor unhandled-restart-error (restart)))
 
 
-   (define *handler-stack* none)
+   (def *handler-stack* none)
 
-   (define-class Handler-Frame ()
+   (defclass Handler-Frame ()
       (parent-option
        matcher
        handler)
       (:constructor make-handler-frame (parent-option matcher handler)))
 
-   (define call-with-handler
+   (def call-with-handler
       (lambda (matcher handler thunk)
          (let ((saved-stack *handler-stack*))
             (set! *handler-stack* (option (make-handler-frame *handler-stack*
@@ -321,9 +320,9 @@
             (unwind-protect (thunk)
                (set! *handler-stack* saved-stack)))))
 
-   (define signal
+   (def signal
       (lambda (condition)
-         (define do-signal
+         (def do-signal
             (lambda (frame-option)
                (if-option (frame frame-option)
                   (if ((.matcher frame) condition)
@@ -333,18 +332,18 @@
          (do-signal *handler-stack*)))
 
 
-   (define-generic default-handler (condition))
+   (defgeneric default-handler (condition))
 
-   (define-method default-handler ((c Condition))
+   (defmethod default-handler ((c Condition))
       #void)
 
-   (define-method default-handler ((w Warning))
+   (defmethod default-handler ((w Warning))
       (print w))
 
-   (define-method default-handler ((e Error))
+   (defmethod default-handler ((e Error))
       (invoke-debugger e))
 
-   (define-method default-handler ((r Restart))
+   (defmethod default-handler ((r Restart))
       (signal (unhandled-restart-error r)))
 
 )

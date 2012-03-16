@@ -3,11 +3,11 @@
 
 ;;;; scope
 (assert (= 1 (scope
-                (define x 1)
+                (def x 1)
                 (assert (= x 1))
                 (scope
                    (assert (= x 1))
-                   (define x 2)
+                   (def x 2)
                    (assert (= x 2)))
                 (assert (= x 1))
                 x)))
@@ -61,15 +61,15 @@
 (assert (instance? Class Class))
 
 (scope
-   (define-class C)
-   (define obj (make-instance C))
+   (defclass C)
+   (def obj (make-instance C))
    (assert (instance? obj C))
    (assert (not? (instance? obj String))))
 
 (scope
-   (define-class A)
-   (define-class B)
-   (define-class C (A B))
+   (defclass A)
+   (defclass B)
+   (defclass C (A B))
    (assert (subclass? A Object))
    (assert (subclass? C A))
    (assert (subclass? C B))
@@ -79,37 +79,37 @@
    (assert (not? (subclass? B C))))
 
 (scope
-   (define-class X)
-   (define-class Y)
-   (define-class Z (Y))
-   (define-generic say)
-   (define-method say ((self X)) "x")
-   (define-method say ((self Y)) "y")
+   (defclass X)
+   (defclass Y)
+   (defclass Z (Y))
+   (defgeneric say)
+   (defmethod say ((self X)) "x")
+   (defmethod say ((self Y)) "y")
    (assert (= (say (make-instance X)) "x"))
    (assert (= (say (make-instance Y)) "y"))
    (assert (= (say (make-instance Z)) "y")))
 
 (scope
-   (define-interface Foo)
-   (define-class Bar (Object))
-   (define-implementation Bar Foo)
+   (definterface Foo)
+   (defclass Bar (Object))
+   (defimplementation Bar Foo)
    (assert (subclass? Bar Foo)))
 
 
 (scope
-   (define-class Foo ()
+   (defclass Foo ()
       (the-slot)
       (:constructor make-foo (the-slot)))
-   (define the-foo (make-foo 12))
+   (def the-foo (make-foo 12))
    (assert (= (.the-slot the-foo) 12))
    (set! (.the-slot the-foo) 13)
    (assert (= (.the-slot the-foo) 13)))
 
 (scope
-   (define-class Point ()
+   (defclass Point ()
       (x y)
       (:constructor make-point (x y)))
-   (define pt (make-point 12 24))
+   (def pt (make-point 12 24))
    (assert (instance? pt Point))
    (assert (instance? pt Object))
    (assert (= 12 (.x pt)))
