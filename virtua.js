@@ -27,7 +27,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "#t", lisp_t);
     lisp_env_put_comfy(env, "#f", lisp_f);
     lisp_env_put_comfy(env, "#ignore", lisp_ignore);
-    lisp_env_put_comfy(env, "#inert", lisp_inert);
+    lisp_env_put_comfy(env, "#void", lisp_void);
     /* Objects */
     lisp_env_put_comfy(env, "make-class", lisp_make_wrapped_native(lisp_lib_make_class, 1, 1));
     lisp_env_put_comfy(env, "add-superclass!", lisp_make_wrapped_native(lisp_add_superclass, 2, 2));
@@ -53,7 +53,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "Number", Lisp_Number);
     lisp_env_put_comfy(env, "Boolean", Lisp_Boolean);
     lisp_env_put_comfy(env, "Ignore", Lisp_Ignore);
-    lisp_env_put_comfy(env, "Inert", Lisp_Inert);
+    lisp_env_put_comfy(env, "Void", Lisp_Void);
     lisp_env_put_comfy(env, "Combiner", Lisp_Combiner);
     lisp_env_put_comfy(env, "Compound-Combiner", Lisp_Compound_Combiner);
     lisp_env_put_comfy(env, "Wrapper", Lisp_Wrapper);
@@ -211,7 +211,7 @@ function lisp_class_of(obj) {
     if (typeof(obj) === "undefined") {
         return Lisp_Undefined;
     } else if (obj === null) {
-        return Lisp_Inert;
+        return Lisp_Void;
     } else {
         var c = obj.lisp_isa;
         if (c === undefined) {
@@ -261,7 +261,7 @@ function lisp_add_superclass(c, sc) {
     if (!lisp_native_array_contains(c.lisp_superclasses, sc)) {
         c.lisp_superclasses.push(sc);
     }
-    return lisp_inert;
+    return lisp_void;
 }
 
 /* Puts a combiner as implementation for a message selector. */
@@ -560,11 +560,11 @@ var lisp_ignore = lisp_make_instance(Lisp_Ignore);
 Lisp_Ignore.lisp_match = function(ignore, otree, env) {
 };
 
-/**** Inert ****/
+/**** Void ****/
 
-var Lisp_Inert = lisp_make_system_class(Lisp_Object, "Lisp_Inert");
+var Lisp_Void = lisp_make_system_class(Lisp_Object, "Lisp_Void");
 
-var lisp_inert = null;
+var lisp_void = null;
 
 /**** Undefined ****/
 
@@ -661,7 +661,7 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
 
 /*** $begin ***/
 
-/* Evaluates forms in sequence, returning value of last, or #inert if
+/* Evaluates forms in sequence, returning value of last, or #void if
    there are no forms.
 
    ($begin . forms) -> result */
@@ -669,7 +669,7 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
 var Lisp_Begin = lisp_make_system_class(Lisp_Combiner, "Lisp_Begin");
 
 Lisp_Begin.lisp_combine = function(cmb, otree, env) {
-    var res = lisp_inert;
+    var res = lisp_void;
     while(otree !== lisp_nil) {
         res = lisp_eval(lisp_car(otree), env);
         otree = lisp_cdr(otree);
@@ -1050,8 +1050,8 @@ lisp_put_native_method(Lisp_Ignore, "to-string", function(obj) {
     return lisp_make_string("#ignore");
 });
 
-lisp_put_native_method(Lisp_Inert, "to-string", function(obj) {
-    return lisp_make_string("#inert");
+lisp_put_native_method(Lisp_Void, "to-string", function(obj) {
+    return lisp_make_string("#void");
 });
 
 lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
@@ -1213,9 +1213,6 @@ var lisp_nil_syntax =
 var lisp_ignore_syntax =
     lisp_make_constant_syntax("#ignore", lisp_ignore);
 
-var lisp_inert_syntax =
-    lisp_make_constant_syntax("#inert", lisp_inert);
-
 var lisp_dot_syntax =
     action(wsequence(".", lisp_expression_syntax),
            lisp_dot_syntax_action);
@@ -1249,14 +1246,13 @@ var lisp_whitespace_syntax =
     action(choice(" ", "\n", "\r", "\t"), lisp_nothing_action);
 
 function lisp_nothing_action(ast) { // HACK!
-    return lisp_inert;
+    return lisp_void;
 }
 
 var lisp_expression_syntax =
     whitespace(choice(lisp_number_syntax,
                       lisp_nil_syntax,
                       lisp_ignore_syntax,
-                      lisp_inert_syntax,
                       lisp_compound_syntax,
                       lisp_identifier_syntax,
                       lisp_string_syntax,

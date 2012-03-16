@@ -5,7 +5,6 @@
 (define def define)
 (define begin $begin)
 (define if $if)
-(define #void #inert)
 (define vau $vau)
 (define loop $loop)
 

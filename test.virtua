@@ -55,7 +55,7 @@
 (assert (eq? #f #f))
 (assert (eq? () ()))
 (assert (eq? #ignore #ignore))
-(assert (eq? #inert #inert))
+(assert (eq? #void #void))
 
 ;;;; Object System
 

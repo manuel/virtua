@@ -12,7 +12,7 @@
     lisp_assert(lisp_is_instance(Lisp_Boolean, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Nil, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Ignore, Lisp_Class));
-    lisp_assert(lisp_is_instance(Lisp_Inert, Lisp_Class));
+    lisp_assert(lisp_is_instance(Lisp_Void, Lisp_Class));
     
     var string_foo = lisp_make_string("foo");
     lisp_assert(lisp_is_instance(string_foo, Lisp_String));
@@ -58,8 +58,8 @@
     lisp_assert(lisp_is_instance(lisp_nil, Lisp_Object));
     lisp_assert(lisp_is_instance(lisp_ignore, Lisp_Ignore));
     lisp_assert(lisp_is_instance(lisp_ignore, Lisp_Object));
-    lisp_assert(lisp_is_instance(lisp_inert, Lisp_Inert));
-    lisp_assert(lisp_is_instance(lisp_inert, Lisp_Object));
+    lisp_assert(lisp_is_instance(lisp_void, Lisp_Void));
+    lisp_assert(lisp_is_instance(lisp_void, Lisp_Object));
 
 }());
 
