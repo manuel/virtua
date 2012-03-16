@@ -13,7 +13,7 @@
                 x)))
 
 ;;;; vau
-(assert (eq? ((vau _ env env))
+(assert (eq? ((vau #ignore env env))
              (get-current-environment)))
 
 ;;;; Equality
@@ -158,7 +158,7 @@
 
 ;;;; Conditions
 
-(assert (= 12 (call-with-handler (lambda _ #t) (lambda _ 12) (lambda () (signal "foo")))))
+(assert (= 12 (call-with-handler (lambda #ignore #t) (lambda #ignore 12) (lambda () (signal "foo")))))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation

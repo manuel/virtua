@@ -6,28 +6,27 @@
 (define begin $begin)
 (define if $if)
 (define #void #inert)
-(define _ #ignore)
 (define vau $vau)
 (define loop $loop)
 
-(define ' (vau (form) _ form))
+(define ' (vau (form) #ignore form))
 
 ;;;; These are adapted from John Shutt's SINK and the R-1RK.
 
-(define list (wrap (vau x _ x)))
+(define list (wrap (vau x #ignore x)))
 
 (define list*
-   (wrap (vau args _
+   (wrap (vau args #ignore
             (begin
                (define aux
-                  (wrap (vau ((head . tail)) _
+                  (wrap (vau ((head . tail)) #ignore
                            (if (null? tail)
                                head
                                (cons head (aux tail))))))
                (aux args)))))
 
 (define vau
-   ((wrap (vau (vau) _
+   ((wrap (vau (vau) #ignore
              (vau (formals eformal . body) env
                 (eval (list vau formals eformal
                             (cons begin body))
@@ -36,13 +35,13 @@
 
 (define lambda
    (vau (formals . body) env
-      (wrap (eval (list* vau formals _ body)
+      (wrap (eval (list* vau formals #ignore body)
                   env))))
 
-(define caar (lambda (((x . _) . _)) x))
-(define cdar (lambda (((_ . x) . _)) x))
-(define cadr (lambda ((_ . (x . _))) x))
-(define cddr (lambda ((_ . (_ . x))) x))
+(define caar (lambda (((x . #ignore) . #ignore)) x))
+(define cdar (lambda (((#ignore . x) . #ignore)) x))
+(define cadr (lambda ((#ignore . (x . #ignore))) x))
+(define cddr (lambda ((#ignore . (#ignore . x))) x))
 
 (define apply
    (lambda (appv arg . opt)
@@ -169,7 +168,7 @@
                       (let (((slots . stuff) stuff))
                          (map (lambda (slot) (eval (list define-slot slot) env)) slots)
                          (unless (null? stuff)
-                            (let (((_ ctor-name args) (car stuff)))
+                            (let (((#ignore ctor-name args) (car stuff)))
                                (eval (list define-constructor ctor-name name args) env))))))))
          name))
 
@@ -205,7 +204,7 @@
          name))
 
    (define define-generic
-      (vau (name . _) env
+      (vau (name . #ignore) env
          (eval (list define name
                   (lambda (self . otree) (send self (to-string name) otree)))
                env)
