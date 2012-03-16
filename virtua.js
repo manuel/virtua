@@ -77,28 +77,16 @@ function lisp_make_kernel_env() {
 
 /**** Object System ****/
 
-/*
-   Virtua has a class-based object system with multiple inheritance.
-   Every object has a .lisp_isa property that points to its class, and
-   every class (which is also an object, and thus has .lisp_isa
-   pointing to Lisp_Class) has a .lisp_superclasses property
-   containing its superclasses.  IOW, JavaScript's prototype system is
-   ignored.
+/*** Bootstrap ***/
 
-   Except: in order to simplify the bootstrap process, the object
-   system is implemented in a slightly schizophrenic way.  Core
-   behaviors of objects (how they evaluate themselves, how they act as
-   pattern-matching left-hand sides, how they act when used as
-   combiner, and how they respond to messages), are implemented via
-   JavaScript's prototype system.  System classes (all classes that
-   are not user-defined) redundantly use JavaScript's prototype chain
-   in parallel to the inheritance heterarchy.  This works because
-   user-defined classes are not expected to be able to override these
-   core behaviors.
+Lisp_Object = Object.prototype;
 
-   In short: classes inherit their core behaviors from their
-   prototype, and their methods from their superclasses.
-*/
+function Lisp_Class_Prototype() {}
+Lisp_Class_Prototype.prototype = Lisp_Object;
+var Lisp_Class = new Lisp_Class_Prototype();
+
+lisp_init_class(Lisp_Object, []);
+lisp_init_class(Lisp_Class, [Lisp_Object]);
 
 /*** Core Behaviors ***/
 
@@ -122,34 +110,28 @@ function lisp_send(obj, sel, otree) {
     return lisp_class_of(obj).lisp_send(obj, sel, otree);
 }
 
-/*** Prototypes ***/
-
-/* This is the prototype of the root class of the heterarchy, Object.
-   It defines core behaviors that are then overridden in some cases by
-   system classes (e.g. symbols and pairs override their evaluation
-   behavior). */
-
-function Lisp_Object_Prototype() {
-    this.lisp_methods = {};
-}
-
 /* By default, objects evaluate to themselves. */
-Lisp_Object_Prototype.prototype.lisp_eval = function(obj, env) {
+Lisp_Object.lisp_eval = function(obj, env) {
     return obj;
 };
 
-/* By default, objects cannot be used as combiners. */
-Lisp_Object_Prototype.prototype.lisp_combine = function(obj, otree, env) {
-    lisp_simple_error("Not a combiner: " + lisp_to_native_string(obj));
+/* Make native functions callable. */
+Lisp_Object.lisp_combine = function(obj, otree, env) {
+    if (lisp_is_native_function(obj)) {
+        var args = lisp_cons_list_to_array(lisp_eval_args(otree, env)).map(lisp_to_js);
+        return obj.apply(null, args);
+    } else {
+        lisp_simple_error("Not a combiner: " + lisp_string_native_string(lisp_to_string(cmb)));
+    }
 };
 
 /* By default, objects cannot be used as left-hand side patterns. */
-Lisp_Object_Prototype.prototype.lisp_match = function(obj, otree, env) {
+Lisp_Object.lisp_match = function(obj, otree, env) {
     lisp_simple_error("Not a pattern.");
 };
 
 /* All objects use the same method lookup algorithm. */
-Lisp_Object_Prototype.prototype.lisp_send = function(obj, sel, otree) {
+Lisp_Object.lisp_send = function(obj, sel, otree) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_native_string(sel));
     lisp_assert(lisp_is_instance(otree, Lisp_Object));
@@ -183,22 +165,7 @@ function lisp_lookup_method(c, sel) {
     }
 }
 
-/* Bootstrap the class heterarchy. */
-
-/* The root of the class heterarchy. */
-var Lisp_Object = new Lisp_Object_Prototype();
-
-/* The class of classes. */
-function Lisp_Class_Prototype() {
-    this.lisp_methods = {};
-}
-Lisp_Class_Prototype.prototype = Lisp_Object;
-var Lisp_Class = new Lisp_Class_Prototype();
-
-Lisp_Object.lisp_isa = Lisp_Class;
-Lisp_Class.lisp_isa = Lisp_Class;
-Lisp_Object.lisp_superclasses = [];
-Lisp_Class.lisp_superclasses = [Lisp_Object];
+/*** Object System Functionality ***/
 
 /* Creates a new class with the given prototype, superclasses and
    native name (for debuggability). */
@@ -208,10 +175,14 @@ function lisp_make_class(proto, sups, native_name) {
     var f = eval("(function " + native_name + "() {})");
     f.prototype = proto;
     var c = new f();
-    c.lisp_isa = Lisp_Class;
+    lisp_init_class(c, sups);
+    return c;
+}
+
+function lisp_init_class(c, sups) {
+    c.lisp_isa = c;
     c.lisp_superclasses = sups;
     c.lisp_methods = {};
-    return c;
 }
 
 /* System classes may use a different prototype than Object. */
@@ -232,19 +203,24 @@ function lisp_make_user_class(sups, native_name) {
 /* Creates an instance of the given class. */
 function lisp_make_instance(c) {
     lisp_assert(lisp_is_instance(c, Lisp_Class));
-    return { lisp_isa: c };
+    return Object.create(c);
 }
 
 /* Returns the class of the object. */
 function lisp_class_of(obj) {
-    if ((typeof(obj) === "undefined") || (obj === null)) {
-        return Lisp_JS_Object;
-    }
-    var c = obj.lisp_isa;
-    if (typeof(c) === "undefined") {
-        return Lisp_JS_Object;
+    if (typeof(obj) === "undefined") {
+        return Lisp_Undefined;
+    } else if (obj === null) {
+        return Lisp_Inert;
     } else {
-        return c;
+        var c = obj.lisp_isa;
+        if (c === undefined) {
+            return Lisp_Object;
+        } else if (c === obj) {
+            return Lisp_Class;
+        } else {
+            return c;
+        }
     }
 }
 
@@ -303,21 +279,6 @@ function lisp_put_native_method(c, sel, native_fun) {
 
 /**** JS Objects ****/
 
-/* All non-Lisp objects are classified as instances of this class,
-   through magic in lisp_class_of. */
-
-var Lisp_JS_Object = lisp_make_system_class(Lisp_Object, "Lisp_JS_Object");
-
-/* Make JavaScript functions callable. */
-Lisp_JS_Object.lisp_combine = function(cmb, otree, env) {
-    if (lisp_is_native_function(cmb)) {
-        var args = lisp_cons_list_to_array(lisp_eval_args(otree, env)).map(lisp_to_js);
-        return cmb.apply(null, args);
-    } else {
-        lisp_simple_error("Not a combiner: " + lisp_string_native_string(lisp_to_string(cmb)));
-    }
-};
-
 /* Returns global variable with given name. */
 function lisp_js_global(name) {
     lisp_assert(lisp_is_instance(name, Lisp_String));
@@ -351,33 +312,33 @@ function lisp_js_function(cmb) {
 
 /**** Strings ****/
 
-var Lisp_String = lisp_make_system_class(Lisp_Object, "Lisp_String");
+var Lisp_String = String.prototype;
+
+lisp_init_class(Lisp_String, [Lisp_Object]);
 
 /* Creates a new string with the given native string. */
 function lisp_make_string(native_string) {
     lisp_assert(lisp_is_native_string(native_string));
-    var string = lisp_make_instance(Lisp_String);
-    string.lisp_native_string = native_string;
-    return string;
+    return native_string;
 }
 
 /* Returns the native string of the string. */
 function lisp_string_native_string(string) {
     lisp_assert(lisp_is_instance(string, Lisp_String));
-    return string.lisp_native_string;
+    return string;
 }
 
 /**** Numbers ****/
 
-var Lisp_Number = lisp_make_system_class(Lisp_Object, "Lisp_Number");
+var Lisp_Number = Number.prototype;
+
+lisp_init_class(Lisp_Number, [Lisp_Object]);
 
 /* Creates a new number from the given native string number
    representation. */
 function lisp_make_number(repr) {
     lisp_assert(lisp_is_native_string(repr));
-    var number = lisp_make_instance(Lisp_Number);
-    number.lisp_number = jsnums.fromString(repr);;
-    return number;
+    return Number(repr);
 }
 
 /**** Symbols ****/
@@ -568,11 +529,13 @@ function lisp_env_set(env, name, value) {
 
 /**** Booleans ****/
 
-var Lisp_Boolean = lisp_make_system_class(Lisp_Object, "Lisp_Boolean");
+var Lisp_Boolean = Boolean.prototype;
 
-var lisp_t = lisp_make_instance(Lisp_Boolean);
+lisp_init_class(Lisp_Boolean, [Lisp_Object]);
 
-var lisp_f = lisp_make_instance(Lisp_Boolean);
+var lisp_t = true;
+
+var lisp_f = false;
 
 /**** Nil ****/
 
@@ -601,7 +564,13 @@ Lisp_Ignore.lisp_match = function(ignore, otree, env) {
 
 var Lisp_Inert = lisp_make_system_class(Lisp_Object, "Lisp_Inert");
 
-var lisp_inert = lisp_make_instance(Lisp_Inert);
+var lisp_inert = null;
+
+/**** Undefined ****/
+
+var Lisp_Undefined = lisp_make_system_class(Lisp_Object, "Lisp_Undefined");
+
+var lisp_undefined = undefined;
 
 /**** Combiners ****/
 
@@ -1013,12 +982,12 @@ lisp_put_native_method(Lisp_Object, "=", function(obj, other) {
 
 lisp_put_native_method(Lisp_Number, "=", function(obj, other) {
     if (!lisp_is_instance(other, Lisp_Number)) return lisp_f;
-    return lisp_truth(jsnums.equals(obj.lisp_number, other.lisp_number));
+    return lisp_truth(obj === other);
 });
 
 lisp_put_native_method(Lisp_String, "=", function(obj, other) {
     if (!lisp_is_instance(other, Lisp_String)) return lisp_f;
-    return lisp_truth(obj.lisp_native_string === other.lisp_native_string);
+    return lisp_truth(obj === other);
 });
 
 lisp_put_native_method(Lisp_Pair, "=", function(obj, other) {
@@ -1045,32 +1014,16 @@ lisp_put_native_method(Lisp_Class, "to-string", function(obj) {
     return lisp_make_string("#[class]");
 });
 
-lisp_put_native_method(Lisp_JS_Object, "to-string", function(obj) {
-    var res;
-    if (typeof(obj) === "undefined") {
-        res = "undefined";
-    } else if (obj === null) {
-        res = "null";
-    } else {
-        try {
-            res = JSON.stringify(obj);
-        } catch(ignore) {
-            res = obj.toString() + " (non-JSON)";
-        }
-    }
-    return lisp_make_string("#[js-object " + res + "]");
-});
-
 lisp_put_native_method(Lisp_String, "to-string", function(obj) {
     return obj;
 });
 
 lisp_put_native_method(Lisp_Number, "to-string", function(obj) {
-    return lisp_make_string(obj.lisp_number.toString());
+    return lisp_make_string(obj.toString());
 });
 
 lisp_put_native_method(Lisp_Boolean, "to-string", function(obj) {
-    return obj === lisp_t ? lisp_make_string("#t") : lisp_make_string("#f");
+    return obj ? lisp_make_string("#t") : lisp_make_string("#f");
 });
 
 lisp_put_native_method(Lisp_Pair, "to-string", function(obj) {
@@ -1126,7 +1079,7 @@ lisp_put_native_method(Lisp_Object, "to-js", function(obj) {
 });
 
 lisp_put_native_method(Lisp_String, "to-js", function(obj) {
-    return obj.lisp_native_string;
+    return obj;
 });
 
 lisp_put_native_method(Lisp_Boolean, "to-js", function(obj) {
@@ -1138,7 +1091,7 @@ lisp_put_native_method(Lisp_Boolean, "to-js", function(obj) {
 });
 
 lisp_put_native_method(Lisp_Number, "to-js", function(obj) {
-    return jsnums.toFixnum(obj.lisp_number);
+    return obj.toString();
 });
 
 /**** Errors, Assertions, and Abominations ****/
