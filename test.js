@@ -14,24 +14,22 @@
     lisp_assert(lisp_is_instance(Lisp_Ignore, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Void, Lisp_Class));
     
-    var string_foo = lisp_make_string("foo");
+    var string_foo = "foo";
     lisp_assert(lisp_is_instance(string_foo, Lisp_String));
     lisp_assert(!lisp_is_instance(string_foo, Lisp_Symbol));
     lisp_assert(!lisp_is_instance(string_foo, Lisp_Class));
     lisp_assert(lisp_is_instance(string_foo, Lisp_Object));
     lisp_assert(!lisp_is_instance(string_foo, Lisp_Class));
     lisp_assert(lisp_eval(string_foo) === string_foo);
-    lisp_assert(lisp_string_native_string(string_foo) === "foo");
     
-    var symbol_foo = lisp_intern_comfy("foo");
+    var symbol_foo = lisp_intern("foo");
     lisp_assert(lisp_is_instance(symbol_foo, Lisp_Symbol));
     lisp_assert(!lisp_is_instance(symbol_foo, Lisp_String));
     lisp_assert(!lisp_is_instance(symbol_foo, Lisp_Class));
     lisp_assert(lisp_is_instance(symbol_foo, Lisp_Object));
-    lisp_assert(symbol_foo === lisp_intern_comfy("foo"));
-    lisp_assert(symbol_foo !== lisp_intern_comfy("bar"));
-    lisp_assert(lisp_string_native_string(lisp_symbol_name(symbol_foo)) === "foo");
-    lisp_assert(lisp_symbol_native_string(symbol_foo) === "foo");
+    lisp_assert(symbol_foo === lisp_intern("foo"));
+    lisp_assert(symbol_foo !== lisp_intern("bar"));
+    lisp_assert(lisp_symbol_name(symbol_foo) === "foo");
     
     var cons = lisp_cons(string_foo, symbol_foo);
     lisp_assert(lisp_is_instance(cons, Lisp_Pair));
@@ -46,7 +44,7 @@
     lisp_assert(lisp_env_lookup(env, symbol_foo) === string_foo);
     var child_env = lisp_make_env(env);
     lisp_assert(lisp_env_lookup(child_env, symbol_foo) === string_foo);
-    var string_bar = lisp_make_string("bar");
+    var string_bar = "bar";
     lisp_env_put(child_env, symbol_foo, string_bar);
     lisp_assert(lisp_env_lookup(child_env, symbol_foo) === string_bar);
     lisp_assert(lisp_env_lookup(env, symbol_foo) === string_foo);

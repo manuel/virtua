@@ -132,7 +132,7 @@ Lisp_Object.lisp_combine = function(obj, otree, env) {
         var args = lisp_cons_list_to_array(lisp_eval_args(otree, env));
         return obj.apply(null, args);
     } else {
-        lisp_simple_error("Not a combiner: " + lisp_string_native_string(lisp_to_string(cmb)));
+        lisp_simple_error("Not a combiner: " + lisp_to_string(cmb));
     }
 };
 
@@ -144,14 +144,14 @@ Lisp_Object.lisp_match = function(obj, otree, env) {
 /* All objects use the same method lookup algorithm. */
 Lisp_Object.lisp_send = function(obj, sel, otree) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
-    lisp_assert(lisp_is_native_string(sel));
+    lisp_assert(lisp_is_instance(sel, Lisp_String));
     lisp_assert(lisp_is_instance(otree, Lisp_Object));
     var c = lisp_class_of(obj);
     var method = lisp_lookup_method(c, sel);
     if (typeof(method) !== "undefined") {
         return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env(null));
     } else {
-        lisp_simple_error("Message not understood: " + sel + " by " + lisp_to_native_string(obj));
+        lisp_simple_error("Message not understood: " + sel + " by " + lisp_to_string(obj));
     }
 };
 
@@ -185,7 +185,7 @@ function lisp_lookup_method(c, sel) {
    and do not mess with their prototype chain. */
 function lisp_make_class(proto, sups, native_name) {
     lisp_assert(lisp_is_native_array(sups));
-    lisp_assert(lisp_is_native_string(native_name));
+    lisp_assert(lisp_is_instance(native_name, Lisp_String));
     var f = eval("(function " + native_name + "() {})");
     f.prototype = proto;
     var c = new f();
@@ -311,7 +311,7 @@ function lisp_add_superclass(c, sc) {
 /* Puts a combiner as implementation for a message selector. */
 function lisp_put_method(c, sel, cmb) {
     lisp_assert(lisp_is_instance(c, Lisp_Class));
-    lisp_assert(lisp_is_native_string(sel));
+    lisp_assert(lisp_is_instance(sel, Lisp_String));
     lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
     c.lisp_methods[sel] = cmb;
 }
@@ -326,14 +326,14 @@ function lisp_put_native_method(c, sel, native_fun) {
 /* Returns global variable with given name. */
 function lisp_js_global(name) {
     lisp_assert(lisp_is_instance(name, Lisp_String));
-    return window[lisp_string_native_string(name)];
+    return window[name];
 }
 
 /* Updates global variable with given name. */
 function lisp_set_js_global(name, value) {
     lisp_assert(lisp_is_instance(name, Lisp_String));
     lisp_assert(lisp_is_instance(value, Lisp_Object));
-    window[lisp_string_native_string(name)] = value;
+    window[name] = value;
     return name;
 }
 
@@ -342,7 +342,7 @@ function lisp_js_call(obj, sel) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(sel, Lisp_String));
     var args = Array.prototype.slice.call(arguments, 2);
-    return obj[lisp_string_native_string(sel)].apply(obj, args);
+    return obj[sel].apply(obj, args);
 }
 
 /* Creates a JS function from a combiner. */
@@ -360,28 +360,15 @@ var Lisp_String = String.prototype;
 
 lisp_init_class(Lisp_String, [Lisp_Object]);
 
-/* Creates a new string with the given native string. */
-function lisp_make_string(native_string) {
-    lisp_assert(lisp_is_native_string(native_string));
-    return native_string;
-}
-
-/* Returns the native string of the string. */
-function lisp_string_native_string(string) {
-    lisp_assert(lisp_is_instance(string, Lisp_String));
-    return string;
-}
-
 /**** Numbers ****/
 
 var Lisp_Number = Number.prototype;
 
 lisp_init_class(Lisp_Number, [Lisp_Object]);
 
-/* Creates a new number from the given native string number
-   representation. */
+/* Creates a new number from the given number representation. */
 function lisp_make_number(repr) {
-    lisp_assert(lisp_is_native_string(repr));
+    lisp_assert(lisp_is_instance(repr, Lisp_String));
     return Number(repr);
 }
 
@@ -411,31 +398,21 @@ function lisp_make_symbol_do_not_call(name) {
 
 /* Returns the symbol with the given name. */
 function lisp_intern(name) {
-    var native_string = lisp_string_native_string(name);
-    var symbol = lisp_symbols_table[native_string];
+    lisp_assert(lisp_is_instance(name, Lisp_String));
+    var symbol = lisp_symbols_table[name];
     if (typeof(symbol) !== "undefined") {
         return symbol;
     } else {
         symbol = lisp_make_symbol_do_not_call(name);
-        lisp_symbols_table[native_string] = symbol;
+        lisp_symbols_table[name] = symbol;
         return symbol;
     }
-}
-
-/* Returns the symbol with the given native string name. */
-function lisp_intern_comfy(native_string) {
-    return lisp_intern(lisp_make_string(native_string));
 }
 
 /* Returns the string name of a symbol. */
 function lisp_symbol_name(symbol) {
     lisp_assert(lisp_is_instance(symbol, Lisp_Symbol));
     return symbol.lisp_name;
-}
-
-/* Returns the native string name of a symbol. */
-function lisp_symbol_native_string(symbol) {
-    return lisp_string_native_string(lisp_symbol_name(symbol));
 }
 
 /**** Pairs ****/
@@ -523,20 +500,20 @@ function lisp_env_put(env, name, value) {
     lisp_assert(lisp_is_instance(env, Lisp_Env));
     lisp_assert(lisp_is_instance(name, Lisp_Symbol));
     lisp_assert(lisp_is_instance(value, Lisp_Object));
-    env.lisp_bindings[lisp_symbol_native_string(name)] = value;
+    env.lisp_bindings[lisp_symbol_name(name)] = value;
     return value;
 }
 
-/* Updates or creates a binding from a native string name to a value. */
-function lisp_env_put_comfy(env, native_string, value) {
-    return lisp_env_put(env, lisp_intern_comfy(native_string), value);
+/* Updates or creates a binding from a string name to a value. */
+function lisp_env_put_comfy(env, name, value) {
+    return lisp_env_put(env, lisp_intern(name), value);
 }
 
 /* Looks up the value of a name in the environment and its ancestors. */
 function lisp_env_lookup(env, name) {
     lisp_assert(lisp_is_instance(env, Lisp_Env));
     lisp_assert(lisp_is_instance(name, Lisp_Symbol));
-    var native_name = lisp_symbol_native_string(name);
+    var native_name = lisp_symbol_name(name);
     var value = env.lisp_bindings[native_name];
     if (typeof(value) !== "undefined") {
         return value;
@@ -553,7 +530,7 @@ function lisp_env_lookup(env, name) {
 function lisp_env_set(env, name, value) {
     lisp_assert(lisp_is_instance(name, Lisp_Symbol));
     lisp_assert(lisp_is_instance(value, Lisp_Object));
-    var native_name = lisp_symbol_native_string(name);
+    var native_name = lisp_symbol_name(name);
     return lisp_do_set(env, native_name, value);
 
     function lisp_do_set(env, native_name, value) {
@@ -949,18 +926,18 @@ function lisp_lib_is_subclass(c, sc) {
 function lisp_lib_get_slot(obj, slot) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(slot, Lisp_String));
-    var value = obj[lisp_string_native_string(slot)];
+    var value = obj[slot];
     if (typeof(value) !== "undefined") {
         return value;
     } else {
-        lisp_simple_error("Unbound slot: " + lisp_string_native_string(slot));
+        lisp_simple_error("Unbound slot: " + slot);
     }
 }
 
 function lisp_lib_has_slot(obj, slot) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(slot, Lisp_String));
-    var value = obj[lisp_string_native_string(slot)];
+    var value = obj[slot];
     return lisp_truth(typeof(value) !== "undefined");
 }
 
@@ -968,7 +945,7 @@ function lisp_lib_set_slot(obj, slot, value) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(slot, Lisp_String));
     lisp_assert(lisp_is_instance(value, Lisp_Object));
-    obj[lisp_string_native_string(slot)] = value;
+    obj[slot] = value;
     return value;
 }
 
@@ -976,7 +953,7 @@ function lisp_lib_put_method(c, sel, cmb) {
     lisp_assert(lisp_is_instance(c, Lisp_Class));
     lisp_assert(lisp_is_instance(sel, Lisp_String));
     lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
-    lisp_put_method(c, lisp_string_native_string(sel), cmb);
+    lisp_put_method(c, sel, cmb);
     return sel;
 }
 
@@ -984,12 +961,12 @@ function lisp_lib_send(obj, sel, otree) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(sel, Lisp_String));
     lisp_assert(lisp_is_instance(otree, Lisp_Object));
-    return lisp_send(obj, lisp_string_native_string(sel), otree);
+    return lisp_send(obj, sel, otree);
 }
 
 function lisp_lib_error(string) {
     lisp_assert(lisp_is_instance(string, Lisp_String));
-    lisp_simple_error(lisp_string_native_string(string));
+    lisp_simple_error(string);
 }
 
 /*** Equality ***/
@@ -1012,10 +989,6 @@ function lisp_to_string(obj) {
     return lisp_send(obj, "to-string", lisp_nil);
 }
 
-function lisp_to_native_string(obj) {
-    return lisp_string_native_string(lisp_to_string(obj));
-}
-
 lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
     var res;
     if (typeof(obj) === "undefined") {
@@ -1027,11 +1000,11 @@ lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
             res = obj.toString() + " (non-JSON)";
         }
     }
-    return lisp_make_string("#[object " + res + "]");
+    return "#[object " + res + "]";
 });
 
 lisp_put_native_method(Lisp_Class, "to-string", function(obj) {
-    return lisp_make_string("#[class]");
+    return "#[class]";
 });
 
 lisp_put_native_method(Lisp_String, "to-string", function(obj) {
@@ -1039,22 +1012,22 @@ lisp_put_native_method(Lisp_String, "to-string", function(obj) {
 });
 
 lisp_put_native_method(Lisp_Number, "to-string", function(obj) {
-    return lisp_make_string(obj.toString());
+    return obj.toString();
 });
 
 lisp_put_native_method(Lisp_Boolean, "to-string", function(obj) {
-    return obj ? lisp_make_string("#t") : lisp_make_string("#f");
+    return obj ? "#t" : "#f";
 });
 
 lisp_put_native_method(Lisp_Pair, "to-string", function(obj) {
     var car = lisp_car(obj);
     var cdr = lisp_cdr(obj);
-    var car_string = lisp_string_native_string(lisp_to_string(car));
+    var car_string = lisp_to_string(car);
     if (cdr !== lisp_nil) {
-        var cdr_string = lisp_string_native_string(lisp_to_string(cdr));
-        return lisp_make_string("(" + car_string + " . " + cdr_string + ")");
+        var cdr_string = lisp_to_string(cdr);
+        return "(" + car_string + " . " + cdr_string + ")";
     } else {
-        return lisp_make_string("(" + car_string + ")");
+        return "(" + car_string + ")";
     }
 });
 
@@ -1063,29 +1036,29 @@ lisp_put_native_method(Lisp_Symbol, "to-string", function(obj) {
 });
 
 lisp_put_native_method(Lisp_Nil, "to-string", function(obj) {
-    return lisp_make_string("()");
+    return "()";
 });
 
 lisp_put_native_method(Lisp_Ignore, "to-string", function(obj) {
-    return lisp_make_string("#ignore");
+    return "#ignore";
 });
 
 lisp_put_native_method(Lisp_Void, "to-string", function(obj) {
-    return lisp_make_string("#void");
+    return "#void";
 });
 
 lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
-    return lisp_make_string("#[combiner]");
+    return "#[combiner]";
 });
 
 lisp_put_native_method(Lisp_Compound_Combiner, "to-string", function(obj) {
     // hack
-    return lisp_make_string("#[compound-combiner " + lisp_string_native_string(lisp_to_string(obj.lisp_ptree)) + "]");
+    return "#[compound-combiner " + lisp_to_string(obj.lisp_ptree) + "]";
 });
 
 lisp_put_native_method(Lisp_Wrapper, "to-string", function(obj) {
     // hack
-    return lisp_make_string("#[wrapper " + lisp_string_native_string(lisp_to_string(obj.lisp_underlying)) + "]");
+    return "#[wrapper " + lisp_to_string(obj.lisp_underlying) + "]";
 });
 
 /**** Errors, Assertions, and Abominations ****/
@@ -1098,10 +1071,6 @@ function lisp_assert(bool) {
     if (!bool) {
         lisp_simple_error("Assertion failed.");
     }
-}
-
-function lisp_is_native_string(native_string) {
-    return typeof(native_string.substring) !== "undefined";
 }
 
 function lisp_is_native_array(native_array) {
@@ -1125,7 +1094,7 @@ function lisp_read_from_string(s) {
 
 /* Returns an array of the forms in the native string. */
 function lisp_parse(string) {
-    lisp_assert(lisp_is_native_string(string));
+    lisp_assert(lisp_is_instance(string, Lisp_String));
     var result = lisp_program_syntax(ps(string));
     if (result.remaining.index === string.length) {
         return result.ast;
@@ -1154,7 +1123,7 @@ var lisp_identifier_syntax =
            lisp_identifier_syntax_action);
 
 function lisp_identifier_syntax_action(ast) {
-    return lisp_intern_comfy(ast);
+    return lisp_intern(ast);
 }
 
 var lisp_escape_char =
@@ -1178,7 +1147,8 @@ function lisp_escape_sequence_action(ast) {
 }
 
 function lisp_string_syntax_action(ast) {
-    return lisp_make_string(ast[1]);
+    lisp_assert(lisp_is_instance(ast[1], Lisp_String));
+    return ast[1];
 }
 
 var lisp_digits =
