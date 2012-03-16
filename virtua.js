@@ -969,7 +969,17 @@ function lisp_to_native_string(obj) {
 }
 
 lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
-    return lisp_make_string("#[object]");
+    var res;
+    if (typeof(obj) === "undefined") {
+        res = "undefined";
+    } else {
+        try {
+            res = JSON.stringify(obj);
+        } catch(ignore) {
+            res = obj.toString() + " (non-JSON)";
+        }
+    }
+    return lisp_make_string("#[object " + res + "]");
 });
 
 lisp_put_native_method(Lisp_Class, "to-string", function(obj) {
