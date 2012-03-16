@@ -27,8 +27,6 @@
 (assert (= "foo" "foo"))
 (assert (= "" ""))
 (assert (not? (= "foo" "bar")))
-(assert (= (cons 1 2) (cons 1 2)))
-(assert (not? (= (cons 2 1) (cons 1 2))))
 (assert (not? (= "foo" #t)))
 (assert (not? (= #t "foo")))
 (assert (not? (= "foo" 12)))

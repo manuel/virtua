@@ -979,22 +979,6 @@ lisp_put_native_method(Lisp_Object, "=", function(obj, other) {
     return lisp_lib_eq(obj, other);
 });
 
-lisp_put_native_method(Lisp_Number, "=", function(obj, other) {
-    if (!lisp_is_instance(other, Lisp_Number)) return lisp_f;
-    return lisp_truth(obj === other);
-});
-
-lisp_put_native_method(Lisp_String, "=", function(obj, other) {
-    if (!lisp_is_instance(other, Lisp_String)) return lisp_f;
-    return lisp_truth(obj === other);
-});
-
-lisp_put_native_method(Lisp_Pair, "=", function(obj, other) {
-    if (!lisp_is_instance(other, Lisp_Pair)) return lisp_f;
-    if (lisp_equal(lisp_car(obj), lisp_car(other)) == lisp_f) return lisp_f;
-    else return lisp_equal(lisp_cdr(obj), lisp_cdr(other));
-});
-
 /*** Printing ***/
 
 function lisp_to_string(obj) {
