@@ -14,7 +14,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "$loop", lisp_make_instance(Lisp_Loop));
     lisp_env_put_comfy(env, "$unwind-protect", lisp_make_instance(Lisp_Unwind_Protect));
     lisp_env_put_comfy(env, "$js-try", lisp_make_instance(Lisp_JS_Try));
-    lisp_env_put_comfy(env, "js-throw", lisp_make_instance(Lisp_JS_Throw));
+    lisp_env_put_comfy(env, "js-throw", lisp_make_wrapped_native(lisp_lib_throw, 1, 1));
     lisp_env_put_comfy(env, "eq?", lisp_make_wrapped_native(lisp_lib_eq, 2, 2));
     lisp_env_put_comfy(env, "make-environment", lisp_make_wrapped_native(lisp_lib_make_env, 0, 1));
     lisp_env_put_comfy(env, "eval", lisp_make_wrapped_native(lisp_eval, 2, 2));
@@ -132,7 +132,7 @@ Lisp_Object.lisp_combine = function(obj, otree, env) {
         var args = lisp_cons_list_to_array(lisp_eval_args(otree, env));
         return obj.apply(null, args);
     } else {
-        lisp_simple_error("Not a combiner: " + lisp_to_string(cmb));
+        lisp_simple_error("Not a combiner: " + lisp_to_string(obj));
     }
 };
 
@@ -567,7 +567,7 @@ var lisp_nil = lisp_make_instance(Lisp_Nil);
 /* Nil matches only itself. */
 Lisp_Nil.lisp_match = function(nil, otree, env) {
     if (otree !== lisp_nil) {
-        lisp_simple_error("Expected nil.");
+        lisp_simple_error("Expected (), got: " + lisp_to_string(otree));
     }
 };
 
@@ -785,17 +785,6 @@ Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
     }
 };
 
-/*** js-throw ***/
-
-/* (js-throw obj) -> | */
-
-var Lisp_JS_Throw = lisp_make_system_class(Lisp_Combiner, "Lisp_JS_Throw");
-
-Lisp_JS_Throw.lisp_combine = function(cmb, otree, env) {
-    var obj_form = lisp_elt(otree, 0);
-    throw lisp_eval(obj_form, env);
-};
-
 /*** $js-try ***/
 
 /* ($js-try handler body) -> result */
@@ -947,6 +936,10 @@ function lisp_lib_send(obj, sel, otree) {
 function lisp_lib_error(string) {
     lisp_assert(lisp_is_instance(string, Lisp_String));
     lisp_simple_error(string);
+}
+
+function lisp_lib_throw(obj) {
+    throw obj;
 }
 
 /*** Equality ***/

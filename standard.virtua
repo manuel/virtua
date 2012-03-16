@@ -112,9 +112,12 @@
           (error (to-string that))
           #void)))
 
+(def Block-Escape (make-class ()))
+(def make-block-escape (lambda () (make-instance Block-Escape)))
+
 (def block
    (vau (name . body) env
-      (let ((tag (list)) (val #void))
+      (let ((tag (make-block-escape)) (val #void))
          ($js-try (lambda (exc) (if (eq? tag exc) val (js-throw exc)))
             (apply (eval (list* lambda name body) env)
                    (lambda (the-val) (set! val the-val) (js-throw tag)))))))
@@ -317,7 +320,11 @@
             (set! *handler-stack* (option (make-handler-frame *handler-stack*
                                                               matcher
                                                               handler)))
-            (unwind-protect (thunk)
+            (unwind-protect ($js-try (lambda (exc)
+                                        (if (instance? exc Block-Escape)
+                                            (js-throw exc)
+                                            (signal exc)))
+                               (thunk))
                (set! *handler-stack* saved-stack)))))
 
    (def signal
