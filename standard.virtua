@@ -8,8 +8,6 @@
 (define vau $vau)
 (define loop $loop)
 
-(define ' (vau (form) #ignore form))
-
 ;;;; These are adapted from John Shutt's SINK and the R-1RK.
 
 (define list (wrap (vau x #ignore x)))
@@ -115,20 +113,14 @@
           (error (to-string that))
           #void)))
 
-(define catch
-   (vau (tag . body) env
-      (eval (list $catch tag (list* begin body)) env)))
-
-(define block
+(def block
    (vau (name . body) env
-      ((eval (list lambda (list name)
-                (list* catch name body))
-             env)
-       (cons () ()))))
+      (let ((tag (list)) (val #void))
+         ($js-try (lambda (exc) (if (eq? tag exc) val (js-throw exc)))
+            (apply (eval (list* lambda name body) env)
+                   (lambda (the-val) (set! val the-val) (js-throw tag)))))))
 
-(define return-from
-   (lambda (name . value)
-      (throw name (if (null? value) #void (car value)))))
+(def return-from (lambda (exit val) (exit val)))
 
 (define unwind-protect
    (vau (protected . cleanup) env

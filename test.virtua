@@ -123,15 +123,8 @@
 
 ;;;; Control Flow
 
-;; break out of loop
-(assert (eq? (' value) (catch (' tag)
-                          (loop
-                             (throw (' tag) (' value))))))
-
-;; nested catch's
-(assert (eq? (' value) (catch (' outer-tag)
-                          (catch (' inner-tag)
-                             (throw (' outer-tag) (' value))))))
+(assert (= 12 ($js-try #void 12)))
+(assert (= "error" ($js-try (lambda (e) e) (js-throw "error"))))
 
 (assert (= 12 (block x 12)))
 (assert (= 12 (block x 1 2 3 12)))

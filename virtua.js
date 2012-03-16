@@ -13,8 +13,8 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "$if", lisp_make_instance(Lisp_If));
     lisp_env_put_comfy(env, "$loop", lisp_make_instance(Lisp_Loop));
     lisp_env_put_comfy(env, "$unwind-protect", lisp_make_instance(Lisp_Unwind_Protect));
-    lisp_env_put_comfy(env, "$catch", lisp_make_instance(Lisp_Catch));
-    lisp_env_put_comfy(env, "throw", lisp_make_instance(Lisp_Throw));
+    lisp_env_put_comfy(env, "$js-try", lisp_make_instance(Lisp_JS_Try));
+    lisp_env_put_comfy(env, "js-throw", lisp_make_instance(Lisp_JS_Throw));
     lisp_env_put_comfy(env, "eq?", lisp_make_wrapped_native(lisp_lib_eq, 2, 2));
     lisp_env_put_comfy(env, "make-environment", lisp_make_wrapped_native(lisp_lib_make_env, 0, 1));
     lisp_env_put_comfy(env, "eval", lisp_make_wrapped_native(lisp_eval, 2, 2));
@@ -785,51 +785,31 @@ Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
     }
 };
 
-/*** throw ***/
+/*** js-throw ***/
 
-/* Throws a value to an enclosing catch tag.  If there is no such
-   enclosing tag, an error happens (after the stack has been unwound
-   -- unlike Common Lisp.)
+/* (js-throw obj) -> | */
 
-   (throw tag value) -> | */
+var Lisp_JS_Throw = lisp_make_system_class(Lisp_Combiner, "Lisp_JS_Throw");
 
-var Lisp_Throw = lisp_make_system_class(Lisp_Combiner, "Lisp_Throw");
-
-Lisp_Throw.lisp_combine = function(cmb, otree, env) {
-    var tag = lisp_elt(otree, 0);
-    var value = lisp_elt(otree, 1);
-    throw new Lisp_Control_Exception(lisp_eval(tag, env),
-                                     lisp_eval(value, env));
+Lisp_JS_Throw.lisp_combine = function(cmb, otree, env) {
+    var obj_form = lisp_elt(otree, 0);
+    throw lisp_eval(obj_form, env);
 };
 
-function Lisp_Control_Exception(tag, value) {
-    this.lisp_tag = tag;
-    this.lisp_value = value;
-}
+/*** $js-try ***/
 
-/*** $catch ***/
+/* ($js-try handler body) -> result */
 
-/* Performs a body with a catch tag in effect.  If a throw to that tag
-   occurs during the dynamic extent of the evaluation of the body, the
-   throw's value is returned, otherwise the result of the body is
-   returned normally.
+var Lisp_JS_Try = lisp_make_system_class(Lisp_Combiner, "Lisp_JS_Try");
 
-   ($catch tag body) -> result */
-
-var Lisp_Catch = lisp_make_system_class(Lisp_Combiner, "Lisp_Catch");
-
-Lisp_Catch.lisp_combine = function(cmb, otree, env) {
-    var tag = lisp_elt(otree, 0);
-    var body = lisp_elt(otree, 1);
-    var tag_value = lisp_eval(tag, env);
+Lisp_JS_Try.lisp_combine = function(cmb, otree, env) {
+    var handler_form = lisp_elt(otree, 0);
+    var body_form = lisp_elt(otree, 1);
+    var handler = lisp_eval(handler_form, env);
     try {
-        return lisp_eval(body, env);
+        return lisp_eval(body_form, env);
     } catch(e) {
-        if (e.lisp_tag === tag_value) {
-            return e.lisp_value;
-        } else {
-            throw e;
-        }
+        return lisp_combine(handler, lisp_list(e), lisp_make_env(null));
     }
 };
 
