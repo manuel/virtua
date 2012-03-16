@@ -2,6 +2,7 @@
 
 (def alert (js-global "alert"))
 
+(def *window* (js-global "window")) ;; eww
 (def *document* (js-global "document"))
 (def *body* (get-slot *document* "body"))
 

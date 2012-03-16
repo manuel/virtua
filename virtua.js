@@ -63,7 +63,6 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
     /* JS interop */
-    lisp_env_put_comfy(env, "*window*", window);
     lisp_env_put_comfy(env, "js-global", lisp_make_wrapped_native(lisp_js_global, 1, 1));
     lisp_env_put_comfy(env, "set-js-global!", lisp_make_wrapped_native(lisp_set_js_global, 2, 2));
     lisp_env_put_comfy(env, "js-call", lisp_make_wrapped_native(lisp_js_call, 2));
