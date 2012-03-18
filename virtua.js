@@ -64,8 +64,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "read-from-string", lisp_make_wrapped_native(lisp_read_from_string, 1, 1));
     lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
-    lisp_env_put_comfy(env, "anything-to-string",
-                       lisp_make_wrapped_native(lisp_lib_anything_to_string, 1, 1));
+    lisp_env_put_comfy(env, "anything-to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
     /* JS interop */
     lisp_env_put_comfy(env, "js-global", lisp_make_wrapped_native(lisp_js_global, 1, 1));
     lisp_env_put_comfy(env, "set-js-global!", lisp_make_wrapped_native(lisp_set_js_global, 2, 2));
@@ -943,7 +942,7 @@ function lisp_lib_throw(obj) {
     throw obj;
 }
 
-function lisp_lib_anything_to_string(obj) {
+function lisp_to_string(obj) {
     var res;
     if (typeof(obj) === "undefined") {
         res = "undefined";
@@ -954,7 +953,7 @@ function lisp_lib_anything_to_string(obj) {
             res = obj.toString() + " (non-JSON)";
         }
     }
-    return res;
+    return "#[object " + res + "]";
 }
 
 /**** Errors, Assertions, and Abominations ****/
