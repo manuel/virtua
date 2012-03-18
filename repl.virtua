@@ -59,18 +59,19 @@
 (def repl-submit
    (lambda ()
       (block exit
-         (call-with-handler
-            (lambda (exc) #t)
-            (lambda (exc) (print (make-repl-error exc)) (return-from exit #f))
-            (lambda ()
-               (def input (get-slot (getElementById *document* "lisp_line") "value"))
-               (print (make-repl-input input))
-               (map (lambda (form)
+        (unwind-protect
+             (call-with-handler
+              (lambda (exc) #t)
+              (lambda (exc) (print (make-repl-error exc)) (return-from exit #f))
+              (lambda ()
+                (def input (get-slot (getElementById *document* "lisp_line") "value"))
+                (print (make-repl-input input))
+                (map (lambda (form)
                        (print (eval form *top-level-environment*)))
-                    (read-from-string input))
-               (set-slot! (getElementById *document* "lisp_line") "value" "")
-               (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
-               #f)))))
+                     (read-from-string input))
+                (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
+                #f))
+          (set-slot! (getElementById *document* "lisp_line") "value" "")))))
 
 (set! (js-global "lisp_repl_onsubmit") (js-function repl-submit))
 
