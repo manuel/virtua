@@ -107,8 +107,8 @@
 ;;;; Virtua-specific forms
 
 (def defun
-  (vau (name args . body) env
-     (eval (list def name (list* lambda args body)) env)))
+   (vau (name args . body) env
+      (eval (list def name (list* lambda args body)) env)))
 
 (def to-string anything-to-string) ;; later redefined as generic
 
