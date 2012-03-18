@@ -32,10 +32,10 @@ function lisp_make_kernel_env() {
     /* Objects */
     lisp_env_put_comfy(env, "make-class", lisp_make_wrapped_native(lisp_lib_make_class, 1, 1));
     lisp_env_put_comfy(env, "add-superclass!", lisp_make_wrapped_native(lisp_add_superclass, 2, 2));
-    lisp_env_put_comfy(env, "make-instance", lisp_make_wrapped_native(lisp_lib_make_instance, 1, 1));
+    lisp_env_put_comfy(env, "make-instance", lisp_make_wrapped_native(lisp_make_instance, 1, 1));
     lisp_env_put_comfy(env, "class-of", lisp_make_wrapped_native(lisp_class_of, 1, 1));
-    lisp_env_put_comfy(env, "instance?", lisp_make_wrapped_native(lisp_lib_is_instance, 2, 2));
-    lisp_env_put_comfy(env, "subclass?", lisp_make_wrapped_native(lisp_lib_is_subclass, 2, 2));
+    lisp_env_put_comfy(env, "instance?", lisp_make_wrapped_native(lisp_is_instance, 2, 2));
+    lisp_env_put_comfy(env, "subclass?", lisp_make_wrapped_native(lisp_is_subclass, 2, 2));
     lisp_env_put_comfy(env, "get-slot", lisp_make_wrapped_native(lisp_lib_get_slot, 2, 2));
     lisp_env_put_comfy(env, "has-slot?", lisp_make_wrapped_native(lisp_lib_has_slot, 2, 2));
     lisp_env_put_comfy(env, "set-slot!", lisp_make_wrapped_native(lisp_lib_set_slot, 3, 3));
@@ -879,18 +879,6 @@ function lisp_lib_null(obj) {
 
 function lisp_lib_make_class(sups) {
     return lisp_make_user_class(lisp_cons_list_to_array(sups), "Lisp_User_Class");
-}
-
-function lisp_lib_make_instance(c) {
-    return lisp_make_instance(c);
-}
-
-function lisp_lib_is_instance(obj, c) {
-    return lisp_is_instance(obj, c);
-}
-
-function lisp_lib_is_subclass(c, sc) {
-    return lisp_is_subclass(c, sc);
 }
 
 function lisp_lib_get_slot(obj, slot) {
