@@ -3,6 +3,7 @@
 
 ($define! def $define!)
 (def begin $begin)
+(def progn $begin)
 (def if $if)
 (def vau $vau)
 (def loop $loop)
@@ -242,7 +243,7 @@
 (defgeneric to-string)
 
 (defmethod to-string ((a Object))
-  (strcat "#[object " + (anything-to-string a) "]"))
+  (strcat "#[object " (anything-to-string a) "]"))
 
 (defmethod to-string ((a Number))
   (anything-to-string a))
@@ -296,6 +297,11 @@
             (strcat (to-string kar) " " (pair-to-string kdr))
             (strcat (to-string kar) " . " (to-string kdr)))))
   (strcat "(" (pair-to-string p) ")"))
+
+(defmethod to-string ((frm Stack-Frame))
+  (strcat "#[stack-frame "
+          (to-string (get-slot frm "cmb")) " " 
+          (to-string (get-slot frm "otree")) "]"))
 
 ;;;; Property Lists
 

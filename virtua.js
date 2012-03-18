@@ -69,6 +69,9 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "set-js-global!", lisp_make_wrapped_native(lisp_set_js_global, 2, 2));
     lisp_env_put_comfy(env, "js-call", lisp_make_wrapped_native(lisp_js_call, 2));
     lisp_env_put_comfy(env, "js-function", lisp_make_wrapped_native(lisp_js_function, 1, 1));
+    /* Debugging */
+    lisp_env_put_comfy(env, "stack-frame", lisp_make_wrapped_native(lisp_stack_frame, 0, 0));
+    lisp_env_put_comfy(env, "Stack-Frame", Lisp_Stack_Frame);
     return env;
 };
 
@@ -101,6 +104,10 @@ var Lisp_Class = new Lisp_Class_Prototype();
 lisp_init_class(Lisp_Object, []);
 lisp_init_class(Lisp_Class, [Lisp_Object]);
 
+/*** Debugging ***/
+
+var lisp_stack = null;
+
 /*** Core Behaviors ***/
 
 /* Evaluates the object in the environment. */
@@ -110,7 +117,13 @@ function lisp_eval(obj, env) {
 
 /* Combines the object with the operand tree in the environment. */
 function lisp_combine(obj, otree, env) {
-    return lisp_class_of(obj).lisp_combine(obj, otree, env);
+    var saved_stack = lisp_stack;
+    lisp_stack = lisp_make_stack_frame(lisp_stack, obj, otree, env);
+    try {
+        return lisp_class_of(obj).lisp_combine(obj, otree, env);
+    } finally {
+        lisp_stack = saved_stack;
+    }
 }
 
 /* Matches this object against the operand tree, possibly updating the environment. */
@@ -953,6 +966,23 @@ function lisp_to_string(obj) {
         }
     }
     return res;
+}
+
+/**** Debugging ****/
+
+function lisp_stack_frame() {
+    return lisp_stack;
+}
+
+var Lisp_Stack_Frame = lisp_make_system_class(Lisp_Object, "Lisp_Stack_Frame");
+
+function lisp_make_stack_frame(parent, cmb, otree, env) {
+    var frame = lisp_make_instance(Lisp_Stack_Frame);
+    frame.parent = parent;
+    frame.cmb = cmb;
+    frame.otree = otree;
+    frame.env = env;
+    return frame;
 }
 
 /**** Errors, Assertions, and Abominations ****/

@@ -62,7 +62,10 @@
         (unwind-protect
              (call-with-handler
               (lambda (exc) #t)
-              (lambda (exc) (print (make-repl-error exc)) (return-from exit #f))
+              (lambda (exc)
+                (print (make-repl-error exc))
+                (print-stack-trace (stack-frame))
+                (return-from exit #f))
               (lambda ()
                 (def input (get-slot (getElementById *document* "lisp_line") "value"))
                 (print (make-repl-input input))
@@ -72,6 +75,14 @@
                 #f))
           (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
           (set-slot! (getElementById *document* "lisp_line") "value" "")))))
+
+(defun print-stack-trace (f)
+  (block done
+    (loop
+       (if (= #void f) 
+           (return-from done #void)
+           (progn
+             (print f) (set! f (get-slot f "parent")))))))
 
 (set! (js-global "lisp_repl_onsubmit") (js-function repl-submit))
 
