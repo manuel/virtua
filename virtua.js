@@ -24,6 +24,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "car", lisp_make_wrapped_native(lisp_car, 1, 1));
     lisp_env_put_comfy(env, "cdr", lisp_make_wrapped_native(lisp_cdr, 1, 1));
     lisp_env_put_comfy(env, "null?", lisp_make_wrapped_native(lisp_lib_null, 1, 1));
+    lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_env_put_comfy(env, "symbol-name", lisp_make_wrapped_native(lisp_symbol_name, 1, 1));
     lisp_env_put_comfy(env, "#t", lisp_t);
     lisp_env_put_comfy(env, "#f", lisp_f);
@@ -62,7 +63,6 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "Native-Combiner", Lisp_Native_Combiner);
     /* Misc */
     lisp_env_put_comfy(env, "read-from-string", lisp_make_wrapped_native(lisp_read_from_string, 1, 1));
-    lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_env_put_comfy(env, "anything-to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
     /* JS interop */
     lisp_env_put_comfy(env, "js-global", lisp_make_wrapped_native(lisp_js_global, 1, 1));
