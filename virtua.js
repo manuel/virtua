@@ -55,6 +55,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "Boolean", Lisp_Boolean);
     lisp_env_put_comfy(env, "Ignore", Lisp_Ignore);
     lisp_env_put_comfy(env, "Void", Lisp_Void);
+    lisp_env_put_comfy(env, "Undefined", Lisp_Undefined);
     lisp_env_put_comfy(env, "Combiner", Lisp_Combiner);
     lisp_env_put_comfy(env, "Compound-Combiner", Lisp_Compound_Combiner);
     lisp_env_put_comfy(env, "Wrapper", Lisp_Wrapper);
