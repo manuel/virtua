@@ -1,9 +1,41 @@
 ;; -*- Lisp -*-
 
+(defgeneric present)
+(defmethod present ((any Object))
+  (SPAN () (to-string any)))
+
+(defmethod present ((b Boolean))
+  (def e (INPUT (:type "checkbox" :disabled "disabled")))
+  (when b (setAttribute e "checked" #t))
+  e)
+
+(defmethod present ((s String))
+  (DIV (:class "lisp-string") s))
+
+(defclass Repl-Note ()
+  (content)
+  (:constructor make-repl-note (content)))
+
+(defgeneric repl-note)
+(defmethod repl-note ((s String))
+  (print (make-repl-note s)))
+
+(defmethod present ((n Repl-Note))
+  (DIV (:class "lisp-repl-note")
+    (.content n)))
+
+(defclass Repl-Input ()
+  (string)
+  (:constructor make-repl-input (string)))
+
+(defmethod present ((i Repl-Input))
+  (DIV (:class "lisp-repl-input")
+    (.string i)))
+
 (def print
    (lambda (string)
       (appendChild (getElementById *document* "lisp_output")
-         (DIV () (to-string string)))))
+         (DIV (:class "lisp-repl-output") (present string)))))
 
 (def repl-submit
    (lambda ()
@@ -13,7 +45,7 @@
             (lambda (exc) (print exc) (return-from exit #f))
             (lambda ()
                (def input (get-slot (getElementById *document* "lisp_line") "value"))
-               (print (strcat "> " (to-string input)))
+               (print (make-repl-input input))
                (map (lambda (form)
                        (print (eval form *top-level-environment*)))
                     (read-from-string input))
@@ -30,5 +62,5 @@
          "> "
          (INPUT (:type "text" :id "lisp_line" :name "line")))))
 
-(print "Welcome to Virtua!")
+(repl-note "Welcome to Virtua!")
 (focus (getElementById *document* "lisp_line"))

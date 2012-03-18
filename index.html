@@ -10,14 +10,33 @@
       padding: .3em;
     }
     html, input {
-      color: #c0c0c0;
-      background-color: #000;
       font-family: mono;
       font-size: medium;
     }
-    input {
+    #lisp_line {
       border: 0;
       width: 95%;
+    }
+    .lisp-repl-output {
+      text-align: left;
+      margin-bottom: .25em;
+    }
+    .lisp-repl-input {
+      margin-bottom: .25em;
+    }
+    .lisp-repl-input:before {
+      content: "> ";
+    }
+    .lisp-string:before {
+      content: "“";
+      color: gray;
+    }
+    .lisp-string:after {
+      content: "”";
+      color: gray;
+    }
+    .lisp-repl-note {
+      border-bottom: 1px solid black;
     }
   </style>
 </head>
