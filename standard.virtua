@@ -234,6 +234,9 @@
                       (eval (list* vau (list* rcv rest) #ignore body) env))
          name)))
 
+(defgeneric =)
+(defmethod = ((a Object) b) (eq? a b))
+
 ;;;; Property Lists
 
 ;; Calls fun with name and value of each property in plist.

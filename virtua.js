@@ -41,7 +41,6 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "slot-names", lisp_make_wrapped_native(lisp_lib_slot_names, 3, 3));
     lisp_env_put_comfy(env, "put-method!", lisp_make_wrapped_native(lisp_lib_put_method, 3, 3));
     lisp_env_put_comfy(env, "send", lisp_make_wrapped_native(lisp_lib_send, 3, 3));
-    lisp_env_put_comfy(env, "=", lisp_make_wrapped_native(lisp_equal, 2, 2));
     lisp_env_put_comfy(env, "to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
     /* Classes */
     lisp_env_put_comfy(env, "Object", Lisp_Object);
@@ -965,20 +964,6 @@ function lisp_lib_error(string) {
 function lisp_lib_throw(obj) {
     throw obj;
 }
-
-/*** Equality ***/
-
-/* A note: native functions implementing these methods don't need to
-   be wrapped, because the generic functions already evaluate the
-   arguments. */
-
-function lisp_equal(a, b) {
-    return lisp_send(a, "=", lisp_list(b));
-}
-
-lisp_put_native_method(Lisp_Object, "=", function(obj, other) {
-    return lisp_lib_eq(obj, other);
-});
 
 /*** Printing ***/
 
