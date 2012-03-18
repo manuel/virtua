@@ -49,7 +49,7 @@
 
 (defmethod present ((e Repl-Error))
   (DIV (:class "lisp-repl-error")
-    (.string e)))
+    (present (.string e))))
 
 (def print
    (lambda (string)
@@ -69,8 +69,8 @@
                 (map (lambda (form)
                        (print (eval form *top-level-environment*)))
                      (read-from-string input))
-                (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
                 #f))
+          (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
           (set-slot! (getElementById *document* "lisp_line") "value" "")))))
 
 (set! (js-global "lisp_repl_onsubmit") (js-function repl-submit))
