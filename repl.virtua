@@ -78,7 +78,6 @@
    (DIV ()
       (DIV (:id "lisp_output"))
       (FORM (:id "lisp_input" :onsubmit "return lisp_repl_onsubmit()")
-         "> "
          (INPUT (:type "text" :id "lisp_line" :name "line")))))
 
 (repl-note "Welcome to Virtua!")
