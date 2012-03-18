@@ -35,129 +35,127 @@
       (wrap (eval (list* vau formals #ignore body)
                   env))))
 
-(def caar (lambda (((x . #ignore) . #ignore)) x))
-(def cdar (lambda (((#ignore . x) . #ignore)) x))
-(def cadr (lambda ((#ignore . (x . #ignore))) x))
-(def cddr (lambda ((#ignore . (#ignore . x))) x))
+(def set-debug-name!
+   (lambda (obj name) (set-slot! obj "lisp_debug_name" name)))
+(def debug-name
+   (lambda (obj) (if (has-slot? obj "lisp_debug_name")
+                     (get-slot obj "lisp_debug_name")
+                     "anon")))
 
-(def apply
-   (lambda (appv arg . opt)
-      (eval (cons (unwrap appv) arg)
-            (if (null? opt)
-                (make-environment)
-                (car opt)))))
+(def defun
+   (vau (name args . body) env
+      (def fun (eval (list* lambda args body) env))
+      (set-debug-name! fun (symbol-name name))
+      (eval (list def name fun) env)))
 
-(def or?
-   (lambda (a b) (if a #t (if b #t #f))))
+(def defmacro
+   (vau (name args e . body) env
+      (def fun (eval (list* vau args e body) env))
+      (set-debug-name! fun (symbol-name name))
+      (eval (list def name fun) env)))
 
-(def map
-   (lambda (fn list)
-      (if (null? list)
-          ()
-          (cons (fn (car list))
-                (map fn (cdr list))))))
+(defun caar (((x . #ignore) . #ignore)) x)
+(defun cdar (((#ignore . x) . #ignore)) x)
+(defun cadr ((#ignore . (x . #ignore))) x)
+(defun cddr ((#ignore . (#ignore . x))) x)
 
-(def let
-   (vau (bindings . body) env
-      (eval (cons (list* lambda (map car bindings) body)
-                  (map cadr bindings))
-            env)))
+(defun apply (appv arg . opt)
+  (eval (cons (unwrap appv) arg)
+        (if (null? opt)
+            (make-environment)
+            (car opt))))
 
-(def let*
-   (vau (bindings . body) env
-      (eval (if (null? bindings)
-                (list* let bindings body)
-                (list let
-                      (list (car bindings))
-                      (list* let* (cdr bindings) body)))
-            env)))
+(defun or? (a b) (if a #t (if b #t #f)))
 
-(def cond
-   (vau clauses env
-      (def aux
-         (lambda ((test . body) . clauses)
-            (if (eval test env)
-                (apply (wrap begin) body env)
-                (apply (wrap cond) clauses env))))
-      (if (null? clauses)
-          #void
-          (apply aux clauses))))
+(defun map (fn list)
+  (if (null? list)
+      ()
+      (cons (fn (car list))
+            (map fn (cdr list)))))
 
-(def not? (lambda (x) (if x #f #t)))
+(defmacro let (bindings . body) env
+  (eval (cons (list* lambda (map car bindings) body)
+              (map cadr bindings))
+        env))
 
-(def when
-   (vau (test . body) env
-      (eval (list if test (list* begin body) #void) env)))
+(defmacro let* (bindings . body) env
+  (eval (if (null? bindings)
+            (list* let bindings body)
+            (list let
+                  (list (car bindings))
+                  (list* let* (cdr bindings) body)))
+        env))
 
-(def unless
-   (vau (test . body) env
-      (eval (list if test #void (list* begin body)) env)))
+(defmacro cond clauses env
+  (defun aux ((test . body) . clauses)
+    (if (eval test env)
+        (apply (wrap begin) body env)
+        (apply (wrap cond) clauses env)))
+  (if (null? clauses)
+      #void
+      (apply aux clauses)))
+
+(defun not? (x) (if x #f #t))
+
+(defmacro when (test . body) env
+  (eval (list if test (list* begin body) #void) env))
+
+(defmacro unless (test . body) env
+  (eval (list if test #void (list* begin body)) env))
 
 (def get-current-environment (wrap (vau () e e)))
 
 (def *top-level-environment* (get-current-environment))
 
-(def provide
-   (vau (symbols . body) env
-      (eval (list def symbols
-               (list let ()
-                  (list* begin body)
-                  (list* list symbols)))
-            env)))
+(defmacro provide (symbols . body) env
+  (eval (list def symbols
+              (list let ()
+                    (list* begin body)
+                    (list* list symbols)))
+        env))
 
 ;;;; Virtua-specific forms
 
-(def defun
-   (vau (name args . body) env
-      (eval (list def name (list* lambda args body)) env)))
+(defun to-string (obj) (anything-to-string obj)) ;; later redefined as generic
 
-(def to-string anything-to-string) ;; later redefined as generic
-
-(def assert
-   (vau (that) env
-      (if (not? (eval that env))
-          (js-throw (to-string that))
-          #void)))
+(defmacro assert (that) env
+  (if (not? (eval that env))
+      (js-throw (to-string that))
+      #void))
 
 (def Block-Escape (make-class ()))
-(def make-block-escape (lambda () (make-instance Block-Escape)))
+(defun make-block-escape () (make-instance Block-Escape))
 
-(def block
-   (vau (name . body) env
-      (let ((tag (make-block-escape)) (val #void))
-         ($js-try (lambda (exc) (if (eq? tag exc) val (js-throw exc)))
-            (apply (eval (list* lambda name body) env)
-                   (lambda (the-val) (set! val the-val) (js-throw tag)))))))
+(defmacro block (name . body) env
+  (let ((tag (make-block-escape)) (val #void))
+    ($js-try (lambda (exc) (if (eq? tag exc) val (js-throw exc)))
+             (apply (eval (list* lambda name body) env)
+                    (lambda (the-val) (set! val the-val) (js-throw tag))))))
 
-(def return-from (lambda (exit val) (exit val)))
+(defun return-from (exit val) (exit val))
 
-(def unwind-protect
-   (vau (protected . cleanup) env
-      (eval (list $unwind-protect protected (list* begin cleanup)) env)))
+(defmacro unwind-protect (protected . cleanup) env
+  (eval (list $unwind-protect protected (list* begin cleanup)) env))
 
-(def scope
-   (vau body env
-      (eval (list* let () body) env)))
+(defmacro scope body env
+  (eval (list* let () body) env))
 
-(def set!
-   (vau (place value) env
-      (if (instance? place Pair)
-          (let (((cmb . args) place))
-             (eval (list* (setter (eval cmb env)) value args) env))
-          (eval (list $set! place value) env))))
+(defmacro set! (place value) env
+  (if (instance? place Pair)
+      (let (((cmb . args) place))
+        (eval (list* (setter (eval cmb env)) value args) env))
+      (eval (list $set! place value) env)))
 
-(def setter (lambda (obj) (get-slot obj "setter")))
-(def set-setter! (lambda (obj setter) (set-slot! obj "setter" setter)))
+(defun setter (obj) (get-slot obj "setter"))
+(defun set-setter! (obj setter) (set-slot! obj "setter" setter))
 
-(def define-js-method
-   (lambda (name)
-      (def js-method (lambda (rcv . args)
-                        (apply js-call (list* rcv name args))))
-      (eval (list def (intern name) js-method) *top-level-environment*)))
+(defun define-js-method (name)
+  (def js-method (lambda (rcv . args)
+                   (apply js-call (list* rcv name args))))
+  (eval (list def (intern name) js-method) *top-level-environment*))
 
-(def define-js-methods
-   (lambda names
-      (map define-js-method names)))
+(defun define-js-methods names
+  (map define-js-method names))
 
 (define-js-methods
    "charAt"
@@ -165,7 +163,7 @@
    "slice"
    )
 
-(def strcat (lambda strings (apply concat (list* "" strings))))
+(defun strcat strings (apply concat (list* "" strings)))
 (def strelt charAt)
 (def strslice slice)
 
@@ -273,16 +271,13 @@
   "#undefined")
 
 (defmethod to-string ((a Combiner))
-  "#[combiner]")
+  (strcat "#[" (debug-name a) "]"))
 
 (defmethod to-string ((cmb Compound-Combiner))
-  (strcat "#[compound-combiner " (to-string (get-slot cmb "lisp_ptree")) "]"))
+  (strcat "#[" (debug-name cmb) " " (to-string (get-slot cmb "lisp_ptree")) "]"))
 
 (defmethod to-string ((cmb Wrapper))
-  (strcat "#[wrapper " (to-string (unwrap cmb)) "]"))
-
-(defmethod to-string ((cmb Native-Combiner))
-  "#[native-combiner]")
+  (strcat "#[" (debug-name cmb) " " (to-string (unwrap cmb)) "]"))
 
 (defmethod to-string ((a Environment))
   "#[environment]")
@@ -299,9 +294,8 @@
   (strcat "(" (pair-to-string p) ")"))
 
 (defmethod to-string ((frm Stack-Frame))
-  (strcat "#[stack-frame "
-          (to-string (get-slot frm "cmb")) " " 
-          (to-string (get-slot frm "otree")) "]"))
+  (strcat (to-string (get-slot frm "cmb")) " " 
+          (to-string (get-slot frm "otree"))))
 
 ;;;; Property Lists
 
