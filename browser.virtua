@@ -8,7 +8,6 @@
 
 (define-js-methods
    "appendChild"
-   "clear"
    "createElement"
    "createTextNode"
    "focus"
