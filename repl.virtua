@@ -3,7 +3,7 @@
 (def print
    (lambda (string)
       (appendChild (getElementById *document* "lisp_output")
-         (DIV () (TEXT (to-string string))))))
+         (DIV () (to-string string)))))
 
 (def repl-submit
    (lambda ()
@@ -27,7 +27,7 @@
    (DIV ()
       (DIV (:id "lisp_output"))
       (FORM (:id "lisp_input" :onsubmit "return lisp_repl_onsubmit()")
-         (TEXT "> ")
+         "> "
          (INPUT (:type "text" :id "lisp_line" :name "line")))))
 
 (print "Welcome to Virtua!")
