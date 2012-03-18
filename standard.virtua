@@ -1,4 +1,4 @@
-;; Virtua standard language.                      -*- Scheme -*-
+;; Virtua standard language.                        -*- Lisp -*-
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
 ($define! def $define!)
