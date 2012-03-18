@@ -231,7 +231,7 @@
       (vau (name ((rcv class) . rest) . body) env
          (put-method! (eval class env)
                       (to-string name)
-                      (eval (list* lambda (list* rcv rest) body) env))
+                      (eval (list* vau (list* rcv rest) #ignore body) env))
          name)))
 
 ;;;; Property Lists
