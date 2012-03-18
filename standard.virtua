@@ -240,7 +240,44 @@
 (defmethod = ((a Object) b) (eq? a b))
 
 (defgeneric to-string)
-(defmethod to-string ((a Object)) (anything-to-string a))
+
+(defmethod to-string ((a Object))
+  (anything-to-string a))
+
+(defmethod to-string ((a Symbol))
+  (symbol-name a))
+
+(defmethod to-string ((a Class))
+  "#[class]")
+
+(defmethod to-string ((a Nil))
+  "()")
+
+(defmethod to-string ((a Boolean))
+  (if #t "#t" "#f"))
+
+(defmethod to-string ((a Ignore))
+  "#ignore")
+
+(defmethod to-string ((a Void))
+  "#void")
+
+(defmethod to-string ((a Combiner))
+  "#[combiner]")
+
+(defmethod to-string ((a Environment))
+  "#[environment]")
+
+(defmethod to-string ((p Pair))
+  (defun pair-to-string (p)
+    (def kar (car p))
+    (def kdr (cdr p))
+    (if (null? kdr)
+        (to-string kar)
+        (if (instance? kdr Pair)
+            (strcat (to-string kar) " " (pair-to-string kdr))
+            (strcat (to-string kar) " . " (to-string kdr)))))
+  (strcat "(" (pair-to-string p) ")"))
 
 ;;;; Property Lists
 

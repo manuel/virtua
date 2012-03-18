@@ -15,13 +15,13 @@
 (defmethod present-small ((any Object))
   (SPAN () (to-string any)))
 
-(defmethod present ((b Boolean))
-  (def e (INPUT (:type "checkbox" :disabled "disabled")))
-  (when b (setAttribute e "checked" #t))
-  e)
+;(defmethod present ((b Boolean))
+;  (def e (INPUT (:type "checkbox" :disabled "disabled")))
+;  (when b (setAttribute e "checked" #t))
+;  e)
 
-(defmethod present ((s String))
-  (DIV (:class "lisp-string") s))
+;(defmethod present ((s String))
+;  (DIV (:class "lisp-string") s))
 
 (defclass Repl-Note ()
   (content)
