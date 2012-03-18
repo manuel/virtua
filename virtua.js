@@ -258,7 +258,7 @@ function lisp_class_of(obj) {
         return Lisp_Void;
     } else {
         var c = obj.lisp_isa;
-        if (c === undefined) {
+        if (typeof(c) === "undefined") {
             return Lisp_Object;
         } else if (c === obj) {
             return Lisp_Class;
@@ -535,7 +535,7 @@ function lisp_env_set(env, name, value) {
 
     function lisp_do_set(env, native_name, value) {
         lisp_assert(lisp_is_instance(env, Lisp_Env));
-        if (env.lisp_bindings[native_name] !== undefined) {
+        if (typeof(env.lisp_bindings[native_name]) !== "undefined") {
             env.lisp_bindings[native_name] = value;
             return value;
         } else {
@@ -865,7 +865,7 @@ function lisp_native_truth(lisp_bool) {
 /*** Library Functions ***/
 
 function lisp_lib_make_env(optional_parent) {
-    return lisp_make_env(optional_parent !== undefined ? optional_parent : null);
+    return lisp_make_env((typeof(optional_parent) !== "undefined") ? optional_parent : null);
 }
 
 function lisp_lib_eq(a, b) {
