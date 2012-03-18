@@ -25,7 +25,7 @@
                     (def e (createElement *document* name))
                     (map-plist (lambda (aname avalue)
                                   (setAttribute e
-                                                (strslice (to-string aname) 1)
+                                                (strslice (symbol-name aname) 1)
                                                 (eval avalue env)))
                                attrs)
                     (map (lambda (child)

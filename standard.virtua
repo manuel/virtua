@@ -110,6 +110,8 @@
   (vau (name args . body) env
      (eval (list def name (list* lambda args body)) env)))
 
+(def to-string anything-to-string) ;; later redefined as generic
+
 (def assert
    (vau (that) env
       (if (not? (eval that env))
@@ -206,13 +208,13 @@
       (vau (class slots) env
          (let ((obj (make-instance (eval class env))))
             (map (lambda (slot)
-                    (set-slot! obj (to-string slot) (eval slot env)))
+                    (set-slot! obj (symbol-name slot) (eval slot env)))
                  slots)
             obj)))
 
    (def defslot
       (vau (name) env
-         (let* ((slot (to-string name))
+         (let* ((slot (symbol-name name))
                 (generic-name (intern (strcat "." slot)))
                 (reader (lambda (obj) (get-slot obj slot)))
                 (writer (lambda (val obj) (set-slot! obj slot val))))
@@ -223,19 +225,22 @@
    (def defgeneric
       (vau (name . #ignore) env
          (eval (list def name
-                  (lambda (self . otree) (send self (to-string name) otree)))
+                  (lambda (self . otree) (send self (symbol-name name) otree)))
                env)
          name))
 
    (def defmethod
       (vau (name ((rcv class) . rest) . body) env
          (put-method! (eval class env)
-                      (to-string name)
+                      (symbol-name name)
                       (eval (list* vau (list* rcv rest) #ignore body) env))
          name)))
 
 (defgeneric =)
 (defmethod = ((a Object) b) (eq? a b))
+
+(defgeneric to-string)
+(defmethod to-string ((a Object)) (anything-to-string a))
 
 ;;;; Property Lists
 

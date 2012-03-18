@@ -24,6 +24,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "car", lisp_make_wrapped_native(lisp_car, 1, 1));
     lisp_env_put_comfy(env, "cdr", lisp_make_wrapped_native(lisp_cdr, 1, 1));
     lisp_env_put_comfy(env, "null?", lisp_make_wrapped_native(lisp_lib_null, 1, 1));
+    lisp_env_put_comfy(env, "symbol-name", lisp_make_wrapped_native(lisp_symbol_name, 1, 1));
     lisp_env_put_comfy(env, "#t", lisp_t);
     lisp_env_put_comfy(env, "#f", lisp_f);
     lisp_env_put_comfy(env, "#ignore", lisp_ignore);
@@ -41,7 +42,6 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "slot-names", lisp_make_wrapped_native(lisp_lib_slot_names, 3, 3));
     lisp_env_put_comfy(env, "put-method!", lisp_make_wrapped_native(lisp_lib_put_method, 3, 3));
     lisp_env_put_comfy(env, "send", lisp_make_wrapped_native(lisp_lib_send, 3, 3));
-    lisp_env_put_comfy(env, "to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
     /* Classes */
     lisp_env_put_comfy(env, "Object", Lisp_Object);
     lisp_env_put_comfy(env, "User-Object", Lisp_User_Object);
@@ -63,6 +63,8 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "read-from-string", lisp_make_wrapped_native(lisp_read_from_string, 1, 1));
     lisp_env_put_comfy(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_env_put_comfy(env, "error", lisp_make_wrapped_native(lisp_lib_error, 1, 1));
+    lisp_env_put_comfy(env, "anything-to-string",
+                       lisp_make_wrapped_native(lisp_lib_anything_to_string, 1, 1));
     /* JS interop */
     lisp_env_put_comfy(env, "js-global", lisp_make_wrapped_native(lisp_js_global, 1, 1));
     lisp_env_put_comfy(env, "set-js-global!", lisp_make_wrapped_native(lisp_set_js_global, 2, 2));
@@ -965,13 +967,7 @@ function lisp_lib_throw(obj) {
     throw obj;
 }
 
-/*** Printing ***/
-
-function lisp_to_string(obj) {
-    return lisp_send(obj, "to-string", lisp_nil);
-}
-
-lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
+function lisp_lib_anything_to_string(obj) {
     var res;
     if (typeof(obj) === "undefined") {
         res = "undefined";
@@ -982,66 +978,8 @@ lisp_put_native_method(Lisp_Object, "to-string", function(obj) {
             res = obj.toString() + " (non-JSON)";
         }
     }
-    return "#[object " + res + "]";
-});
-
-lisp_put_native_method(Lisp_Class, "to-string", function(obj) {
-    return "#[class]";
-});
-
-lisp_put_native_method(Lisp_String, "to-string", function(obj) {
-    return obj;
-});
-
-lisp_put_native_method(Lisp_Number, "to-string", function(obj) {
-    return obj.toString();
-});
-
-lisp_put_native_method(Lisp_Boolean, "to-string", function(obj) {
-    return obj ? "#t" : "#f";
-});
-
-lisp_put_native_method(Lisp_Pair, "to-string", function(obj) {
-    var car = lisp_car(obj);
-    var cdr = lisp_cdr(obj);
-    var car_string = lisp_to_string(car);
-    if (cdr !== lisp_nil) {
-        var cdr_string = lisp_to_string(cdr);
-        return "(" + car_string + " . " + cdr_string + ")";
-    } else {
-        return "(" + car_string + ")";
-    }
-});
-
-lisp_put_native_method(Lisp_Symbol, "to-string", function(obj) {
-    return lisp_symbol_name(obj);
-});
-
-lisp_put_native_method(Lisp_Nil, "to-string", function(obj) {
-    return "()";
-});
-
-lisp_put_native_method(Lisp_Ignore, "to-string", function(obj) {
-    return "#ignore";
-});
-
-lisp_put_native_method(Lisp_Void, "to-string", function(obj) {
-    return "#void";
-});
-
-lisp_put_native_method(Lisp_Combiner, "to-string", function(obj) {
-    return "#[combiner]";
-});
-
-lisp_put_native_method(Lisp_Compound_Combiner, "to-string", function(obj) {
-    // hack
-    return "#[compound-combiner " + lisp_to_string(obj.lisp_ptree) + "]";
-});
-
-lisp_put_native_method(Lisp_Wrapper, "to-string", function(obj) {
-    // hack
-    return "#[wrapper " + lisp_to_string(obj.lisp_underlying) + "]";
-});
+    return res;
+}
 
 /**** Errors, Assertions, and Abominations ****/
 
