@@ -43,6 +43,14 @@
   (DIV (:class "lisp-repl-input")
     (.string i)))
 
+(defclass Repl-Error ()
+  (string)
+  (:constructor make-repl-error (string)))
+
+(defmethod present ((e Repl-Error))
+  (DIV (:class "lisp-repl-error")
+    (.string e)))
+
 (def print
    (lambda (string)
       (appendChild (getElementById *document* "lisp_output")
@@ -53,7 +61,7 @@
       (block exit
          (call-with-handler
             (lambda (exc) #t)
-            (lambda (exc) (print exc) (return-from exit #f))
+            (lambda (exc) (print (make-repl-error exc)) (return-from exit #f))
             (lambda ()
                (def input (get-slot (getElementById *document* "lisp_line") "value"))
                (print (make-repl-input input))

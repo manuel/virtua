@@ -19,7 +19,6 @@
       width: 95%;
     }
     .lisp-repl-output {
-      text-align: left;
       margin-bottom: .25em;
     }
     .lisp-repl-input {
@@ -35,6 +34,12 @@
     .lisp-string:after {
       content: "”";
       color: gray;
+    }
+    .lisp-repl-error {
+      color: red;
+    }
+    .lisp-repl-error:before {
+      content: "☠ ";
     }
     .lisp-repl-note {
       border-bottom: 1px solid black;
