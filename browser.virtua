@@ -47,4 +47,7 @@
    "INPUT"
    "P"
    "SPAN"
+   "TABLE"
+   "TR"
+   "TD"
    )

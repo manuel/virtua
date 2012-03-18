@@ -4,6 +4,17 @@
 (defmethod present ((any Object))
   (SPAN () (to-string any)))
 
+(defmethod present ((any User-Object))
+  (defun present-slot (name)
+    (TR ()
+      (TD (:class "lisp-slot-name") name)
+      (TD () (present-small (get-slot any name)))))
+  (apply TABLE (list* () (map present-slot (slot-names any)))))
+
+(defgeneric present-small)
+(defmethod present-small ((any Object))
+  (SPAN () (to-string any)))
+
 (defmethod present ((b Boolean))
   (def e (INPUT (:type "checkbox" :disabled "disabled")))
   (when b (setAttribute e "checked" #t))

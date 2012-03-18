@@ -38,6 +38,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "get-slot", lisp_make_wrapped_native(lisp_lib_get_slot, 2, 2));
     lisp_env_put_comfy(env, "has-slot?", lisp_make_wrapped_native(lisp_lib_has_slot, 2, 2));
     lisp_env_put_comfy(env, "set-slot!", lisp_make_wrapped_native(lisp_lib_set_slot, 3, 3));
+    lisp_env_put_comfy(env, "slot-names", lisp_make_wrapped_native(lisp_lib_slot_names, 3, 3));
     lisp_env_put_comfy(env, "put-method!", lisp_make_wrapped_native(lisp_lib_put_method, 3, 3));
     lisp_env_put_comfy(env, "send", lisp_make_wrapped_native(lisp_lib_send, 3, 3));
     lisp_env_put_comfy(env, "=", lisp_make_wrapped_native(lisp_equal, 2, 2));
@@ -916,6 +917,17 @@ function lisp_lib_set_slot(obj, slot, value) {
     lisp_assert(lisp_is_instance(value, Lisp_Object));
     obj[slot] = value;
     return value;
+}
+
+function lisp_lib_slot_names(obj) {
+    lisp_assert(lisp_is_instance(obj, Lisp_Object));
+    var names = [];
+    for (var name in obj) {
+        if (obj.hasOwnProperty(name)) {
+            names.push(name);
+        }
+    }
+    return lisp_array_to_cons_list(names);
 }
 
 function lisp_lib_put_method(c, sel, cmb) {
