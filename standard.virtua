@@ -115,7 +115,7 @@
 (def assert
    (vau (that) env
       (if (not? (eval that env))
-          (error (to-string that))
+          (js-throw (to-string that))
           #void)))
 
 (def Block-Escape (make-class ()))
