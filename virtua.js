@@ -953,7 +953,7 @@ function lisp_to_string(obj) {
             res = obj.toString() + " (non-JSON)";
         }
     }
-    return "#[object " + res + "]";
+    return res;
 }
 
 /**** Errors, Assertions, and Abominations ****/

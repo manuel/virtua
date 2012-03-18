@@ -242,6 +242,12 @@
 (defgeneric to-string)
 
 (defmethod to-string ((a Object))
+  (strcat "#[object " + (anything-to-string a) "]"))
+
+(defmethod to-string ((a Number))
+  (anything-to-string a))
+
+(defmethod to-string ((a String))
   (anything-to-string a))
 
 (defmethod to-string ((a Symbol))
