@@ -262,8 +262,20 @@
 (defmethod to-string ((a Void))
   "#void")
 
+(defmethod to-string ((a Undefined))
+  "#undefined")
+
 (defmethod to-string ((a Combiner))
   "#[combiner]")
+
+(defmethod to-string ((cmb Compound-Combiner))
+  (strcat "#[compound-combiner " (to-string (get-slot cmb "lisp_ptree")) "]"))
+
+(defmethod to-string ((cmb Wrapper))
+  (strcat "#[wrapper " (to-string (unwrap cmb)) "]"))
+
+(defmethod to-string ((cmb Native-Combiner))
+  "#[native-combiner]")
 
 (defmethod to-string ((a Environment))
   "#[environment]")
