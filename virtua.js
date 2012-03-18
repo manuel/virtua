@@ -863,19 +863,6 @@ function lisp_make_wrapped_native(native_fun, min_args, max_args) {
    marked as library.  It's important that all exported functions deal
    with Lisp values (e.g. booleans), and not JavaScript values. */
 
-/*** Helpers ***/
-
-/* Returns a Lisp boolean for a native one. */
-function lisp_truth(native_bool) {
-    return native_bool ? lisp_t : lisp_f;
-}
-
-/* Returns a native boolean for a Lisp one. */
-function lisp_native_truth(lisp_bool) {
-    lisp_assert(lisp_is_instance(lisp_bool, Lisp_Boolean));
-    return lisp_bool === lisp_t ? true : false;
-}
-
 /*** Library Functions ***/
 
 function lisp_lib_make_env(optional_parent) {
@@ -883,7 +870,7 @@ function lisp_lib_make_env(optional_parent) {
 }
 
 function lisp_lib_eq(a, b) {
-    return lisp_truth(a === b);
+    return a === b;
 }
 
 function lisp_lib_null(obj) {
@@ -899,11 +886,11 @@ function lisp_lib_make_instance(c) {
 }
 
 function lisp_lib_is_instance(obj, c) {
-    return lisp_truth(lisp_is_instance(obj, c));
+    return lisp_is_instance(obj, c);
 }
 
 function lisp_lib_is_subclass(c, sc) {
-    return lisp_truth(lisp_is_subclass(c, sc));
+    return lisp_is_subclass(c, sc);
 }
 
 function lisp_lib_get_slot(obj, slot) {
@@ -921,7 +908,7 @@ function lisp_lib_has_slot(obj, slot) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(slot, Lisp_String));
     var value = obj[slot];
-    return lisp_truth(typeof(value) !== "undefined");
+    return typeof(value) !== "undefined";
 }
 
 function lisp_lib_set_slot(obj, slot, value) {
