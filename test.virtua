@@ -64,6 +64,8 @@
    (defclass C)
    (def obj (make-instance C))
    (assert (instance? obj C))
+   (assert (instance? obj User-Object))
+   (assert (instance? obj Object))
    (assert (not? (instance? obj String))))
 
 (scope
@@ -91,7 +93,7 @@
 
 (scope
    (definterface Foo)
-   (defclass Bar (Object))
+   (defclass Bar)
    (defimplementation Bar Foo)
    (assert (subclass? Bar Foo)))
 

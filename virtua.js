@@ -45,6 +45,7 @@ function lisp_make_kernel_env() {
     lisp_env_put_comfy(env, "to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
     /* Classes */
     lisp_env_put_comfy(env, "Object", Lisp_Object);
+    lisp_env_put_comfy(env, "User-Object", Lisp_User_Object);
     lisp_env_put_comfy(env, "Class", Lisp_Class);
     lisp_env_put_comfy(env, "Environment", Lisp_Env);
     lisp_env_put_comfy(env, "Symbol", Lisp_Symbol);
@@ -216,14 +217,21 @@ function lisp_make_system_class(proto, native_name) {
     return lisp_make_class(proto, [proto], native_name);
 }
 
-/* User classes always have Object as prototype, regardless of what
-   classes they inherit from. */
+/* User-defined classes can only inherit from User-Object or other
+   user-defined classes.  IOW, system classes cannot be subclassed for
+   the time being. */
 function lisp_make_user_class(sups, native_name) {
     lisp_assert(lisp_is_native_array(sups));
     if (sups.length === 0) {
-        sups = [Lisp_Object];
+        sups = [Lisp_User_Object];
+    } else {
+        for (var i = 0; i < sups.length; i++) {
+            if (!lisp_is_subclass(sups[i], Lisp_User_Object))
+                lisp_simple_error("Can not inherit from system class: " + 
+                                  lisp_to_string(sups[i]));
+        }
     }
-    return lisp_make_class(Lisp_Object, sups, native_name);
+    return lisp_make_class(Lisp_User_Object, sups, native_name);
 }
 
 /* Creates an instance of the given class. */
@@ -372,6 +380,10 @@ function lisp_make_number(repr) {
     lisp_assert(lisp_is_instance(repr, Lisp_String));
     return Number(repr);
 }
+
+/**** User Objects ****/
+
+var Lisp_User_Object = lisp_make_system_class(Lisp_Object, "Lisp_User_Object");
 
 /**** Symbols ****/
 
