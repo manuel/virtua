@@ -381,7 +381,9 @@ function lisp_js_function(cmb) {
 /* Creates a combiner that corresponds to a JS binary operator. */
 function lisp_js_binop(op) {
     var fun = new Function("a", "b", "return (a " + op + " b)");
-    return lisp_make_wrapped_native(fun, 2, 2);
+    var cmb = lisp_make_wrapped_native(fun, 2, 2);
+    cmb.lisp_debug_name = op + " binop";
+    return cmb;
 }
 
 /**** Arrays ****/
