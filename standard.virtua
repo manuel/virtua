@@ -264,7 +264,7 @@
   (symbol-name a))
 
 (defmethod to-string ((a Class))
-  "#[class]")
+  (strcat "#[class " (debug-name a) "]"))
 
 (defmethod to-string ((a Nil))
   "()")
