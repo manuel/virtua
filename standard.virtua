@@ -2,6 +2,7 @@
 ;; Copyright (c) 2012 Manuel Simoni. See license at end of file.
 
 ($define! def $define!)
+(def defvar def)
 (def begin $begin)
 (def progn $begin)
 (def if $if)

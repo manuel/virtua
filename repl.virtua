@@ -53,29 +53,27 @@
   (DIV (:class "lisp-repl-error")
     (present (.string e))))
 
-(def print
-   (lambda (string)
-      (appendChild (getElementById *document* "lisp_output")
-         (DIV (:class "lisp-repl-output") (present string)))))
+(defun print (string)
+  (appendChild (getElementById *document* "lisp_output")
+               (DIV (:class "lisp-repl-output") (present string))))
 
-(def repl-submit
-   (lambda ()
-      (block exit
-        (unwind-protect
-             (call-with-handler
-              (lambda (exc) #t)
-              (lambda (exc)
-                (print (make-repl-error exc))
-                (return-from exit #f))
-              (lambda ()
-                (def input (get-slot (getElementById *document* "lisp_line") "value"))
-                (print (make-repl-input input))
-                (map (lambda (form)
-                       (print (eval form *top-level-environment*)))
-                     (read-from-string input))
-                #f))
-          (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
-          (set-slot! (getElementById *document* "lisp_line") "value" "")))))
+(defun repl-submit ()
+  (block exit
+    (unwind-protect
+         (call-with-handler
+          (lambda (exc) #t)
+          (lambda (exc)
+            (print (make-repl-error exc))
+            (return-from exit #f))
+          (lambda ()
+            (defvar input (get-slot (getElementById *document* "lisp_line") "value"))
+            (print (make-repl-input input))
+            (map (lambda (form)
+                   (print (eval form *top-level-environment*)))
+                 (read-from-string input))
+            #f))
+      (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
+      (set-slot! (getElementById *document* "lisp_line") "value" ""))))
 
 (defun print-stack-trace (f)
   (block done
