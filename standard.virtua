@@ -123,7 +123,7 @@
       (js-throw (to-string that))
       #void))
 
-(def Block-Escape (make-class ()))
+(def Block-Escape (make-class () "Block-Escape"))
 (defun make-block-escape () (make-instance Block-Escape))
 
 (defmacro block (name . body) env
@@ -179,9 +179,10 @@
    (def defclass
       (vau (name . stuff) env
          (if (null? stuff)
-             (eval (list def name (make-class ())) env)
+             (eval (list def name (make-class () (symbol-name name))) env)
              (let (((superclasses . stuff) stuff))
-                (let ((c (make-class (map (lambda (sc) (eval sc env)) superclasses))))
+                (let ((c (make-class (map (lambda (sc) (eval sc env)) superclasses)
+                                     (symbol-name name))))
                    (eval (list def name c) env)
                    (unless (null? stuff)
                       (let (((slots . stuff) stuff))

@@ -7,9 +7,11 @@
 (defmethod present ((any User-Object))
   (defun present-slot (name)
     (TR ()
-      (TD (:class "lisp-slot-name") name)
+      (TH (:class "lisp-slot-name") name)
       (TD () (present-small (get-slot any name)))))
-  (apply TABLE (list* () (map present-slot (slot-names any)))))
+  (DIV (:class "lisp-user-object")
+    (DIV (:class "lisp-user-object-class") (debug-name (class-of any)))
+    (eval (list* TABLE () (map present-slot (slot-names any))) (get-current-environment))))
 
 (defgeneric present-small)
 (defmethod present-small ((any Object))

@@ -31,7 +31,7 @@ function lisp_make_kernel_env() {
     lisp_export(env, "#ignore", lisp_ignore);
     lisp_export(env, "#void", lisp_void);
     /* Objects */
-    lisp_export(env, "make-class", lisp_make_wrapped_native(lisp_lib_make_class, 1, 1));
+    lisp_export(env, "make-class", lisp_make_wrapped_native(lisp_lib_make_class, 2, 2));
     lisp_export(env, "add-superclass!", lisp_make_wrapped_native(lisp_add_superclass, 2, 2));
     lisp_export(env, "make-instance", lisp_make_wrapped_native(lisp_make_instance, 1, 1));
     lisp_export(env, "class-of", lisp_make_wrapped_native(lisp_class_of, 1, 1));
@@ -201,9 +201,8 @@ function lisp_lookup_method(c, sel) {
 function lisp_make_class(proto, sups, native_name) {
     lisp_assert(lisp_is_native_array(sups));
     lisp_assert(lisp_is_instance(native_name, Lisp_String));
-    var f = eval("(function " + native_name + "() {})");
-    f.prototype = proto;
-    var c = new f();
+    var c = Object.create(proto);
+    c.lisp_debug_name = native_name;
     lisp_init_class(c, sups);
     return c;
 }
@@ -890,8 +889,8 @@ function lisp_lib_null(obj) {
     return lisp_lib_eq(obj, lisp_nil);
 }
 
-function lisp_lib_make_class(sups) {
-    return lisp_make_user_class(lisp_cons_list_to_array(sups), "Lisp_User_Class");
+function lisp_lib_make_class(sups, native_name) {
+    return lisp_make_user_class(lisp_cons_list_to_array(sups), native_name);
 }
 
 function lisp_lib_get_slot(obj, slot) {

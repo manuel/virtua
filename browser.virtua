@@ -45,6 +45,7 @@
    "P"
    "SPAN"
    "TABLE"
-   "TR"
    "TD"
+   "TH"
+   "TR"
    )
