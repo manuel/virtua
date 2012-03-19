@@ -1,5 +1,3 @@
-(set-setter! js-global (lambda (val name) (set-js-global! name val))) ;; doubleplusungood
-
 (def alert (js-global "alert"))
 
 (def *window* (js-global "window")) ;; eww

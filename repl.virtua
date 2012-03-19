@@ -64,7 +64,6 @@
               (lambda (exc) #t)
               (lambda (exc)
                 (print (make-repl-error exc))
-                (print-stack-trace (stack-frame))
                 (return-from exit #f))
               (lambda ()
                 (def input (get-slot (getElementById *document* "lisp_line") "value"))

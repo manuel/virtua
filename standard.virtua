@@ -148,6 +148,7 @@
 
 (defun setter (obj) (get-slot obj "setter"))
 (defun set-setter! (obj setter) (set-slot! obj "setter" setter))
+(set-setter! js-global (lambda (val name) (set-js-global! name val))) ; erm
 
 (defun define-js-method (name)
   (def js-method (lambda (rcv . args)
@@ -293,6 +294,8 @@
             (strcat (to-string kar) " . " (to-string kdr)))))
   (strcat "(" (pair-to-string p) ")"))
 
+;;;; Debugging
+
 (defmethod to-string ((frm Stack-Frame))
   (strcat (to-string (get-slot frm "cmb")) " " 
           (to-string (get-slot frm "otree"))))
@@ -421,6 +424,11 @@
       (signal (unhandled-restart-error r)))
 
 )
+
+(set! (js-global "lisp_simple_error")
+      (js-function (lambda (msg)
+                     (print-stack-trace (stack-frame))
+                     (js-throw msg))))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
