@@ -380,34 +380,31 @@
    (def *handler-stack* none)
 
    (defclass Handler-Frame ()
-      (parent-option
-       matcher
-       handler)
-      (:constructor make-handler-frame (parent-option matcher handler)))
+     (parent-option
+      matcher
+      handler)
+     (:constructor make-handler-frame (parent-option matcher handler)))
 
-   (def call-with-handler
-      (lambda (matcher handler thunk)
-         (let ((saved-stack *handler-stack*))
-            (set! *handler-stack* (option (make-handler-frame *handler-stack*
-                                                              matcher
-                                                              handler)))
-            (unwind-protect ($js-try (lambda (exc)
-                                        (if (instance? exc Block-Escape)
-                                            (js-throw exc)
-                                            (signal exc)))
-                               (thunk))
-               (set! *handler-stack* saved-stack)))))
+   (defun call-with-handler (matcher handler thunk)
+     (let ((saved-stack *handler-stack*))
+       (set! *handler-stack* (option (make-handler-frame *handler-stack*
+                                                         matcher
+                                                         handler)))
+       (unwind-protect ($js-try (lambda (exc)
+                                  (if (instance? exc Block-Escape)
+                                      (js-throw exc)
+                                      (signal exc)))
+                                (thunk))
+         (set! *handler-stack* saved-stack))))
 
-   (def signal
-      (lambda (condition)
-         (def do-signal
-            (lambda (frame-option)
-               (if-option (frame frame-option)
-                  (if ((.matcher frame) condition)
-                      ((.handler frame) condition)
-                      (do-signal (.parent-option frame)))
-                  (default-handler condition))))
-         (do-signal *handler-stack*)))
+   (defun signal (condition)
+     (defun do-signal (frame-option)
+       (if-option (frame frame-option)
+         (if ((.matcher frame) condition)
+             ((.handler frame) condition)
+             (do-signal (.parent-option frame)))
+         (default-handler condition)))
+     (do-signal *handler-stack*))
 
 
    (defgeneric default-handler (condition))
