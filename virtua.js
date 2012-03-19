@@ -26,6 +26,7 @@ function lisp_make_kernel_env() {
     lisp_export(env, "null?", lisp_make_wrapped_native(lisp_lib_null, 1, 1));
     lisp_export(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_export(env, "symbol-name", lisp_make_wrapped_native(lisp_symbol_name, 1, 1));
+    lisp_export(env, "make-array", lisp_make_wrapped_native(lisp_make_array, 0, 0));
     lisp_export(env, "#t", lisp_t);
     lisp_export(env, "#f", lisp_f);
     lisp_export(env, "#ignore", lisp_ignore);
@@ -51,6 +52,7 @@ function lisp_make_kernel_env() {
     lisp_export(env, "Symbol", Lisp_Symbol);
     lisp_export(env, "Pair", Lisp_Pair);
     lisp_export(env, "Nil", Lisp_Nil);
+    lisp_export(env, "Array", Lisp_Array);
     lisp_export(env, "String", Lisp_String);
     lisp_export(env, "Number", Lisp_Number);
     lisp_export(env, "Boolean", Lisp_Boolean);
@@ -373,6 +375,16 @@ function lisp_js_function(cmb) {
         var args = lisp_array_to_cons_list(Array.prototype.slice.call(arguments));
         return lisp_combine(cmb, args, lisp_make_env(null));
     };
+}
+
+/**** Arrays ****/
+
+var Lisp_Array = Array.prototype;
+
+lisp_init_class(Lisp_Array, [Lisp_Object]);
+
+function lisp_make_array() {
+    return [];
 }
 
 /**** Strings ****/

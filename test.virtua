@@ -34,6 +34,10 @@
 (assert (not? (= (cons 1 2) 12)))
 (assert (not? (= 12 (cons 1 2))))
 
+;;;; Arrays
+
+(assert (instance? (make-array) Array))
+
 ;;;; Printing
 
 (assert (= "#t" (to-string #t)))
