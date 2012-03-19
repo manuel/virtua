@@ -38,6 +38,18 @@
 
 (assert (instance? (make-array) Array))
 
+;;;; Binops
+
+(scope
+   (def + (js-binop "+"))
+   (def - (js-binop "-"))
+   (def * (js-binop "*"))
+   (def / (js-binop "/"))
+   (assert (= 3 (+ 1 2)))
+   (assert (= 1 (- 2 1)))
+   (assert (= 42 (* 6 7)))
+   (assert (= 3 (/ 9 3))))
+
 ;;;; Printing
 
 (assert (= "#t" (to-string #t)))

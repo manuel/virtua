@@ -71,6 +71,7 @@ function lisp_make_kernel_env() {
     lisp_export(env, "set-js-global!", lisp_make_wrapped_native(lisp_set_js_global, 2, 2));
     lisp_export(env, "js-call", lisp_make_wrapped_native(lisp_js_call, 2));
     lisp_export(env, "js-function", lisp_make_wrapped_native(lisp_js_function, 1, 1));
+    lisp_export(env, "js-binop", lisp_make_wrapped_native(lisp_js_binop, 1, 1));
     /* Debugging */
     lisp_export(env, "stack-frame", lisp_make_wrapped_native(lisp_stack_frame, 0, 0));
     lisp_export(env, "Stack-Frame", Lisp_Stack_Frame);
@@ -375,6 +376,12 @@ function lisp_js_function(cmb) {
         var args = lisp_array_to_cons_list(Array.prototype.slice.call(arguments));
         return lisp_combine(cmb, args, lisp_make_env(null));
     };
+}
+
+/* Creates a combiner that corresponds to a JS binary operator. */
+function lisp_js_binop(op) {
+    var fun = new Function("a", "b", "return (a " + op + " b)");
+    return lisp_make_wrapped_native(fun, 2, 2);
 }
 
 /**** Arrays ****/
