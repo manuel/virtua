@@ -176,66 +176,61 @@
           defgeneric
           defmethod)
 
-   (def defclass
-      (vau (name . stuff) env
-         (if (null? stuff)
-             (eval (list def name (make-class () (symbol-name name))) env)
-             (let (((superclasses . stuff) stuff))
-                (let ((c (make-class (map (lambda (sc) (eval sc env)) superclasses)
-                                     (symbol-name name))))
-                   (eval (list def name c) env)
-                   (unless (null? stuff)
-                      (let (((slots . stuff) stuff))
-                         (map (lambda (slot) (eval (list defslot slot) env)) slots)
-                         (unless (null? stuff)
-                            (let (((#ignore ctor-name args) (car stuff)))
-                               (eval (list defconstructor ctor-name name args) env))))))))
-         name))
-
-   (def definterface
-      (vau (name) env
-         (eval (list defclass name ()) env)))
+   (defmacro defclass (name . stuff) env
+     (if (null? stuff)
+         (eval (list def name (make-class () (symbol-name name))) env)
+         (let (((superclasses . stuff) stuff))
+           (let ((c (make-class (map (lambda (sc) (eval sc env)) superclasses)
+                                (symbol-name name))))
+             (eval (list def name c) env)
+             (unless (null? stuff)
+               (let (((slots . stuff) stuff))
+                 (map (lambda (slot) (eval (list defslot slot) env)) slots)
+                 (unless (null? stuff)
+                   (let (((#ignore ctor-name args) (car stuff)))
+                     (eval (list defconstructor ctor-name name args) env))))))))
+     name)
+   
+   (defmacro definterface (name) env
+     (eval (list defclass name ()) env))
 
    (def defimplementation add-superclass!)
 
-   (def defconstructor
-      (vau (name class slots) env
-         (eval (list def name
-                  (list lambda slots
-                     (list construct-with-slots class slots)))
-               env)))
+   (defmacro defconstructor (name class slots) env
+     (eval (list def name
+                 (list lambda slots
+                       (list construct-with-slots class slots)))
+           env))
 
-   (def construct-with-slots
-      (vau (class slots) env
-         (let ((obj (make-instance (eval class env))))
-            (map (lambda (slot)
-                    (set-slot! obj (symbol-name slot) (eval slot env)))
-                 slots)
-            obj)))
+   (defmacro construct-with-slots (class slots) env
+     (let ((obj (make-instance (eval class env))))
+       (map (lambda (slot)
+              (set-slot! obj (symbol-name slot) (eval slot env)))
+            slots)
+       obj))
 
-   (def defslot
-      (vau (name) env
-         (let* ((slot (symbol-name name))
-                (generic-name (intern (strcat "." slot)))
-                (reader (lambda (obj) (get-slot obj slot)))
-                (writer (lambda (val obj) (set-slot! obj slot val))))
-            (set-setter! reader writer)
-            (eval (list def generic-name reader) env))
-         name))
+   (defmacro defslot (name) env
+     (let* ((slot (symbol-name name))
+            (generic-name (intern (strcat "." slot)))
+            (reader (lambda (obj) (get-slot obj slot)))
+            (writer (lambda (val obj) (set-slot! obj slot val))))
+       (set-setter! reader writer)
+       (eval (list def generic-name reader) env))
+     name)
 
-   (def defgeneric
-      (vau (name . #ignore) env
-         (eval (list def name
-                  (lambda (self . otree) (send self (symbol-name name) otree)))
-               env)
-         name))
+   (defmacro defgeneric (name . #ignore) env
+     (eval (list def name
+                 (lambda (self . otree) (send self (symbol-name name) otree)))
+           env)
+     name)
 
-   (def defmethod
-      (vau (name ((rcv class) . rest) . body) env
-         (put-method! (eval class env)
-                      (symbol-name name)
-                      (eval (list* vau (list* rcv rest) #ignore body) env))
-         name)))
+   (defmacro defmethod (name ((rcv class) . rest) . body) env
+     (put-method! (eval class env)
+                  (symbol-name name)
+                  (eval (list* vau (list* rcv rest) #ignore body) env))
+     name)
+
+   )
 
 (defgeneric =)
 (defmethod = ((a Object) b) (eq? a b))
