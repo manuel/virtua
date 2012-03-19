@@ -152,20 +152,21 @@
 (set-setter! js-global (lambda (val name) (set-js-global! name val))) ; erm
 
 (defun define-js-method (name)
-  (def js-method (lambda (rcv . args)
-                   (apply js-call (list* rcv name args))))
+  (defun js-method (rcv . args)
+    (apply js-call (list* rcv name args)))
   (eval (list def (intern name) js-method) *top-level-environment*))
 
 (defun define-js-methods names
   (map define-js-method names))
 
 (define-js-methods
-   "charAt"
-   "concat"
-   "slice"
-   )
+  "charAt"
+  "concat"
+  "slice"
+  )
 
-(defun strcat strings (apply concat (list* "" strings)))
+(defun strcat strings
+  (apply concat (list* "" strings)))
 (def strelt charAt)
 (def strslice slice)
 
@@ -291,8 +292,6 @@
             (strcat (to-string kar) " . " (to-string kdr)))))
   (strcat "(" (pair-to-string p) ")"))
 
-;;;; Debugging
-
 (defmethod to-string ((frm Stack-Frame))
   (strcat (to-string (get-slot frm "cmb")) " " 
           (to-string (get-slot frm "otree"))))
@@ -300,12 +299,11 @@
 ;;;; Property Lists
 
 ;; Calls fun with name and value of each property in plist.
-(def map-plist
-   (lambda (fun plist)
-      (if (null? plist)
-          ()
-          (cons (fun (car plist) (cadr plist))
-                (map-plist fun (cddr plist))))))
+(defun map-plist (fun plist)
+  (if (null? plist)
+      ()
+      (cons (fun (car plist) (cadr plist))
+            (map-plist fun (cddr plist)))))
 
 ;;;; Options
 
@@ -313,23 +311,22 @@
 
 (defclass None (Option))
 
-(def none (make-instance None))
+(defvar none (make-instance None))
 
 (defclass Some (Option)
-   (value)
-   (:constructor option (value)))
+  (value)
+  (:constructor option (value)))
 
 (defgeneric option-supplied? (option))
 (defmethod option-supplied? ((n None)) #f)
 (defmethod option-supplied? ((s Some)) #t)
 
-(def if-option
-   (vau ((name option) then . else) env
-      (let ((o (eval option env)))
-         (if (option-supplied? o)
-             (eval (list let (list (list name (.value o))) then) env)
-             (unless (null? else)
-                (eval (car else) env))))))
+(defmacro if-option ((name option) then . else) env
+  (let ((o (eval option env)))
+    (if (option-supplied? o)
+        (eval (list let (list (list name (.value o))) then) env)
+        (unless (null? else)
+          (eval (car else) env)))))
 
 ;;;; Collections
 
@@ -340,8 +337,8 @@
           next!
           at)
 
-   (definterface Iterable)
-   (definterface Iterator)
+   (defclass Iterable)
+   (defclass Iterator)
    (defgeneric iterator)
    (defgeneric has-next?)
    (defgeneric next!)
@@ -373,7 +370,7 @@
       (:constructor unhandled-restart-error (restart)))
 
 
-   (def *handler-stack* none)
+   (defvar *handler-stack* none)
 
    (defclass Handler-Frame ()
      (parent-option

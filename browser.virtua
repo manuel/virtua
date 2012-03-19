@@ -7,14 +7,14 @@
 (defvar *body* (get-slot *document* "body"))
 
 (define-js-methods
-   "appendChild"
-   "createElement"
-   "createTextNode"
-   "focus"
-   "getElementById"
-   "scrollTo"
-   "setAttribute"
-   )
+  "appendChild"
+  "createElement"
+  "createTextNode"
+  "focus"
+  "getElementById"
+  "scrollTo"
+  "setAttribute"
+  )
 
 (defun define-dom-element (name)
   (defmacro maker (attrs . children) env
