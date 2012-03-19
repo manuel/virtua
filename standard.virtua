@@ -258,7 +258,7 @@
   "()")
 
 (defmethod to-string ((a Boolean))
-  (if #t "#t" "#f"))
+  (if a "#t" "#f"))
 
 (defmethod to-string ((a Ignore))
   "#ignore")
