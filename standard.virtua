@@ -144,7 +144,8 @@
              (apply (eval (list* lambda name body) env)
                     (lambda (the-val) (set! val the-val) (js-throw tag))))))
 
-(defun return-from (exit val) (exit val))
+(defun return-from (exit . val)
+  (exit (if (null? val) #void (car val))))
 
 (defmacro unwind-protect (protected . cleanup) env
   (eval (list $unwind-protect protected (list* begin cleanup)) env))
