@@ -76,12 +76,9 @@
       (set-slot! (getElementById *document* "lisp_line") "value" ""))))
 
 (defun print-stack-trace (f)
-  (block done
-    (loop
-       (if (= #void f) 
-           (return-from done #void)
-           (progn
-             (print f) (set! f (get-slot f "parent")))))))
+  (until (= #void f)
+    (print f)
+    (set! f (get-slot f "parent"))))
 
 (set! (js-global "lisp_repl_onsubmit") (js-function repl-submit))
 

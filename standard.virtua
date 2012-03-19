@@ -104,6 +104,17 @@
 (defmacro unless (test . body) env
   (eval (list if test #void (list* begin body)) env))
 
+(defmacro while (condition . body) env
+  (def wrapped-body (list* begin body))
+  (block done
+    (loop
+       (if (eval condition env)
+           (eval wrapped-body env)
+           (return-from done #void)))))
+
+(defmacro until (condition . body) env
+  (eval (list* while (list not? condition) body) env))
+
 (def get-current-environment (wrap (vau () e e)))
 
 (def *top-level-environment* (get-current-environment))
