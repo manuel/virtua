@@ -159,6 +159,17 @@
 
 (assert (= "foobar" (strcat "foo" "bar")))
 
+(scope
+   (def x 1)
+   (fluid-let (x 2)
+     (assert (= x 2)))
+   (assert (= x 1))
+   (block exit
+     (fluid-let (x 3)
+       (assert (= x 3))
+       (return-from exit)))
+   (assert (= x 1)))
+
 ;;;; Options
 
 (assert (= 12 (if-option (name (option 12)) name 13)))

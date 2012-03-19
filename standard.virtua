@@ -159,6 +159,12 @@
         (eval (list* (setter (eval cmb env)) value args) env))
       (eval (list $set! place value) env)))
 
+(defmacro fluid-let ((name value) . body) env
+  (let ((saved-value (eval name env)))
+    (eval (list set! name value) env)
+    (unwind-protect (eval (list* begin body) env)
+      (eval (list set! name saved-value) env))))
+
 (defun setter (obj) (get-slot obj "setter"))
 (defun set-setter! (obj setter) (set-slot! obj "setter" setter))
 (set-setter! js-global (lambda (val name) (set-js-global! name val))) ; erm
