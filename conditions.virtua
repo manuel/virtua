@@ -1,5 +1,16 @@
 ;; -*- LISP -*-
 
+(provide (Condition
+          Error
+          Warning
+          Restart
+          Simple-Error
+          catch
+          handle
+          throw
+          signal
+          default-handler)
+
 (defclass Condition)
 (defclass Error (Condition))
 (defclass Warning (Condition))
@@ -17,21 +28,21 @@
   (:constructor make-handlers-frame (parent-option handlers-list)))
 
 (defclass Handler ()
-  (condition-class
+  (matcher-function
    handler-function)
-  (:constructor make-handler (condition-class handler-function)))
+  (:constructor make-handler (matcher-function handler-function)))
 
 (defun handler-matches-condition? (handler condition)
-  (instance? condition (.condition-class handler)))
+  ((.matcher-function handler) condition))
 
 (defun call-with-handlers (thunk handlers-list)
   (fluid-let (*handlers-frame-option*
               (just (make-handlers-frame *handlers-frame-option* handlers-list)))
     (thunk)))
 
-(defgeneric signal (condition))
+(defgeneric signal-internal (condition))
 
-(defmethod signal ((condition Condition))
+(defmethod signal-internal ((condition Condition))
   (defun signal-frame (frame-option)
     (if-option (frame frame-option)
       (progn
@@ -43,11 +54,11 @@
       (default-handler condition)))
   (signal-frame *handlers-frame-option*))
 
-(defmethod signal ((message String))
-  (signal (make-simple-error message)))
+(defmethod signal-internal ((message String))
+  (signal-internal (make-simple-error message)))
 
-(defun throw (x)
-  (signal x)
+(defun throw-internal (x)
+  (signal-internal x)
   (invoke-debugger x))
 
 (defgeneric default-handler (condition))
@@ -66,8 +77,9 @@
 (defmacro handle (expr . handlers) env
   (call-with-handlers (lambda () (eval expr env))
                       (map (lambda (h)
-                             (let ((((c v) . exprs) h))
-                               (make-handler (eval c env)
+                             (let ((((c v . ac) . exprs) h))
+                               (make-handler (lambda (condition)
+                                               (instance? condition (eval c env)))
                                              (eval (list* lambda (list v) exprs) env))))
                            handlers)))
 
@@ -81,3 +93,14 @@
                                             (list* lambda () exprs)))))
                          handlers))
              env)))))
+
+(defmacro signal-with-restarts (raiser condition . restarts) env
+  (eval (list* catch (list raiser condition) restarts) env))
+
+(defmacro throw condition-and-restarts env
+  (apply (wrap signal-with-restarts) (list* throw-internal condition-and-restarts) env))
+
+(defmacro signal condition-and-restarts env
+  (apply (wrap signal-with-restarts) (list* signal-internal condition-and-restarts) env))
+
+) ; edivorp

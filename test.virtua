@@ -186,7 +186,9 @@
 
 ;;;; Conditions
 
-;(assert (= 12 (call-with-handler (lambda #ignore #t) (lambda #ignore 12) (lambda () (signal "foo")))))
+(assert (= (handle (throw "foo" ((Restart r) 12))
+             ((Simple-Error e) (throw (make-instance Restart))))
+           12))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation

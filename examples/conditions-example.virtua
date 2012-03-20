@@ -14,7 +14,7 @@
 (defun get-val ()
   (if-option (val *val-option*)
     val
-    (catch (throw (make-no-val-error))
+    (throw (make-no-val-error)
       ((Use-Val-Restart r) (.val r)))))
 
 (defun set-val (new-val)
