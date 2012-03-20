@@ -290,7 +290,9 @@
           methods)
      name)
 
-   (defmacro defmethod (name ((rcv class) . rest) . body) env
+   (defmacro defmethod (name (rcv-n-class . rest) . body) env
+     (def rcv   (if (pair? rcv-n-class) (car rcv-n-class) rcv-n-class))
+     (def class (if (pair? rcv-n-class) (cadr rcv-n-class) Object))
      (put-method! (eval class env)
                   (symbol-name name)
                   (eval (list* vau (list* rcv (untype rest)) #ignore
@@ -498,6 +500,27 @@
   (define-js-number-binop "*")
   (define-js-number-binop "/"))
 
+;;;; Comparison
+
+(def number< (js-binop "<"))
+
+(defgeneric < (a b)
+  (:method ((a Number) (b Number))
+    (number< a b)))
+
+(defgeneric > (a b)
+  (:method ((a Number) (b Number))
+    (number< b a)))
+
+(defgeneric <= (a b)
+  (:method (a b)
+    (or? (= a b)
+         (< a b))))
+
+(defgeneric >= (a b)
+  (:method (a b)
+    (or? (= a b)
+         (> a b))))
 
 ;;;; Property Lists
 
