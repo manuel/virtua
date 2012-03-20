@@ -55,10 +55,10 @@
       (set-debug-name! fun (symbol-name name))
       (eval (list def name fun) env)))
 
-(defun caar (((x . #ignore) . #ignore)) x)
-(defun cdar (((#ignore . x) . #ignore)) x)
-(defun cadr ((#ignore . (x . #ignore))) x)
-(defun cddr ((#ignore . (#ignore . x))) x)
+(def caar (lambda (((x . #ignore) . #ignore)) x))
+(def cdar (lambda (((#ignore . x) . #ignore)) x))
+(def cadr (lambda ((#ignore . (x . #ignore))) x))
+(def cddr (lambda ((#ignore . (#ignore . x))) x))
 
 (defun apply (appv arg . opt)
   (eval (cons (unwrap appv) arg)
@@ -100,10 +100,10 @@
         env))
 
 (defmacro cond clauses env
-  (defun aux ((test . body) . clauses)
-    (if (eval test env)
-        (apply (wrap begin) body env)
-        (apply (wrap cond) clauses env)))
+  (def aux (lambda ((test . body) . clauses)
+             (if (eval test env)
+                 (apply (wrap begin) body env)
+                 (apply (wrap cond) clauses env))))
   (if (null? clauses)
       #void
       (apply aux clauses)))
@@ -140,6 +140,32 @@
 
 ;;;; Virtua-specific forms
 
+(defun pair? (obj) (instance? obj Pair))
+(defun symbol? (obj) (instance? obj Symbol))
+
+(defmacro typed-lambda (args . body) env
+  (def untype (lambda (args)
+                (if (pair? args)
+                    (let ((arg (car args)))
+                      (cons (if (pair? arg) (car arg) arg)
+                            (untype (cdr args))))
+                    args)))
+  (def assertions (lambda (args)
+                    (if (pair? args)
+                        (let ((arg (car args)))
+                          (if (pair? arg)
+                              (cons (list assert (list instance? (car arg) (cadr arg)))
+                                    (assertions (cdr args)))
+                              (assertions (cdr args))))
+                        ())))
+  (eval (list* lambda (untype args) (list* begin (assertions args)) body) env))
+
+(def defun
+   (vau (name args . body) env
+      (def fun (eval (list* typed-lambda args body) env))
+      (set-debug-name! fun (symbol-name name))
+      (eval (list def name fun) env)))
+
 (defun to-string (obj) (anything-to-string obj)) ;; later redefined as generic
 
 (defmacro assert (that) env
@@ -156,7 +182,7 @@
              (apply (eval (list* lambda name body) env)
                     (lambda (the-val) (set! val the-val) (js-throw tag))))))
 
-(defun return-from (exit . val)
+(defun return-from ((exit Combiner) . val)
   (exit (if (null? val) #void (car val))))
 
 (defmacro unwind-protect (protected . cleanup) env
@@ -181,7 +207,7 @@
 (defun set-setter! (obj setter) (set-slot! obj "setter" setter))
 (set-setter! js-global (lambda (val name) (set-js-global! name val))) ; erm
 
-(defun define-js-method (name)
+(defun define-js-method ((name String))
   (defun js-method (rcv . args)
     (apply js-call (list* rcv name args)))
   (eval (list def (intern name) js-method) *top-level-environment*))
@@ -287,7 +313,7 @@
 (defmacro when-option (name-and-option . then) env
   (eval (list if-option name-and-option (list* begin then) #void) env))
 
-(defun find-if (pred list)
+(defun find-if ((pred Combiner) list)
   (if (null? list)
       nothing
       (let ((kar (car list)))
@@ -329,10 +355,10 @@
      handler-function)
     (:constructor make-handler (matcher-function handler-function)))
 
-  (defun handler-matches-condition? (handler condition)
+  (defun handler-matches-condition? ((handler Handler) (condition Condition))
     ((.matcher-function handler) condition))
   
-  (defun call-with-handlers (thunk handlers-list)
+  (defun call-with-handlers ((thunk Combiner) handlers-list)
     (fluid-let (*handlers-frame-option*
                 (just (make-handlers-frame *handlers-frame-option* handlers-list)))
       (thunk)))
@@ -340,7 +366,7 @@
   (defgeneric signal-internal (condition)
 
     (:method ((condition Condition))
-      (defun signal-frame (frame-option)
+      (defun signal-frame ((frame-option Option))
         (if-option (frame frame-option)
           (progn
             (when-option (handler (find-if (lambda (h)
