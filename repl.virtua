@@ -1,6 +1,6 @@
 ;; -*- Lisp -*-
 
-(defgeneric present)
+(defgeneric present (obj))
 (defmethod present ((any Object))
   (SPAN () (to-string any)))
 
@@ -13,7 +13,7 @@
     (DIV (:class "lisp-user-object-class") (debug-name (class-of any)))
     (apply (wrap TABLE) (list* () (map present-slot (slot-names any))))))
 
-(defgeneric present-small)
+(defgeneric present-small (obj))
 (defmethod present-small ((any Object))
   (SPAN () (to-string any)))
 
@@ -29,7 +29,7 @@
   (content)
   (:constructor make-repl-note (content)))
 
-(defgeneric repl-note)
+(defgeneric repl-note (message))
 (defmethod repl-note ((s String))
   (print (make-repl-note s)))
 

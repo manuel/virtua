@@ -100,7 +100,7 @@
    (defclass X)
    (defclass Y)
    (defclass Z (Y))
-   (defgeneric say)
+   (defgeneric say (obj))
    (defmethod say ((self X)) "x")
    (defmethod say ((self Y)) "y")
    (assert (= (say (make-instance X)) "x"))
