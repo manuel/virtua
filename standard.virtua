@@ -250,10 +250,14 @@
        (eval (list def generic-name reader) env))
      name)
 
-   (defmacro defgeneric (name . #ignore) env
+   (defmacro defgeneric (name ignored-args . methods) env
      (eval (list def name
                  (lambda (self . otree) (send self (symbol-name name) otree)))
            env)
+     (map (lambda (m)
+            (let (((#ignore args . body) m))
+              (eval (list* defmethod name args body) env)))
+          methods)
      name)
 
    (defmacro defmethod (name ((rcv class) . rest) . body) env
@@ -333,36 +337,36 @@
                 (just (make-handlers-frame *handlers-frame-option* handlers-list)))
       (thunk)))
 
-  (defgeneric signal-internal (condition))
-  
-  (defmethod signal-internal ((condition Condition))
-    (defun signal-frame (frame-option)
-      (if-option (frame frame-option)
-        (progn
-          (when-option (handler (find-if (lambda (h)
-                                           (handler-matches-condition? h condition))
-                                         (.handlers-list frame)))
-                       ((.handler-function handler) condition))
-        (signal-frame (.parent-option frame)))
-        (default-handler condition)))
-    (signal-frame *handlers-frame-option*))
+  (defgeneric signal-internal (condition)
 
-  (defmethod signal-internal ((message String))
-    (signal-internal (make-simple-error message)))
+    (:method ((condition Condition))
+      (defun signal-frame (frame-option)
+        (if-option (frame frame-option)
+          (progn
+            (when-option (handler (find-if (lambda (h)
+                                             (handler-matches-condition? h condition))
+                                           (.handlers-list frame)))
+                         ((.handler-function handler) condition))
+            (signal-frame (.parent-option frame)))
+          (default-handler condition)))
+      (signal-frame *handlers-frame-option*))
+
+    (:method ((message String))
+      (signal-internal (make-simple-error message))))
 
   (defun throw-internal (x)
     (signal-internal x)
     (invoke-debugger x))
 
-  (defgeneric default-handler (condition))
-  (defmethod default-handler ((c Condition))
-    #void)
-  (defmethod default-handler ((w Warning))
-    (print w))
-  (defmethod default-handler ((e Error))
-    (invoke-debugger e))
-  (defmethod default-handler ((r Restart))
-    (invoke-debugger "unhandled restart"))
+  (defgeneric default-handler (condition)
+    (:method ((c Condition))
+      #void)
+    (:method ((w Warning))
+      (print w))
+    (:method ((e Error))
+      (invoke-debugger e))
+    (:method ((r Restart))
+      (invoke-debugger "unhandled restart")))
 
   (defun invoke-debugger (x) (js-throw x))
   
@@ -398,67 +402,52 @@
 
   ) ; conditions
 
-(defgeneric =)
-(defmethod = ((a Object) b) (eq? a b))
+(defgeneric = (a b)
+  (:method ((a Object) b) (eq? a b)))
 
-(defgeneric to-string)
-
-(defmethod to-string ((a Object))
-  (strcat "#[object " (anything-to-string a) "]"))
-
-(defmethod to-string ((a Number))
-  (anything-to-string a))
-
-(defmethod to-string ((a String))
-  (anything-to-string a))
-
-(defmethod to-string ((a Symbol))
-  (symbol-name a))
-
-(defmethod to-string ((a Class))
-  (strcat "#[class " (debug-name a) "]"))
-
-(defmethod to-string ((a Nil))
-  "()")
-
-(defmethod to-string ((a Boolean))
-  (if a "#t" "#f"))
-
-(defmethod to-string ((a Ignore))
-  "#ignore")
-
-(defmethod to-string ((a Void))
-  "#void")
-
-(defmethod to-string ((a Undefined))
-  "#undefined")
-
-(defmethod to-string ((a Combiner))
-  (strcat "#[" (debug-name a) "]"))
-
-(defmethod to-string ((cmb Compound-Combiner))
-  (strcat "#[" (debug-name cmb) " " (to-string (get-slot cmb "lisp_ptree")) "]"))
-
-(defmethod to-string ((cmb Wrapper))
-  (strcat "#[" (debug-name cmb) " " (to-string (unwrap cmb)) "]"))
-
-(defmethod to-string ((a Environment))
-  "#[environment]")
-
-(defmethod to-string ((p Pair))
-  (defun pair-to-string (p)
-    (def kar (car p))
-    (def kdr (cdr p))
-    (if (null? kdr)
-        (to-string kar)
-        (if (instance? kdr Pair)
-            (strcat (to-string kar) " " (pair-to-string kdr))
-            (strcat (to-string kar) " . " (to-string kdr)))))
-  (strcat "(" (pair-to-string p) ")"))
-
-(defmethod to-string ((frm Stack-Frame))
-  (strcat (to-string (get-slot frm "cmb")) " " 
-          (to-string (get-slot frm "otree"))))
+(defgeneric to-string (obj)
+  (:method ((a Object))
+    (strcat "#[object " (anything-to-string a) "]"))
+  (:method ((a Number))
+    (anything-to-string a))
+  (:method ((a String))
+    (anything-to-string a))
+  (:method ((a Symbol))
+    (symbol-name a))
+  (:method ((a Class))
+    (strcat "#[class " (debug-name a) "]"))
+  (:method ((a Nil))
+    "()")
+  (:method ((a Boolean))
+    (if a "#t" "#f"))
+  (:method ((a Ignore))
+    "#ignore")
+  (:method ((a Void))
+    "#void")
+  (:method ((a Undefined))
+    "#undefined")
+  (:method ((a Combiner))
+    (strcat "#[" (debug-name a) "]"))
+  (:method ((cmb Compound-Combiner))
+    (strcat "#[" (debug-name cmb) " " (to-string (get-slot cmb "lisp_ptree")) "]"))
+  (:method ((cmb Wrapper))
+    (strcat "#[" (debug-name cmb) " " (to-string (unwrap cmb)) "]"))
+  (:method ((a Environment))
+    "#[environment]")
+  (:method ((p Pair))
+    (defun pair-to-string (p)
+      (def kar (car p))
+      (def kdr (cdr p))
+      (if (null? kdr)
+          (to-string kar)
+          (if (instance? kdr Pair)
+              (strcat (to-string kar) " " (pair-to-string kdr))
+              (strcat (to-string kar) " . " (to-string kdr)))))
+    (strcat "(" (:method p) ")"))
+  (:method ((frm Stack-Frame))
+    (strcat (to-string (get-slot frm "cmb")) " " 
+            (to-string (get-slot frm "otree"))))
+  )
 
 ;;;; Property Lists
 
@@ -480,10 +469,10 @@
 
    (defclass Iterable)
    (defclass Iterator)
-   (defgeneric iterator)
-   (defgeneric has-next?)
-   (defgeneric next!)
-   (defgeneric at)
+   (defgeneric iterator (iterable))
+   (defgeneric has-next? (iterator))
+   (defgeneric next! (iterator))
+   (defgeneric at (iterable index))
 
    (defmethod at ((s String) (i Number))
       (strelt s i))
