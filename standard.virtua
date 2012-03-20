@@ -260,8 +260,8 @@
 
    (defmacro defconstructor (name class slots) env
      (eval (list def name
-                 (list lambda slots
-                       (list construct-with-slots class slots)))
+                 (list typed-lambda slots
+                       (list construct-with-slots class (untype slots))))
            env))
 
    (defmacro construct-with-slots (class slots) env
@@ -350,19 +350,21 @@
   
   (defclass Simple-Error (Error)
     (message)
-    (:constructor make-simple-error (message)))
+    (:constructor make-simple-error ((message String))))
 
   (defvar *handlers-frame-option* nothing)
   
   (defclass Handlers-Frame ()
     (parent-option
      handlers-list)
-    (:constructor make-handlers-frame (parent-option handlers-list)))
+    (:constructor make-handlers-frame ((parent-option Option)
+                                       handlers-list)))
 
   (defclass Handler ()
     (matcher-function
      handler-function)
-    (:constructor make-handler (matcher-function handler-function)))
+    (:constructor make-handler ((matcher-function Combiner)
+                                (handler-function Combiner))))
 
   (defun handler-matches-condition? ((handler Handler) (condition Condition))
     ((.matcher-function handler) condition))
