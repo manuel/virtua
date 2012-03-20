@@ -20,5 +20,5 @@
 (defun set-val (new-val)
   (set! *val-option* (just new-val)))
 
-(handle (print (get-val))
+(handle (get-val)
   ((No-Val-Error e) (throw (make-use-val-restart "the default value"))))
