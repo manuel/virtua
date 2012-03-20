@@ -2,7 +2,7 @@
 
 ;; See http://axisofeval.blogspot.com/2011/04/whats-condition-system-and-why-do-you.html
 
-(defvar *val-option* none)
+(defvar *val-option* nothing)
 
 (defclass No-Val-Error (Error) ()
   (:constructor make-no-val-error ()))

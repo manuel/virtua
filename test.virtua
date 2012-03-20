@@ -176,7 +176,7 @@
 (assert (= 13 (if-option (name none) name 13)))
 (assert (= #void (if-option (name none) name)))
 
-(assert (= none (find-if (lambda (elt) (= elt 1)) (list 2 3 4 5))))
+(assert (= nothing (find-if (lambda (elt) (= elt 1)) (list 2 3 4 5))))
 (assert (= #t (if-option (elt (find-if (lambda (elt) (= elt 4)) (list 2 3 4 5)))
                 (begin (assert (= elt 4)) #t)
                 #f)))

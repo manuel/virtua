@@ -9,7 +9,7 @@
   (message)
   (:constructor make-simple-error (message)))
 
-(defvar *handlers-frame-option* none)
+(defvar *handlers-frame-option* nothing)
 
 (defclass Handlers-Frame ()
   (parent-option

@@ -326,8 +326,8 @@
 ;;;; Options
 
 (defclass Option)
-(defclass None (Option))
-(defvar none (make-instance None))
+(defclass Nothing (Option))
+(defvar nothing (make-instance Nothing))
 (defclass Just (Option)
   (value)
   (:constructor just (value)))
@@ -341,7 +341,7 @@
 
 (defun find-if (pred list)
   (if (null? list)
-      none
+      nothing
       (let ((kar (car list)))
         (if (pred kar)
             (just kar)
