@@ -11,7 +11,7 @@
       (TD () (present-small (get-slot any name)))))
   (DIV (:class "lisp-user-object")
     (DIV (:class "lisp-user-object-class") (debug-name (class-of any)))
-    (eval (list* TABLE () (map present-slot (slot-names any))) (get-current-environment))))
+    (apply (wrap TABLE) (list* () (map present-slot (slot-names any))))))
 
 (defgeneric present-small)
 (defmethod present-small ((any Object))
