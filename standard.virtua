@@ -443,7 +443,7 @@
           (if (instance? kdr Pair)
               (strcat (to-string kar) " " (pair-to-string kdr))
               (strcat (to-string kar) " . " (to-string kdr)))))
-    (strcat "(" (:method p) ")"))
+    (strcat "(" (pair-to-string p) ")"))
   (:method ((frm Stack-Frame))
     (strcat (to-string (get-slot frm "cmb")) " " 
             (to-string (get-slot frm "otree"))))

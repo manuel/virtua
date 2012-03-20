@@ -58,7 +58,9 @@
                (DIV (:class "lisp-repl-output") (present string))))
 
 (defun repl-submit ()
-  ($js-try (lambda (exception) (print "ERROR") (print exception) #f)
+  ($js-try (lambda (exception) 
+             (js-call (js-global "console") "log" exception)
+             (print "ERROR") (print exception) #f)
     (progn
       (defvar input (get-slot (getElementById *document* "lisp_line") "value"))
       (print (make-repl-input input))
