@@ -29,15 +29,16 @@
               (just (make-handlers-frame *handlers-frame-option* handlers-list)))
     (thunk)))
 
-(defgeneric signal)
+(defgeneric signal (condition))
 
 (defmethod signal ((condition Condition))
   (defun signal-frame (frame-option)
     (if-option (frame frame-option)
-      (if-option (handler (find-if (lambda (h)
-                                     (handler-matches-condition? h condition))
-                                   (.handlers-list frame)))
-        ((.handler-function handler) condition)
+      (progn
+        (when-option (handler (find-if (lambda (h)
+                                         (handler-matches-condition? h condition))
+                                       (.handlers-list frame)))
+          ((.handler-function handler) condition))
         (signal-frame (.parent-option frame)))
       (default-handler condition)))
   (signal-frame *handlers-frame-option*))
@@ -47,11 +48,19 @@
 
 (defun throw (x)
   (signal x)
-  (js-throw x)) ;; this should INVOKE-DEBUGGER
+  (invoke-debugger x))
 
 (defgeneric default-handler (condition))
 (defmethod default-handler ((c Condition))
-  (js-throw c)) ;; hard abort for now
+  #void)
+(defmethod default-handler ((w Warning))
+  (print w))
+(defmethod default-handler ((e Error))
+  (invoke-debugger e))
+(defmethod default-handler ((r Restart))
+  (invoke-debugger "unhandled restart"))
+
+(defun invoke-debugger (x) (js-throw x))
 
 ;; handler ::= ((Class var) . exprs)
 (defmacro handle (expr . handlers) env
