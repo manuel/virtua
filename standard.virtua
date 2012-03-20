@@ -143,22 +143,26 @@
 (defun pair? (obj) (instance? obj Pair))
 (defun symbol? (obj) (instance? obj Symbol))
 
+(def type-assertions
+  (lambda (args)
+    (if (pair? args)
+        (let ((arg (car args)))
+          (if (pair? arg)
+              (cons (list assert (list instance? (car arg) (cadr arg)))
+                    (type-assertions (cdr args)))
+              (type-assertions (cdr args))))
+        ())))
+
+(def untype
+  (lambda (args)
+    (if (pair? args)
+        (let ((arg (car args)))
+          (cons (if (pair? arg) (car arg) arg)
+                (untype (cdr args))))
+        args)))
+
 (defmacro typed-lambda (args . body) env
-  (def untype (lambda (args)
-                (if (pair? args)
-                    (let ((arg (car args)))
-                      (cons (if (pair? arg) (car arg) arg)
-                            (untype (cdr args))))
-                    args)))
-  (def assertions (lambda (args)
-                    (if (pair? args)
-                        (let ((arg (car args)))
-                          (if (pair? arg)
-                              (cons (list assert (list instance? (car arg) (cadr arg)))
-                                    (assertions (cdr args)))
-                              (assertions (cdr args))))
-                        ())))
-  (eval (list* lambda (untype args) (list* begin (assertions args)) body) env))
+  (eval (list* lambda (untype args) (list* begin (type-assertions args)) body) env))
 
 (def defun
    (vau (name args . body) env
@@ -289,7 +293,10 @@
    (defmacro defmethod (name ((rcv class) . rest) . body) env
      (put-method! (eval class env)
                   (symbol-name name)
-                  (eval (list* vau (list* rcv rest) #ignore body) env))
+                  (eval (list* vau (list* rcv (untype rest)) #ignore
+                               (list* begin (type-assertions rest))
+                               body)
+                        env))
      name)
 
    )
