@@ -1,0 +1,50 @@
+;; -*- LISP -*-
+
+(defclass Condition)
+(defclass Error (Condition))
+(defclass Warning (Condition))
+(defclass Restart (Condition))
+
+(defvar *handlers-frame-option* none)
+
+(defclass Handlers-Frame ()
+  (parent-option
+   handlers-list)
+  (:constructor make-handlers-frame (parent-option handlers-list)))
+
+(defclass Handler ()
+  (condition-class
+   handler-function)
+  (:constructor make-handler (condition-class handler-function)))
+
+(defun handler-matches-condition? (handler condition)
+  (instance? condition (.condition-class handler)))
+
+(defun call-with-handlers (thunk handlers-list)
+  (fluid-let (*handlers-frame-option*
+              (just (make-handlers-frame *handlers-frame-option* handlers-list)))
+    (thunk)))
+
+(defun signal (condition)
+  (defun signal-frame (frame-option)
+    (if-option (frame frame-option)
+      (if-option (handler (find-if (lambda (h)
+                                     (handler-matches-condition? h condition))
+                                   (.handlers-list frame)))
+        ((.handler-function handler) condition)
+        (signal-frame (.parent-option frame)))
+      (default-handler condition)))
+  (signal-frame *handlers-frame-option*))
+
+(defgeneric default-handler (condition))
+(defmethod default-handler ((c Condition))
+  (js-throw c)) ;; hard abort for now
+
+;; handler ::= ((Class var) . exprs)
+(defmacro handle (expr . handlers) env
+  (call-with-handlers (eval (list lambda () expr) env)
+                      (map (lambda (h)
+                             (let ((((c v) . exprs) h))
+                               (make-handler (eval c env)
+                                             (eval (list* lambda (list v) exprs) env))))
+                           handlers)))

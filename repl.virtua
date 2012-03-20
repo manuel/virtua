@@ -58,22 +58,16 @@
                (DIV (:class "lisp-repl-output") (present string))))
 
 (defun repl-submit ()
-  (block exit
-    (unwind-protect
-         (call-with-handler
-          (lambda (exc) #t)
-          (lambda (exc)
-            (print (make-repl-error exc))
-            (return-from exit #f))
-          (lambda ()
-            (defvar input (get-slot (getElementById *document* "lisp_line") "value"))
-            (print (make-repl-input input))
-            (map (lambda (form)
-                   (print (eval form *top-level-environment*)))
-                 (read-from-string input))
-            #f))
+  ($js-try (lambda (exception) (print "ERROR") (print exception) #f)
+    (progn
+      (defvar input (get-slot (getElementById *document* "lisp_line") "value"))
+      (print (make-repl-input input))
+      (map (lambda (form)
+             (print (eval form *top-level-environment*)))
+           (read-from-string input))
       (scrollTo *window* 0 (get-slot *body* "scrollHeight"))
-      (set-slot! (getElementById *document* "lisp_line") "value" ""))))
+      (set-slot! (getElementById *document* "lisp_line") "value" "")
+      #f)))
 
 (defun print-stack-trace (f)
   (until (= #void f)

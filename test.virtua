@@ -183,7 +183,7 @@
 
 ;;;; Conditions
 
-(assert (= 12 (call-with-handler (lambda #ignore #t) (lambda #ignore 12) (lambda () (signal "foo")))))
+;(assert (= 12 (call-with-handler (lambda #ignore #t) (lambda #ignore 12) (lambda () (signal "foo")))))
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
