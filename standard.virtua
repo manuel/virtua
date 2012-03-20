@@ -339,6 +339,14 @@
         (unless (null? else)
           (eval (car else) env)))))
 
+(defun find-if (pred list)
+  (if (null? list)
+      none
+      (let ((kar (car list)))
+        (if (pred kar)
+            (just kar)
+            (find-if pred (cdr list))))))
+
 ;;;; Collections
 
 (provide (Iterable
