@@ -5,6 +5,10 @@
 (defclass Warning (Condition))
 (defclass Restart (Condition))
 
+(defclass Simple-Error (Error)
+  (message)
+  (:constructor make-simple-error (message)))
+
 (defvar *handlers-frame-option* none)
 
 (defclass Handlers-Frame ()
@@ -25,7 +29,9 @@
               (just (make-handlers-frame *handlers-frame-option* handlers-list)))
     (thunk)))
 
-(defun signal (condition)
+(defgeneric signal)
+
+(defmethod signal ((condition Condition))
   (defun signal-frame (frame-option)
     (if-option (frame frame-option)
       (if-option (handler (find-if (lambda (h)
@@ -36,15 +42,29 @@
       (default-handler condition)))
   (signal-frame *handlers-frame-option*))
 
+(defmethod signal ((message String))
+  (signal (make-simple-error message)))
+
 (defgeneric default-handler (condition))
 (defmethod default-handler ((c Condition))
   (js-throw c)) ;; hard abort for now
 
 ;; handler ::= ((Class var) . exprs)
 (defmacro handle (expr . handlers) env
-  (call-with-handlers (eval (list lambda () expr) env)
+  (call-with-handlers (lambda () (eval expr env))
                       (map (lambda (h)
                              (let ((((c v) . exprs) h))
                                (make-handler (eval c env)
                                              (eval (list* lambda (list v) exprs) env))))
                            handlers)))
+
+(defmacro catch (expr . handlers) env
+  (block normal-return
+    ((block error-return ; note extra evaluation
+       (eval (list* handle (list return-from normal-return expr)
+                    (map (lambda (h)
+                           (let (((cv . exprs) h))
+                             (list cv (list return-from error-return
+                                            (list* lambda () exprs)))))
+                         handlers))
+             env)))))
