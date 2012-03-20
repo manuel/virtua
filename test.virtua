@@ -173,8 +173,11 @@
 ;;;; Options
 
 (assert (= 12 (if-option (name (just 12)) name 13)))
-(assert (= 13 (if-option (name none) name 13)))
-(assert (= #void (if-option (name none) name)))
+(assert (= 13 (if-option (name nothing) name 13)))
+(assert (= #void (if-option (name nothing) name)))
+(assert (= 12 (when-option (name (just 12)) 1 2 3 name)))
+(assert (= #void (when-option (name nothing) name 13)))
+(assert (= #void (when-option (name nothing) name)))
 
 (assert (= nothing (find-if (lambda (elt) (= elt 1)) (list 2 3 4 5))))
 (assert (= #t (if-option (elt (find-if (lambda (elt) (= elt 4)) (list 2 3 4 5)))

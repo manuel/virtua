@@ -339,6 +339,9 @@
         (unless (null? else)
           (eval (car else) env)))))
 
+(defmacro when-option (name-and-option . then) env
+  (eval (list if-option name-and-option (list* begin then) #void) env))
+
 (defun find-if (pred list)
   (if (null? list)
       nothing
