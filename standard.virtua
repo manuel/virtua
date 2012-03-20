@@ -325,23 +325,16 @@
 
 ;;;; Options
 
-(definterface Option)
-
+(defclass Option)
 (defclass None (Option))
-
 (defvar none (make-instance None))
-
-(defclass Some (Option)
+(defclass Just (Option)
   (value)
-  (:constructor option (value)))
-
-(defgeneric option-supplied? (option))
-(defmethod option-supplied? ((n None)) #f)
-(defmethod option-supplied? ((s Some)) #t)
+  (:constructor just (value)))
 
 (defmacro if-option ((name option) then . else) env
   (let ((o (eval option env)))
-    (if (option-supplied? o)
+    (if (instance? o Just)
         (eval (list let (list (list name (.value o))) then) env)
         (unless (null? else)
           (eval (car else) env)))))
@@ -398,9 +391,9 @@
 
    (defun call-with-handler (matcher handler thunk)
      (let ((saved-stack *handler-stack*))
-       (set! *handler-stack* (option (make-handler-frame *handler-stack*
-                                                         matcher
-                                                         handler)))
+       (set! *handler-stack* (just (make-handler-frame *handler-stack*
+                                                       matcher
+                                                       handler)))
        (unwind-protect ($js-try (lambda (exc)
                                   (if (instance? exc Block-Escape)
                                       (js-throw exc)

@@ -172,7 +172,7 @@
 
 ;;;; Options
 
-(assert (= 12 (if-option (name (option 12)) name 13)))
+(assert (= 12 (if-option (name (just 12)) name 13)))
 (assert (= 13 (if-option (name none) name 13)))
 (assert (= #void (if-option (name none) name)))
 
