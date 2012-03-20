@@ -482,6 +482,23 @@
             (to-string (get-slot frm "otree"))))
   )
 
+;;;; Numbers
+
+(provide (+ - * /)
+  (defmacro define-js-number-binop (name) env
+    (def a (intern "a"))
+    (def b (intern "b"))
+    (def binop (js-binop name))
+    (eval (list def (intern name)
+                (list typed-lambda (list (list a Number) (list b Number))
+                      (list binop a b)))
+          env))
+  (define-js-number-binop "+")
+  (define-js-number-binop "-")
+  (define-js-number-binop "*")
+  (define-js-number-binop "/"))
+
+
 ;;;; Property Lists
 
 ;; Calls fun with name and value of each property in plist.
