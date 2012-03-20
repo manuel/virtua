@@ -1,6 +1,7 @@
 ;; -*- Lisp -*-
 
 (defvar alert (js-global "alert"))
+(defvar prompt (js-global "prompt"))
 
 (defvar *window* (js-global "window"))
 (defvar *document* (js-global "document"))
