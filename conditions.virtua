@@ -45,6 +45,10 @@
 (defmethod signal ((message String))
   (signal (make-simple-error message)))
 
+(defun throw (x)
+  (signal x)
+  (js-throw x)) ;; this should INVOKE-DEBUGGER
+
 (defgeneric default-handler (condition))
 (defmethod default-handler ((c Condition))
   (js-throw c)) ;; hard abort for now
