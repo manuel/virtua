@@ -26,7 +26,6 @@ function lisp_make_kernel_env() {
     lisp_export(env, "null?", lisp_make_wrapped_native(lisp_lib_null, 1, 1));
     lisp_export(env, "intern", lisp_make_wrapped_native(lisp_intern, 1, 1));
     lisp_export(env, "symbol-name", lisp_make_wrapped_native(lisp_symbol_name, 1, 1));
-    lisp_export(env, "make-array", lisp_make_wrapped_native(lisp_make_array, 0, 0));
     lisp_export(env, "#t", lisp_t);
     lisp_export(env, "#f", lisp_f);
     lisp_export(env, "#ignore", lisp_ignore);
@@ -72,6 +71,8 @@ function lisp_make_kernel_env() {
     lisp_export(env, "js-call", lisp_make_wrapped_native(lisp_js_call, 2));
     lisp_export(env, "js-function", lisp_make_wrapped_native(lisp_js_function, 1, 1));
     lisp_export(env, "js-binop", lisp_make_wrapped_native(lisp_js_binop, 1, 1));
+    lisp_export(env, "js-object", lisp_make_wrapped_native(lisp_js_object, 0, 1));
+    lisp_export(env, "js-array", lisp_make_wrapped_native(lisp_js_array, 0, 0));
     /* Debugging */
     lisp_export(env, "stack-frame", lisp_make_wrapped_native(lisp_stack_frame, 0, 0));
     lisp_export(env, "Stack-Frame", Lisp_Stack_Frame);
@@ -384,6 +385,16 @@ function lisp_js_binop(op) {
     var cmb = lisp_make_wrapped_native(fun, 2, 2);
     cmb.lisp_debug_name = op + " binop";
     return cmb;
+}
+
+/* Creates JS object with given prototype (optional). */
+function lisp_js_object(proto) {
+    return Object.create((typeof(proto) !== "undefined") ? proto : null);
+}
+
+/* Creates JS array. */
+function lisp_js_array() {
+    return [];
 }
 
 /**** Arrays ****/

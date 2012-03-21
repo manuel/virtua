@@ -502,6 +502,12 @@
   (define-js-number-binop "*")
   (define-js-number-binop "/"))
 
+(defmacro inc! (var . delta) env
+  (eval (list set! var (list + var (if (pair? delta) (car delta) 1))) env))
+              
+(defmacro dec! (var . delta) env
+  (eval (list set! var (list - var (if (pair? delta) (car delta) 1))) env))
+
 ;;;; Comparison
 
 (def number< (js-binop "<"))

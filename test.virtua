@@ -36,7 +36,7 @@
 
 ;;;; Arrays
 
-(assert (instance? (make-array) Array))
+(assert (instance? (js-array) Array))
 
 ;;;; Binops
 
