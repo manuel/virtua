@@ -488,7 +488,7 @@
 
 ;;;; Numbers
 
-(provide (+ - * /)
+(provide (+ - * / %)
   (defmacro define-js-number-binop (name) env
     (def a (intern "a"))
     (def b (intern "b"))
@@ -500,7 +500,9 @@
   (define-js-number-binop "+")
   (define-js-number-binop "-")
   (define-js-number-binop "*")
-  (define-js-number-binop "/"))
+  (define-js-number-binop "/")
+  (define-js-number-binop "%")
+  )
 
 (defmacro inc! (var . delta) env
   (eval (list set! var (list + var (if (pair? delta) (car delta) 1))) env))
