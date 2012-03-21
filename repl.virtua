@@ -72,9 +72,15 @@
       #f)))
 
 (defun print-stack-trace (f)
-  (until (= #void f)
+  ;; extreme hack: skip first 6 frames
+  (def off 6)
+  (while (> off 0) (set! f (get-slot f "parent")) (set! off (- off 1)))
+  ;; only show fixed number of frames
+  (def frames 10)
+  (until (or? (= #void f) (= frames 0))
     (print f)
-    (set! f (get-slot f "parent"))))
+    (set! f (get-slot f "parent"))
+    (set! frames (- frames 1))))
 
 (set! (js-global "lisp_repl_onsubmit") (js-function repl-submit))
 
