@@ -92,3 +92,8 @@
 
 (repl-note "Welcome to Virtua!")
 (focus (getElementById *document* "lisp_line"))
+
+(set! (js-global "lisp_simple_error")
+      (js-function (lambda (msg)
+                     (print-stack-trace (stack-frame))
+                     (js-throw msg))))

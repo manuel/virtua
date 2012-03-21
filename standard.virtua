@@ -560,11 +560,6 @@
 
 )
 
-(set! (js-global "lisp_simple_error")
-      (js-function (lambda (msg)
-                     (print-stack-trace (stack-frame))
-                     (js-throw msg))))
-
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
 ;; files (the "Software"), to deal in the Software without
