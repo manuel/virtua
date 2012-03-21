@@ -253,8 +253,8 @@
                      (eval (list defconstructor ctor-name name args) env))))))))
      name)
    
-   (defmacro definterface (name) env
-     (eval (list defclass name ()) env))
+   (defmacro definterface (name . supers) env
+     (eval (list* defclass name supers) env))
 
    (def defimplementation add-superclass!)
 

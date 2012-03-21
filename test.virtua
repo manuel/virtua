@@ -113,6 +113,13 @@
    (defimplementation Bar Foo)
    (assert (subclass? Bar Foo)))
 
+(scope
+   (definterface A)
+   (definterface B (A))
+   (defclass C)
+   (defimplementation C B)
+   (assert (subclass? C B))
+   (assert (subclass? C A)))
 
 (scope
    (defclass Foo ()
