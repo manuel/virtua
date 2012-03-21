@@ -201,6 +201,9 @@
         (eval (list* (setter (eval cmb env)) value args) env))
       (eval (list $set! place value) env)))
 
+(defmacro op! (place op) env
+  (eval (list set! place (list op place)) env))
+
 (defmacro fluid-let ((name value) . body) env
   (let ((saved-value (eval name env)))
     (eval (list set! name value) env)
@@ -509,6 +512,9 @@
               
 (defmacro dec! (var . delta) env
   (eval (list set! var (list - var (if (pair? delta) (car delta) 1))) env))
+
+(defun even? ((n Number)) (= 0 (% n 2)))
+(defun odd? ((n Number)) (not? (even? n)))
 
 ;;;; Comparison
 

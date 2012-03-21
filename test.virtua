@@ -71,6 +71,16 @@
 (assert (eq? #ignore #ignore))
 (assert (eq? #void #void))
 
+;;;; Numbers
+
+(assert (even? 0))
+(assert (even? -100))
+(assert (even? 100))
+(assert (not? (even? 3)))
+(assert (not? (even? -3)))
+(assert (odd? 101))
+(assert (odd? -101))
+
 ;;;; Object System
 
 (assert (instance? Object Class))
