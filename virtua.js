@@ -35,6 +35,7 @@ function lisp_make_kernel_env() {
     lisp_export(env, "add-superclass!", lisp_make_wrapped_native(lisp_add_superclass, 2, 2));
     lisp_export(env, "make-instance", lisp_make_wrapped_native(lisp_make_instance, 1, 1));
     lisp_export(env, "class-of", lisp_make_wrapped_native(lisp_class_of, 1, 1));
+    lisp_export(env, "superclasses-of", lisp_make_wrapped_native(lisp_lib_superclasses_of, 1, 1));
     lisp_export(env, "instance?", lisp_make_wrapped_native(lisp_is_instance, 2, 2));
     lisp_export(env, "subclass?", lisp_make_wrapped_native(lisp_is_subclass, 2, 2));
     lisp_export(env, "get-slot", lisp_make_wrapped_native(lisp_lib_get_slot, 2, 2));
@@ -960,6 +961,10 @@ function lisp_lib_slot_names(obj) {
         }
     }
     return lisp_array_to_cons_list(names);
+}
+
+function lisp_lib_superclasses_of(c) {
+    return lisp_array_to_cons_list(lisp_superclasses_of(c));
 }
 
 function lisp_lib_put_method(c, sel, cmb) {
