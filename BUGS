@@ -10,3 +10,5 @@
 * Integration of JS's undefined is logically flawed.
   It's impossible to assign undefined to a variable, because
   environment lookup will confuse it with a non-existing binding.
+* The variable "constructor" is always bound to undefined.
+Because it's a property of every environment's bindings table.
