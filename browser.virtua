@@ -17,14 +17,16 @@
   "setAttribute"
   )
 
+(defun console.log (foo)
+  (js-call (js-global "console") "log" (to-string foo)))
+
 (defun define-dom-element (name)
-  (defmacro maker (attrs . children) env
+  (defmacro maker children env
+    (console.log children)
     (def e (createElement *document* name))
-    (map-plist (lambda (aname avalue)
-                 (setAttribute e
-                               (strslice (symbol-name aname) 1)
-                               (eval avalue env)))
-               attrs)
+    (map (lambda (aname)
+           (setAttribute e aname (eval (get-slot children aname) env)))
+         (xons-names children))
     (map (lambda (child)
            (let ((ch (eval child env)))
              (if (instance? ch String)

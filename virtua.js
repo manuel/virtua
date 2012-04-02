@@ -42,6 +42,7 @@ function lisp_make_kernel_env() {
     lisp_export(env, "has-slot?", lisp_make_wrapped_native(lisp_lib_has_slot, 2, 2));
     lisp_export(env, "set-slot!", lisp_make_wrapped_native(lisp_lib_set_slot, 3, 3));
     lisp_export(env, "slot-names", lisp_make_wrapped_native(lisp_lib_slot_names, 1, 1));
+    lisp_export(env, "xons-names", lisp_make_wrapped_native(lisp_lib_xons_names, 1, 1));
     lisp_export(env, "put-method!", lisp_make_wrapped_native(lisp_lib_put_method, 3, 3));
     lisp_export(env, "send", lisp_make_wrapped_native(lisp_lib_send, 3, 3));
     /* Classes */
@@ -51,7 +52,6 @@ function lisp_make_kernel_env() {
     lisp_export(env, "Environment", Lisp_Env);
     lisp_export(env, "Symbol", Lisp_Symbol);
     lisp_export(env, "Pair", Lisp_Pair);
-    lisp_export(env, "Nil", Lisp_Nil);
     lisp_export(env, "Array", Lisp_Array);
     lisp_export(env, "String", Lisp_String);
     lisp_export(env, "Number", Lisp_Number);
@@ -94,9 +94,8 @@ function lisp_make_kernel_env() {
    lisp_init_class which is called both for all newly created Lisp
    classes, as well as all existing JS "classes" (prototypes).
 
-   Note that JS's null is Lisp's void (not nil!), and JS's undefined
-   is a proper object in Lisp, with its own class, Undefined.  See the
-   function lisp_class_of. */
+   Note that JS's undefined is a proper object in Lisp, with its own
+   class, Undefined.  See the function lisp_class_of. */
 
 /*** Bootstrap ***/
 
@@ -478,38 +477,49 @@ function lisp_symbol_name(symbol) {
 var Lisp_Pair = lisp_make_system_class(Lisp_Object, "Lisp_Pair");
 
 /* A pair evaluates to the combination of its operator (car) with its
-   operand tree (cdr). */
+   operand tree (cdr).  Except when it's nil. */
 Lisp_Pair.lisp_eval = function(pair, env) {
-    return lisp_combine(lisp_eval(lisp_car(pair), env), lisp_cdr(pair), env);
+    if (lisp_lib_null(pair)) {
+        return pair;
+    } else {
+        return lisp_combine(lisp_eval(lisp_car(pair), env), lisp_cdr(pair), env);
+    }
 };
 
 /* A pair matches pairs, recursively. */
 Lisp_Pair.lisp_match = function(pair, otree, env) {
     lisp_assert(lisp_is_instance(otree, Lisp_Pair));
-    lisp_match(lisp_car(pair), lisp_car(otree), env);
-    lisp_match(lisp_cdr(pair), lisp_cdr(otree), env);
+    var slot_names = lisp_slot_names(pair);
+    for (var i = 0; i < slot_names.length; i++) {
+        var slot_name = slot_names[i];
+        lisp_match(pair[slot_name], otree[slot_name], env);
+    }
 };
 
 /* Creates a new pair with the given first and second elements. */
 function lisp_cons(car, cdr) {
     lisp_assert(lisp_is_instance(car, Lisp_Object));
     lisp_assert(lisp_is_instance(cdr, Lisp_Object));
-    var cons = lisp_make_instance(Lisp_Pair);
+    var cons = lisp_nil();
     cons.lisp_car = car;
     cons.lisp_cdr = cdr;
     return cons;
 }
 
+function lisp_nil() {
+    return lisp_make_instance(Lisp_Pair);
+}
+
 /* Returns the first element of the pair. */
 function lisp_car(cons) {
     lisp_assert(lisp_is_instance(cons, Lisp_Pair));
-    return cons.lisp_car;
+    return lisp_lib_get_slot(cons, "lisp_car");
 }
 
 /* Returns the second element of the pair. */
 function lisp_cdr(cons) {
     lisp_assert(lisp_is_instance(cons, Lisp_Pair));
-    return cons.lisp_cdr;
+    return lisp_lib_get_slot(cons, "lisp_cdr");
 }
 
 function lisp_elt(pair, i) {
@@ -521,15 +531,16 @@ function lisp_elt(pair, i) {
 }
 
 function lisp_array_to_cons_list(array, end) {
-    var c = end ? end : lisp_nil;
+    var c = end ? end : lisp_nil();
     for (var i = array.length; i > 0; i--)
         c = lisp_cons(array[i - 1], c);
     return c;
 }
 
 function lisp_cons_list_to_array(c) {
+    lisp_assert(lisp_is_instance(c, Lisp_Pair));
     var res = [];
-    while(c !== lisp_nil) {
+    while(!lisp_lib_null(c)) {
         res.push(lisp_car(c));
         c = lisp_cdr(c);
     }
@@ -617,19 +628,6 @@ var lisp_t = true;
 
 var lisp_f = false;
 
-/**** Nil ****/
-
-var Lisp_Nil = lisp_make_system_class(Lisp_Object, "Lisp_Nil");
-
-var lisp_nil = lisp_make_instance(Lisp_Nil);
-
-/* Nil matches only itself. */
-Lisp_Nil.lisp_match = function(nil, otree, env) {
-    if (otree !== lisp_nil) {
-        lisp_simple_error("Expected (), got: " + lisp_to_string(otree));
-    }
-};
-
 /**** Ignore ****/
 
 var Lisp_Ignore = lisp_make_system_class(Lisp_Object, "Lisp_Ignore");
@@ -716,12 +714,20 @@ Lisp_Wrapper.lisp_combine = function(cmb, otree, env) {
 };
 
 function lisp_eval_args(otree, env) {
-    if (otree === lisp_nil) {
-        return lisp_nil;
+    var res;
+    if (lisp_lib_null(otree)) {
+        res = otree;
     } else {
-        return lisp_cons(lisp_eval(lisp_car(otree), env),
-                         lisp_eval_args(lisp_cdr(otree), env));
+        res = lisp_cons(lisp_eval(lisp_car(otree), env),
+                        lisp_eval_args(lisp_cdr(otree), env));
     }
+    /* Add xons fields. */
+    var xons_names = lisp_lib_xons_names(otree);
+    for (var i = 0; i < xons_names.length; i++) {
+        var name = xons_names[i];
+        res[name] = lisp_eval(lisp_get_slot(otree, name), env);
+    }
+    return res;
 }
 
 /*** $vau ***/
@@ -750,7 +756,7 @@ var Lisp_Begin = lisp_make_system_class(Lisp_Combiner, "Lisp_Begin");
 
 Lisp_Begin.lisp_combine = function(cmb, otree, env) {
     var res = lisp_void;
-    while(otree !== lisp_nil) {
+    while(!lisp_lib_null(otree)) {
         res = lisp_eval(lisp_car(otree), env);
         otree = lisp_cdr(otree);
     };
@@ -919,7 +925,13 @@ function lisp_lib_eq(a, b) {
 }
 
 function lisp_lib_null(obj) {
-    return lisp_lib_eq(obj, lisp_nil);
+    if (lisp_is_instance(obj, Lisp_Pair) &&
+        (!lisp_lib_has_slot(obj, "lisp_car")) &&
+        (!lisp_lib_has_slot(obj, "lisp_cdr"))) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function lisp_lib_make_class(sups, native_name) {
@@ -929,9 +941,8 @@ function lisp_lib_make_class(sups, native_name) {
 function lisp_lib_get_slot(obj, slot) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     lisp_assert(lisp_is_instance(slot, Lisp_String));
-    var value = obj[slot];
-    if (typeof(value) !== "undefined") {
-        return value;
+    if (obj.hasOwnProperty(slot)) {
+        return obj[slot];
     } else {
         lisp_simple_error("Unbound slot: " + slot);
     }
@@ -952,7 +963,7 @@ function lisp_lib_set_slot(obj, slot, value) {
     return value;
 }
 
-function lisp_lib_slot_names(obj) {
+function lisp_slot_names(obj) {
     lisp_assert(lisp_is_instance(obj, Lisp_Object));
     var names = [];
     for (var name in obj) {
@@ -960,7 +971,24 @@ function lisp_lib_slot_names(obj) {
             names.push(name);
         }
     }
-    return lisp_array_to_cons_list(names);
+    return names;
+}
+
+function lisp_lib_slot_names(obj) {
+    return lisp_array_to_cons_list(lisp_slot_names(obj));
+}
+
+// Slot names sans car and cdr
+function lisp_lib_xons_names(obj) {
+    var slot_names = lisp_slot_names(obj);
+    var res = [];
+    for (var i = 0; i < slot_names.length; i++) {
+        var slot_name = slot_names[i];
+        if (!(slot_name.indexOf("lisp_") === 0)) {
+            res.push(slot_name);
+        }
+    }
+    return lisp_array_to_cons_list(res);
 }
 
 function lisp_lib_superclasses_of(c) {
@@ -1132,9 +1160,6 @@ function lisp_make_constant_syntax(string, constant) {
     return action(string, function(ast) { return constant; });
 }
 
-var lisp_nil_syntax =
-    lisp_make_constant_syntax("()", lisp_nil);
-
 var lisp_ignore_syntax =
     lisp_make_constant_syntax("#ignore", lisp_ignore);
 
@@ -1148,15 +1173,46 @@ function lisp_dot_syntax_action(ast) {
 
 var lisp_compound_syntax =
     action(wsequence("(",
-                     repeat1(lisp_expression_syntax),
+                     repeat0(lisp_expression_syntax),
                      optional(lisp_dot_syntax),
                      ")"),
            lisp_compound_syntax_action);
 
+function lisp_is_xons_name(name) {
+    if (lisp_is_instance(name, Lisp_Symbol)) {
+        if (lisp_symbol_name(name).indexOf("#:") == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function lisp_xons_name_to_name(symbol) {
+    return lisp_symbol_name(symbol).substr(2);
+}
+
 function lisp_compound_syntax_action(ast) {
     var exprs = ast[1];
-    var end = ast[2] ? ast[2] : lisp_nil;
-    return lisp_array_to_cons_list(exprs, end);
+    var end = ast[2] ? ast[2] : lisp_nil();
+    /* Process xons name/value pairs. */
+    var positional = [];
+    var named = {};
+    for (var i = 0; i < exprs.length; i++) {
+        if (lisp_is_xons_name(exprs[i])) {
+            lisp_assert(exprs.length >= i + 1);
+            named[lisp_xons_name_to_name(exprs[i])] = exprs[i + 1];
+            i++;
+        } else {
+            positional.push(exprs[i]);
+        }
+    }
+    var result = lisp_array_to_cons_list(positional, end);
+    for (var k in named) {
+        if (named.hasOwnProperty(k)) {
+            result[k] = named[k];
+        }
+    }
+    return result;
 }
 
 var lisp_line_terminator = choice(ch("\r"), ch("\n"));
@@ -1176,7 +1232,6 @@ function lisp_nothing_action(ast) { // HACK!
 
 var lisp_expression_syntax =
     whitespace(choice(lisp_number_syntax,
-                      lisp_nil_syntax,
                       lisp_ignore_syntax,
                       lisp_compound_syntax,
                       lisp_identifier_syntax,

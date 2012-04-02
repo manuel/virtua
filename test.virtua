@@ -34,6 +34,8 @@
 (assert (not? (= (cons 1 2) 12)))
 (assert (not? (= 12 (cons 1 2))))
 
+(assert (null? ()))
+
 ;;;; Arrays
 
 (assert (instance? (js-array) Array))
@@ -67,7 +69,7 @@
 
 (assert (eq? #t #t))
 (assert (eq? #f #f))
-(assert (eq? () ()))
+;(assert (eq? () ()))
 (assert (eq? #ignore #ignore))
 (assert (eq? #void #void))
 

@@ -10,7 +10,6 @@
     lisp_assert(lisp_is_instance(Lisp_Env, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Pair, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Boolean, Lisp_Class));
-    lisp_assert(lisp_is_instance(Lisp_Nil, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Ignore, Lisp_Class));
     lisp_assert(lisp_is_instance(Lisp_Void, Lisp_Class));
     
@@ -52,8 +51,6 @@
     lisp_assert(lisp_eval(symbol_foo, env) === string_foo);
     lisp_assert(lisp_eval(symbol_foo, child_env) === string_bar);
     
-    lisp_assert(lisp_is_instance(lisp_nil, Lisp_Nil));
-    lisp_assert(lisp_is_instance(lisp_nil, Lisp_Object));
     lisp_assert(lisp_is_instance(lisp_ignore, Lisp_Ignore));
     lisp_assert(lisp_is_instance(lisp_ignore, Lisp_Object));
     lisp_assert(lisp_is_instance(lisp_void, Lisp_Void));
