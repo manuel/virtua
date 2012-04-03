@@ -43,8 +43,6 @@ function lisp_make_kernel_env() {
     lisp_export(env, "set-slot!", lisp_make_wrapped_native(lisp_lib_set_slot, 3, 3));
     lisp_export(env, "slot-names", lisp_make_wrapped_native(lisp_lib_slot_names, 1, 1));
     lisp_export(env, "xons-names", lisp_make_wrapped_native(lisp_lib_xons_names, 1, 1));
-    lisp_export(env, "put-method!", lisp_make_wrapped_native(lisp_lib_put_method, 3, 3));
-    lisp_export(env, "send", lisp_make_wrapped_native(lisp_lib_send, 3, 3));
     /* Classes */
     lisp_export(env, "Object", Lisp_Object);
     lisp_export(env, "User-Object", Lisp_User_Object);
@@ -66,14 +64,7 @@ function lisp_make_kernel_env() {
     /* Misc */
     lisp_export(env, "read-from-string", lisp_make_wrapped_native(lisp_read_from_string, 1, 1));
     lisp_export(env, "anything-to-string", lisp_make_wrapped_native(lisp_to_string, 1, 1));
-    /* JS interop */
-    lisp_export(env, "js-global", lisp_make_wrapped_native(lisp_js_global, 1, 1));
-    lisp_export(env, "set-js-global!", lisp_make_wrapped_native(lisp_set_js_global, 2, 2));
-    lisp_export(env, "js-call", lisp_make_wrapped_native(lisp_js_call, 2));
-    lisp_export(env, "js-function", lisp_make_wrapped_native(lisp_js_function, 1, 1));
-    lisp_export(env, "js-binop", lisp_make_wrapped_native(lisp_js_binop, 1, 1));
-    lisp_export(env, "js-object", lisp_make_wrapped_native(lisp_js_object, 0, 1));
-    lisp_export(env, "js-array", lisp_make_wrapped_native(lisp_js_array, 0, 0));
+    lisp_export(env, "print", lisp_make_wrapped_native(function(foo){console.log(foo)}, 1, 1));
     /* Debugging */
     lisp_export(env, "stack-frame", lisp_make_wrapped_native(lisp_stack_frame, 0, 0));
     lisp_export(env, "Stack-Frame", Lisp_Stack_Frame);
@@ -135,65 +126,20 @@ function lisp_match(obj, otree, env) {
     return lisp_class_of(obj).lisp_match(obj, otree, env);
 }
 
-/* Sends a message with the given selector and operand tree to this object. */
-function lisp_send(obj, sel, otree) {
-    return lisp_class_of(obj).lisp_send(obj, sel, otree);
-}
-
 /* By default, objects evaluate to themselves. */
 Lisp_Object.lisp_eval = function(obj, env) {
     return obj;
 };
 
-/* Make native functions callable. */
+/* By default, objects cannot be used as combiners. */
 Lisp_Object.lisp_combine = function(obj, otree, env) {
-    if (lisp_is_native_function(obj)) {
-        var args = lisp_cons_list_to_array(lisp_eval_args(otree, env));
-        return obj.apply(null, args);
-    } else {
-        lisp_simple_error("Not a combiner: " + lisp_to_string(obj));
-    }
+    lisp_simple_error("Not a combiner: " + lisp_to_string(obj));
 };
 
 /* By default, objects cannot be used as left-hand side patterns. */
 Lisp_Object.lisp_match = function(obj, otree, env) {
     lisp_simple_error("Not a pattern.");
 };
-
-/* All objects use the same method lookup algorithm. */
-Lisp_Object.lisp_send = function(obj, sel, otree) {
-    lisp_assert(lisp_is_instance(obj, Lisp_Object));
-    lisp_assert(lisp_is_instance(sel, Lisp_String));
-    lisp_assert(lisp_is_instance(otree, Lisp_Object));
-    var c = lisp_class_of(obj);
-    var method = lisp_lookup_method(c, sel);
-    if (typeof(method) !== "undefined") {
-        return lisp_combine(method, lisp_cons(obj, otree), lisp_make_env(null));
-    } else {
-        lisp_simple_error("Message not understood: " + sel + " by " + lisp_to_string(obj));
-    }
-};
-
-function lisp_lookup_method(c, sel) {
-    /* Temporary hack: simply disallow inheriting a method from more
-       than one class.  Will be replaced by Touretzky's inferential
-       distance ordering. */
-    var method = c.lisp_methods[sel];
-    if (typeof(method) !== "undefined") {
-        return method;
-    } else {
-        var sups = lisp_superclasses_of(c);
-        for (var i = 0; i < sups.length; i++) {
-            var sup_method = lisp_lookup_method(sups[i], sel);
-            if (typeof(method) !== "undefined") {
-                lisp_simple_error("More than one method found: " + sel);
-            } else {
-                method = sup_method;
-            }
-        }
-        return method;
-    }
-}
 
 /*** Object System Functionality ***/
 
@@ -219,12 +165,9 @@ function lisp_init_class(c, sups) {
        .lisp_superclasses contains a list of superclass objects.  This
        is independent of the prototype chain.  We fix up all existing
        JS classes to have Lisp_Object as superclass when we call
-       lisp_init_class on them.
-
-       .lisp_methods is a dictionary of methods, initially empty. */
+       lisp_init_class on them. */
     c.lisp_isa = c;
     c.lisp_superclasses = sups;
-    c.lisp_methods = {};
 }
 
 /* System classes may use a different prototype than Object.  This is
@@ -333,70 +276,6 @@ function lisp_add_superclass(c, sc) {
     return lisp_void;
 }
 
-/* Puts a combiner as implementation for a message selector. */
-function lisp_put_method(c, sel, cmb) {
-    lisp_assert(lisp_is_instance(c, Lisp_Class));
-    lisp_assert(lisp_is_instance(sel, Lisp_String));
-    lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
-    c.lisp_methods[sel] = cmb;
-}
-
-/* Puts a wrapped native function as implementation for a message selector. */
-function lisp_put_native_method(c, sel, native_fun) {
-    lisp_put_method(c, sel, lisp_make_native(native_fun));
-}
-
-/**** JS Objects ****/
-
-/* Returns global variable with given name. */
-function lisp_js_global(name) {
-    lisp_assert(lisp_is_instance(name, Lisp_String));
-    return window[name];
-}
-
-/* Updates global variable with given name. */
-function lisp_set_js_global(name, value) {
-    lisp_assert(lisp_is_instance(name, Lisp_String));
-    lisp_assert(lisp_is_instance(value, Lisp_Object));
-    window[name] = value;
-    return name;
-}
-
-/* Calls a method of an object. */
-function lisp_js_call(obj, sel) {
-    lisp_assert(lisp_is_instance(obj, Lisp_Object));
-    lisp_assert(lisp_is_instance(sel, Lisp_String));
-    var args = Array.prototype.slice.call(arguments, 2);
-    return obj[sel].apply(obj, args);
-}
-
-/* Creates a JS function from a combiner. */
-function lisp_js_function(cmb) {
-    lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
-    return function() {
-        var args = lisp_array_to_cons_list(Array.prototype.slice.call(arguments));
-        return lisp_combine(cmb, args, lisp_make_env(null));
-    };
-}
-
-/* Creates a combiner that corresponds to a JS binary operator. */
-function lisp_js_binop(op) {
-    var fun = new Function("a", "b", "return (a " + op + " b)");
-    var cmb = lisp_make_wrapped_native(fun, 2, 2);
-    cmb.lisp_debug_name = op + " binop";
-    return cmb;
-}
-
-/* Creates JS object with given prototype (optional). */
-function lisp_js_object(proto) {
-    return Object.create((typeof(proto) !== "undefined") ? proto : null);
-}
-
-/* Creates JS array. */
-function lisp_js_array() {
-    return [];
-}
-
 /**** Arrays ****/
 
 var Lisp_Array = Array.prototype;
@@ -476,13 +355,11 @@ function lisp_symbol_name(symbol) {
 
 var Lisp_Pair = lisp_make_system_class(Lisp_Object, "Lisp_Pair");
 
-/* A pair evaluates to the combination of its operator (car) with its
-   operand tree (cdr).  Except when it's nil. */
 Lisp_Pair.lisp_eval = function(pair, env) {
     if (lisp_lib_null(pair)) {
         return pair;
     } else {
-        return lisp_combine(lisp_eval(lisp_car(pair), env), lisp_cdr(pair), env);
+        return lisp_combine(lisp_eval(lisp_car(pair), env), pair, env);
     }
 };
 
@@ -710,6 +587,7 @@ function lisp_unwrap(wrapper) {
 }
 
 Lisp_Wrapper.lisp_combine = function(cmb, otree, env) {
+    // Xons Note: may evaluate car multiple times now
     return lisp_combine(lisp_unwrap(cmb), lisp_eval_args(otree, env), env);
 };
 
@@ -739,6 +617,7 @@ function lisp_eval_args(otree, env) {
 var Lisp_Vau = lisp_make_system_class(Lisp_Combiner, "Lisp_Vau");
 
 Lisp_Vau.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var ptree = lisp_elt(otree, 0);
     var envformal = lisp_elt(otree, 1);
     var body = lisp_elt(otree, 2);
@@ -755,6 +634,7 @@ Lisp_Vau.lisp_combine = function(cmb, otree, env) {
 var Lisp_Begin = lisp_make_system_class(Lisp_Combiner, "Lisp_Begin");
 
 Lisp_Begin.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var res = lisp_void;
     while(!lisp_lib_null(otree)) {
         res = lisp_eval(lisp_car(otree), env);
@@ -773,6 +653,7 @@ Lisp_Begin.lisp_combine = function(cmb, otree, env) {
 var Lisp_Define = lisp_make_system_class(Lisp_Combiner, "Lisp_Define");
 
 Lisp_Define.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var lhs = lisp_elt(otree, 0);
     var rhs = lisp_elt(otree, 1);
     lisp_match(lhs, lisp_eval(rhs, env), env);
@@ -788,6 +669,7 @@ Lisp_Define.lisp_combine = function(cmb, otree, env) {
 var Lisp_Set = lisp_make_system_class(Lisp_Combiner, "Lisp_Set");
 
 Lisp_Set.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var name = lisp_elt(otree, 0);
     var value = lisp_elt(otree, 1);
     return lisp_env_set(env, name, lisp_eval(value, env));
@@ -803,6 +685,7 @@ Lisp_Set.lisp_combine = function(cmb, otree, env) {
 var Lisp_If = lisp_make_system_class(Lisp_Combiner, "Lisp_If");
 
 Lisp_If.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var test = lisp_elt(otree, 0);
     var consequent = lisp_elt(otree, 1);
     var alternative = lisp_elt(otree, 2);
@@ -825,6 +708,7 @@ Lisp_If.lisp_combine = function(cmb, otree, env) {
 var Lisp_Loop = lisp_make_system_class(Lisp_Combiner, "Lisp_Loop");
 
 Lisp_Loop.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var body = lisp_elt(otree, 0);
     while(true) {
         lisp_eval(body, env);
@@ -841,6 +725,7 @@ Lisp_Loop.lisp_combine = function(cmb, otree, env) {
 var Lisp_Unwind_Protect = lisp_make_system_class(Lisp_Combiner, "Lisp_Unwind_Protect");
 
 Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var protect = lisp_elt(otree, 0);
     var cleanup = lisp_elt(otree, 1);
     try {
@@ -857,6 +742,7 @@ Lisp_Unwind_Protect.lisp_combine = function(cmb, otree, env) {
 var Lisp_JS_Try = lisp_make_system_class(Lisp_Combiner, "Lisp_JS_Try");
 
 Lisp_JS_Try.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var handler_form = lisp_elt(otree, 0);
     var body_form = lisp_elt(otree, 1);
     var handler = lisp_eval(handler_form, env);
@@ -876,6 +762,7 @@ Lisp_JS_Try.lisp_combine = function(cmb, otree, env) {
 var Lisp_Native_Combiner = lisp_make_system_class(Lisp_Combiner, "Lisp_Native_Combiner");
 
 Lisp_Native_Combiner.lisp_combine = function(cmb, otree, env) {
+    otree = lisp_cdr(otree); // xons
     var args = lisp_cons_list_to_array(otree);
     if (typeof(cmb.lisp_min_args !== "undefined")) {
         if (args.length < cmb.lisp_min_args) {
@@ -993,21 +880,6 @@ function lisp_lib_xons_names(obj) {
 
 function lisp_lib_superclasses_of(c) {
     return lisp_array_to_cons_list(lisp_superclasses_of(c));
-}
-
-function lisp_lib_put_method(c, sel, cmb) {
-    lisp_assert(lisp_is_instance(c, Lisp_Class));
-    lisp_assert(lisp_is_instance(sel, Lisp_String));
-    lisp_assert(lisp_is_instance(cmb, Lisp_Combiner));
-    lisp_put_method(c, sel, cmb);
-    return sel;
-}
-
-function lisp_lib_send(obj, sel, otree) {
-    lisp_assert(lisp_is_instance(obj, Lisp_Object));
-    lisp_assert(lisp_is_instance(sel, Lisp_String));
-    lisp_assert(lisp_is_instance(otree, Lisp_Object));
-    return lisp_send(obj, sel, otree);
 }
 
 function lisp_lib_error(string) {
