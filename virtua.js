@@ -369,7 +369,11 @@ Lisp_Pair.lisp_match = function(pair, otree, env) {
     var slot_names = lisp_slot_names(pair);
     for (var i = 0; i < slot_names.length; i++) {
         var slot_name = slot_names[i];
-        lisp_match(pair[slot_name], otree[slot_name], env);
+        var operand = otree[slot_name];
+        if (typeof(operand === "undefined")) {
+            lisp_simple_error("Missing slot: " + slot_name);
+        }
+        lisp_match(pair[slot_name], operand, env);
     }
 };
 
