@@ -588,6 +588,7 @@ function lisp_unwrap(wrapper) {
 
 Lisp_Wrapper.lisp_combine = function(cmb, otree, env) {
     // Xons Note: may evaluate car multiple times now
+    console.log(otree);
     return lisp_combine(lisp_unwrap(cmb), lisp_eval_args(otree, env), env);
 };
 
@@ -600,10 +601,10 @@ function lisp_eval_args(otree, env) {
                         lisp_eval_args(lisp_cdr(otree), env));
     }
     /* Add xons fields. */
-    var xons_names = lisp_lib_xons_names(otree);
+    var xons_names = lisp_xons_names(otree);
     for (var i = 0; i < xons_names.length; i++) {
         var name = xons_names[i];
-        res[name] = lisp_eval(lisp_get_slot(otree, name), env);
+        res[name] = lisp_eval(lisp_lib_get_slot(otree, name), env);
     }
     return res;
 }
@@ -866,7 +867,7 @@ function lisp_lib_slot_names(obj) {
 }
 
 // Slot names sans car and cdr
-function lisp_lib_xons_names(obj) {
+function lisp_xons_names(obj) {
     var slot_names = lisp_slot_names(obj);
     var res = [];
     for (var i = 0; i < slot_names.length; i++) {
@@ -875,7 +876,11 @@ function lisp_lib_xons_names(obj) {
             res.push(slot_name);
         }
     }
-    return lisp_array_to_cons_list(res);
+    return res;
+}
+
+function lisp_lib_xons_names(obj) {
+    return lisp_array_to_cons_list(lisp_xons_names(obj));
 }
 
 function lisp_lib_superclasses_of(c) {
