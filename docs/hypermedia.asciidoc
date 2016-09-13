@@ -150,6 +150,30 @@ scope:
 [".", "docs", "index.html"]
 ....
 
+### Link Order
+
+The links incident on a name may be ordered by adding a sk (sort key)
+field to the corresponding anchor.
+
+This creates three ordered comment links from /index.html holding
+three lines of a comment:
+
+....
+["link",
+ ["rel", "comment"],
+ ["src", ["anchor", ["href", ["/", "index.html"]], ["sk", "1"]]],
+ ["tgt", ["anchor", ["href", "This is line 1 of the comment"]]]]
+["link",
+ ["rel", "comment"],
+ ["src", ["anchor", ["href", ["/", "index.html"]], ["sk", "2"]]],
+ ["tgt", ["anchor", ["href", "Line 2 of comment"]]]]
+["link",
+ ["rel", "comment"],
+ ["src", ["anchor", ["href", ["/", "index.html"]], ["sk", "3"]]]
+ ["tgt", ["anchor", ["href", "Another line"]]]]
+....
+
+### Link Strength
 
 ## Linkbase
 
