@@ -173,6 +173,14 @@ three lines of a comment:
  ["tgt", ["anchor", ["href", "Another line"]]]]
 ....
 
+#### Tumbler
+
+A sort key is a Xanadu-inspired tumbler, a kind of number with the
+property that we can always find a new tumbler between two existing
+ones.
+
+
+
 ### Link Strength
 
 ## Linkbase
