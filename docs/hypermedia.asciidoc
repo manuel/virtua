@@ -39,7 +39,9 @@ calls for records, plain lists themselves have to be wrapped in a
 
 This creates the list [1, 2, 3] in the high-level encoding:
 
-* ["list", 1, 3, 4]
+....
+["list", 1, 3, 4]
+....
 
 #### Records
 
@@ -47,7 +49,9 @@ Records are expressed as a type name a set of fields.
 
 This creates a record of type person with two fields, age and name.
 
-* ["person", ["age", 35], ["name", "Manuel"]]
+....
+["person", ["age", 35], ["name", "Manuel"]]
+....
 
 The fields are always sorted by name.
 
@@ -66,8 +70,12 @@ A link stores a typed relation between a source and a target anchor.
 This link of type description has the source /dev/mouse and the target
 "Mouse device":
 
-* ["link", ["rel", "description"], ["src", ["abs-name", "dev",
-  "mouse"]], ["tgt", "Mouse device"]
+....
+["link",
+ ["rel", "description"],
+ ["src", ["abs-name", "dev", "mouse"]],
+ ["tgt", "Mouse device"]]
+....
 
 ### Anchor
 
@@ -88,9 +96,13 @@ begin with / (slash) and . (dot).
 
 This absolute name refers to /dev/mouse:
 
-* ["abs-name", "dev", "mouse"]
+....
+["abs-name", "dev", "mouse"]
+....
 
-This relative name refers to the name ./index.html in the current scope:
+This relative name refers to the name ./docs/index.html in the current
+scope:
 
-* ["rel-name", "index.html"]
-
+....
+["rel-name", "docs", "index.html"]
+....
