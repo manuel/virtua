@@ -61,14 +61,32 @@ Arbitrary sized decimal numbers are represented as records with an
 exponent and a mantissa, with some special encoding rules to allow
 natural sorting by the low-level ordering rules.
 
+A decimal number is represented as a dec record with e (exponent) and
+m (mantissa) fields.
+
+This represents the decimal number 123.456:
+
+....
+["dec", ["e", 3], ["m", 123456]]
+....
+
+A negative decimal is represented as a dec record with both the
+exponent and the mantissa negative.
+
+This represents -123.456:
+
+....
+["dec", ["e", -3], ["m", -123456]]
+....
+
 ## Link
 
 The link is the fundamental unit of content.
 
 A link stores a typed relation between a source and a target anchor.
 
-This link of type description has the source /dev/mouse and the target
-"Mouse device":
+This link of type description has the source /dev/mouse (a name) and
+the target "Mouse device" (a string datum):
 
 ....
 ["link",
