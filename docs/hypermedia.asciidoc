@@ -9,11 +9,13 @@ integers, UTF-8 strings, and lists.
 
 Example low-level data using JSON syntax:
 
-* -1243
+....
+-1243
 
-* "hello"
+"hello"
 
-* ["foo", ["bar", 12]]
+["foo", ["bar", 12]]
+....
 
 All application and protocol data units are ultimately encoded in LLE.
 
@@ -55,11 +57,40 @@ Arbitrary sized decimal numbers are represented as records with an
 exponent and a mantissa, with some special encoding rules to allow
 natural sorting by the low-level ordering rules.
 
-
-
 ## Link
 
 The link is the fundamental unit of content.
 
-A link stores a relation between a source and a target anchor.
+A link stores a typed relation between a source and a target anchor.
+
+This link of type description has the source /dev/mouse and the target
+"Mouse device":
+
+* ["link", ["rel", "description"], ["src", ["abs-name", "dev",
+  "mouse"]], ["tgt", "Mouse device"]
+
+### Anchor
+
+The source and target anchors of a link can be either names or
+arbitrary data.
+
+Anchors that refer to names are the usual hyperlinks, whereas anchors
+that refer to data are more like properties or attributes.  At least
+one anchor of a link has to be a name.
+
+### Name
+
+A name is a sequence of path components, similar to a Unix filesystem
+path.
+
+There are absolute and relative names, corresponding to paths that
+begin with / (slash) and . (dot).
+
+This absolute name refers to /dev/mouse:
+
+* ["abs-name", "dev", "mouse"]
+
+This relative name refers to the name ./index.html in the current scope:
+
+* ["rel-name", "index.html"]
 
