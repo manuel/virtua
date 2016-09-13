@@ -104,7 +104,7 @@ Anchors that refer to names are the usual hyperlinks, whereas anchors
 that refer to data are more like properties or attributes.  At least
 one anchor of a link has to be a name.
 
-An anchor is represented as an anchor record with a href field (the
+An anchor is represented as an anchor record with an href field (the
 object referred to by the anchor).
 
 An anchor that points to the string "foo":
