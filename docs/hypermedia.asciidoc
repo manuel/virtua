@@ -82,7 +82,7 @@ This represents -123.456:
 #### Boolean
 
 Booleans are represented as bool records with a field b that is either
-0 or 1, representing true or false respectively.
+0 or 1, representing false or true respectively.
 
 ....
 ["bool", ["b", 0]]
