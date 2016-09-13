@@ -55,7 +55,7 @@ This creates a record of type person with two fields, age and name.
 
 The fields are always sorted by name.
 
-#### Decimals
+#### Decimal
 
 Arbitrary sized decimal numbers are represented as records with an
 exponent and a mantissa, with some special encoding rules to allow
@@ -77,6 +77,17 @@ This represents -123.456:
 
 ....
 ["dec", ["e", -3], ["m", -123456]]
+....
+
+#### Boolean
+
+Booleans are represented as bool records with a field b that is either
+0 or 1, representing true or false respectively.
+
+....
+["bool", ["b", 0]]
+
+["bool", ["b", 1]]
 ....
 
 ## Link
