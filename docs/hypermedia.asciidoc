@@ -91,8 +91,8 @@ name) and the target "Mouse device" (a string datum):
 ....
 ["link",
  ["rel", "description"],
- ["src", ["abs-name", "dev", "mouse"]],
- ["tgt", "Mouse device"]]
+ ["src", ["anchor", ["href", ["abs-name", "dev", "mouse"]]]],
+ ["tgt", ["anchor", ["href", "Mouse device"]]]]
 ....
 
 ### Anchor
@@ -103,6 +103,21 @@ arbitrary data.
 Anchors that refer to names are the usual hyperlinks, whereas anchors
 that refer to data are more like properties or attributes.  At least
 one anchor of a link has to be a name.
+
+An anchor is represented as an anchor record with a href field (the
+object referred to by the anchor).
+
+An anchor that points to the string "foo":
+
+....
+["anchor", ["href", "foo"]
+....
+
+An anchor that points to the name /tmp:
+
+....
+["anchor", ["href", ["abs-name", "tmp"]]]
+....
 
 ### Name
 
