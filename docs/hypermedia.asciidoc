@@ -151,3 +151,8 @@ scope:
 ....
 
 
+## Linkbase
+
+A linkbase is a collection of links.
+
+## Linkserver
