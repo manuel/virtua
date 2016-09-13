@@ -2,7 +2,7 @@
 
 ## Preliminaries
 
-### Low-level Encoding (LLE)
+### Low-level Encoding
 
 The low-level data encoding consists of arbitrary-sized signed
 integers, UTF-8 strings, and lists.
@@ -17,7 +17,8 @@ Example low-level data using JSON syntax:
 ["foo", ["bar", 12]]
 ....
 
-All application and protocol data units are ultimately encoded in LLE.
+All application and protocol data units are ultimately encoded in the
+low-level encoding.
 
 #### Order
 
@@ -26,7 +27,7 @@ The order among data of different types is number < string < list.
 The usual rule that shorter lists sort before longer lists with the
 same prefix applies.
 
-### High-level Encoding (HLE)
+### High-level Encoding
 
 A high-level encoding with support for features such as records and
 decimal numbers is layered on top of the low-level encoding.
