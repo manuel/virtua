@@ -179,7 +179,14 @@ Sort keys are Xanadu-inspired tumblers, a kind of number with the
 property that we can always find a new number between two existing
 ones.
 
-
+....
+1
+1..0
+1..1
+1..2
+1.0
+1az3.445.4
+....
 
 ### Link Strength
 
