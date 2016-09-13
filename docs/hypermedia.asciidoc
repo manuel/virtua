@@ -45,7 +45,7 @@ This creates the list [1, 2, 3] in the high-level encoding:
 
 #### Records
 
-Records are expressed as a type name a set of fields.
+Records are expressed as a type name and a set of fields.
 
 This creates a record of type person with two fields, age and name.
 
