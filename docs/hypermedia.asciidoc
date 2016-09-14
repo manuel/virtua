@@ -96,7 +96,7 @@ The link is the fundamental unit of content.
 
 A link stores a typed relation between a source and a target anchor.
 
-This link of type description has the source /dev/mouse (an absolute
+This link with type description has the source /dev/mouse (an absolute
 name) and the target "Mouse device" (a string datum):
 
 ....
@@ -193,8 +193,6 @@ ones.
 3.0
 7.445.4
 ....
-
-### Link Strength
 
 ## Linkbase
 
